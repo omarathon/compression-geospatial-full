@@ -1,3 +1,0 @@
-/home/omar/diss/yeet/cpp/compression/external/FastPFor/build/googletest-download/CMakeFiles/googletest.dir
-/home/omar/diss/yeet/cpp/compression/external/FastPFor/build/googletest-download/CMakeFiles/edit_cache.dir
-/home/omar/diss/yeet/cpp/compression/external/FastPFor/build/googletest-download/CMakeFiles/rebuild_cache.dir
