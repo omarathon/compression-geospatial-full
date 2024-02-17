@@ -1,3 +1,6 @@
 [submodule "code/code/cpp/compression/external/TurboPFor"]
 	path = code/code/cpp/compression/external/TurboPFor
 	url = https://github.com/powturbo/TurboPFor-Integer-Compression.git
+[submodule "code/code/cpp/compression/external/2i_bench"]
+	path = code/code/cpp/compression/external/2i_bench
+	url = https://github.com/jermp/2i_bench.git
