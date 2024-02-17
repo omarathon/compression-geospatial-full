@@ -71,6 +71,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
         if (fastpfor_codec->name() == "Simple8b_RLE"
             || fastpfor_codec->name() == "Simple9_RLE"
             || fastpfor_codec->name() == "SimplePFor+VariableByte"
+            || fastpfor_codec->name() == "FastPFor_SIMDGroupSimple+VariableByte"
             || fastpfor_codec->name() == "VSEncoding") {
             // Broken.
             continue;
