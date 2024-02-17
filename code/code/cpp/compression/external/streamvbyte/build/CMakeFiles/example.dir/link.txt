@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG -rdynamic CMakeFiles/example.dir/examples/example.c.o -o example  libstreamvbyte.a 

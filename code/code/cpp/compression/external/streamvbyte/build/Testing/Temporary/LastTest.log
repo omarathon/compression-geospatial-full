@@ -1,0 +1,22 @@
+Start testing: Feb 10 22:18 GMT
+----------------------------------------------------------
+1/1 Testing: unit
+1/1 Test: unit
+Command: "/home/omar/diss/code/cpp/compression/external/streamvbyte/build/unit"
+Directory: /home/omar/diss/code/cpp/compression/external/streamvbyte/build
+"unit" start time: Feb 10 22:18 GMT
+Output:
+----------------------------------------------------------
+compressed size 36494.
+Code looks good.
+And you have a little endian architecture.
+Code was vectorized (x64).
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"unit" end time: Feb 10 22:18 GMT
+"unit" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Feb 10 22:18 GMT
