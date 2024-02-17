@@ -8,6 +8,8 @@
 #include <memory>
 #include <algorithm>
 
+#include <limits.h>
+
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wreturn-local-addr"
 #endif
