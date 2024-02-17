@@ -72,6 +72,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
             || fastpfor_codec->name() == "Simple9_RLE"
             || fastpfor_codec->name() == "SimplePFor+VariableByte"
             || fastpfor_codec->name() == "SIMDGroupSimple+VariableByte"
+            || fastpfor_codec->name() == "SIMDGroupSimple_RingBuf+VariableByte"
             || fastpfor_codec->name() == "VSEncoding") {
             // Broken.
             continue;
