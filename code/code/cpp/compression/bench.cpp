@@ -239,16 +239,16 @@ int main(int argc, char* argv[]) {
             codecs.push_back(std::move(compositeCodec));
 
             auto rleCodec = std::make_unique<RLECodecAVX512>();
-            turboPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+            turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
             compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(rleCodec), std::move(fastPForCodec)
+                std::move(rleCodec), std::move(turboPForCodec)
             );
             codecs.push_back(std::move(compositeCodec));
 
             auto forCodec = std::make_unique<FORCodecAVX512>();
-            turboPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+            turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
             auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(forCodec), std::move(fastPForCodec)
+                std::move(forCodec), std::move(turboPForCodec)
             );
             codecs.push_back(std::move(compositeCodec));
         }
