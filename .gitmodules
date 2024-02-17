@@ -4,3 +4,6 @@
 [submodule "code/code/cpp/compression/external/2i_bench"]
 	path = code/code/cpp/compression/external/2i_bench
 	url = https://github.com/jermp/2i_bench.git
+[submodule "code/code/cpp/compression/external/FastPFor"]
+	path = code/code/cpp/compression/external/FastPFor
+	url = https://github.com/lemire/FastPFor.git
