@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG -rdynamic CMakeFiles/unit.dir/tests/unit.c.o -o unit  libstreamvbyte.a 

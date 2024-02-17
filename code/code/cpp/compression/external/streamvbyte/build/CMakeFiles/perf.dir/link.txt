@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG -rdynamic CMakeFiles/perf.dir/tests/perf.c.o -o perf  libstreamvbyte.a -lm 

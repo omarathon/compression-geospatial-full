@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG -rdynamic CMakeFiles/writeseq.dir/tests/writeseq.c.o -o writeseq  libstreamvbyte.a 

@@ -1,7 +1,0 @@
-cmake -DCMAKE_BUILD_TYPE=Release \
-         -DSTREAMVBYTE_ENABLE_EXAMPLES=ON \
-	 -DSTREAMVBYTE_ENABLE_TESTS=ON -B build
-
-cmake --build build
-# run the tests like:
-ctest --test-dir build
