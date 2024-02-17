@@ -235,8 +235,29 @@ int main(int argc, char* argv[]) {
         }
         codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
 
-        // Make composite
-        auto deltaCodec = std::make_unique<DeltaCodec>();
+        // Make composites
+        auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
+        auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+        auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+            std::move(deltaCodec), std::move(fastPForCodec)
+        );
+        codecs.push_back(std::move(compositeCodec));
+
+        auto deltaCodec = std::make_unique<DictCodecPacking>();
+        auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+        auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+            std::move(deltaCodec), std::move(fastPForCodec)
+        );
+        codecs.push_back(std::move(compositeCodec));
+
+        auto deltaCodec = std::make_unique<RLECodecAVX512>();
+        auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+        auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+            std::move(deltaCodec), std::move(fastPForCodec)
+        );
+        codecs.push_back(std::move(compositeCodec));
+
+        auto deltaCodec = std::make_unique<FORCodecAVX512>();
         auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
         auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
             std::move(deltaCodec), std::move(fastPForCodec)
