@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "cpl_conv.h": "c",
+        "stdio.h": "c",
+        "random": "c"
+    }
+}

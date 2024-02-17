@@ -1,0 +1,95 @@
+min = 0
+num_unique_values = 2
+uint8 dict
+**BENCHMARK RANDOM ACCESS**
+file=/home/omar/diss/geotiffs/2656.tif,blocksize=256,numblocks=400,randomsamples=10000,codec=FastPFor_JustCopy
+tottdec:324504299,meantdec:32450.4,vartdec:3.31007e+08
+
+ Performance counter stats for process id '202608':
+
+          63425335      cache-references:u                                          
+          26492596      cache-misses:u            #   41.770 % of all cache refs    
+         669759981      cycles:u                                                    
+           4690218      instructions:u            #    0.01  insn per cycle         
+            946249      branches:u                                                  
+                44      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.211979286 seconds time elapsed
+
+min = -9999
+num_unique_values = 62592
+uint16 dict
+**BENCHMARK RANDOM ACCESS**
+file=/home/omar/diss/geotiffs/accessibility.tif,blocksize=256,numblocks=400,randomsamples=10000,codec=FastPFor_JustCopy
+tottdec:321994549,meantdec:32199.5,vartdec:4.29983e+08
+
+ Performance counter stats for process id '202687':
+
+          75104214      cache-references:u                                          
+          29675446      cache-misses:u            #   39.512 % of all cache refs    
+         759691185      cycles:u                                                    
+           5288829      instructions:u            #    0.01  insn per cycle         
+           1067793      branches:u                                                  
+               242      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.244884422 seconds time elapsed
+
+min = 0
+num_unique_values = 7
+uint8 dict
+**BENCHMARK RANDOM ACCESS**
+file=/home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif,blocksize=256,numblocks=400,randomsamples=10000,codec=FastPFor_JustCopy
+tottdec:371085736,meantdec:37108.6,vartdec:4.43948e+08
+
+ Performance counter stats for process id '202714':
+
+          78114888      cache-references:u                                          
+          30826693      cache-misses:u            #   39.463 % of all cache refs    
+         770917743      cycles:u                                                    
+           5308158      instructions:u            #    0.01  insn per cycle         
+           1071558      branches:u                                                  
+               301      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.279141545 seconds time elapsed
+
+min = -9999
+num_unique_values = 80
+uint8 dict
+**BENCHMARK RANDOM ACCESS**
+file=/home/omar/diss/geotiffs/slope-srtm_35_11.tif,blocksize=256,numblocks=400,randomsamples=10000,codec=FastPFor_JustCopy
+tottdec:421720391,meantdec:42172,vartdec:1.09149e+09
+
+ Performance counter stats for process id '202755':
+
+          87398412      cache-references:u                                          
+          33917547      cache-misses:u            #   38.808 % of all cache refs    
+         842955142      cycles:u                                                    
+           5975661      instructions:u            #    0.01  insn per cycle         
+           1209668      branches:u                                                  
+              3534      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.365865589 seconds time elapsed
+
+min = -32768
+num_unique_values = 2367
+uint16 dict
+**BENCHMARK RANDOM ACCESS**
+file=/home/omar/diss/geotiffs/srtm_45_15.tif,blocksize=256,numblocks=400,randomsamples=10000,codec=FastPFor_JustCopy
+tottdec:353707298,meantdec:35370.7,vartdec:4.11565e+08
+
+ Performance counter stats for process id '202758':
+
+          71381417      cache-references:u                                          
+          31307541      cache-misses:u            #   43.860 % of all cache refs    
+         741726790      cycles:u                                                    
+           5556484      instructions:u            #    0.01  insn per cycle         
+           1122280      branches:u                                                  
+               808      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.275810113 seconds time elapsed
+

@@ -1,0 +1,13 @@
+
+ Performance counter stats for process id '556267':
+
+         148606075      cache-references:u                                          
+           1407886      cache-misses:u            #    0.947 % of all cache refs    
+        1295375307      cycles:u                                                    
+        2271163044      instructions:u            #    1.75  insn per cycle         
+         457621852      branches:u                                                  
+                55      faults:u                                                    
+                 0      migrations:u                                                
+
+       0.385051291 seconds time elapsed
+
