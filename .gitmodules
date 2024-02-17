@@ -13,3 +13,6 @@
 [submodule "code/code/cpp/compression/external/dictionary"]
 	path = code/code/cpp/compression/external/dictionary
 	url = https://github.com/lemire/dictionary
+[submodule "code/code/cpp/compression/external/lz4"]
+	path = code/code/cpp/compression/external/lz4
+	url = https://github.com/lz4/lz4.git
