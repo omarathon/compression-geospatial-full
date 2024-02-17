@@ -1,1 +1,0 @@
-/usr/bin/c++  -std=c++14 -march=native -O3 -ggdb -Wall -Wextra -Wno-missing-braces -O3 -DNDEBUG -rdynamic CMakeFiles/entropy.dir/src/entropy.cpp.o -o ../../entropy  libFastPFor_lib.a 

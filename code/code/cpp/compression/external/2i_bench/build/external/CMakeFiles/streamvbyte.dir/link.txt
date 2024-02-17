@@ -1,2 +1,0 @@
-/usr/bin/ar qc libstreamvbyte.a CMakeFiles/streamvbyte.dir/streamvbyte/src/streamvbyte_encode.c.o CMakeFiles/streamvbyte.dir/streamvbyte/src/streamvbyte_decode.c.o
-/usr/bin/ranlib libstreamvbyte.a

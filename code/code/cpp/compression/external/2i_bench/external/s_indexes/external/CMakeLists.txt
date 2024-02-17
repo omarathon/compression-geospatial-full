@@ -1,2 +1,0 @@
-include_directories(mm_file/include/mm_file)
-include_directories(essentials/include)
