@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++14 -march=native -O3 -ggdb -Wall -Wextra -Wno-missing-braces -O3 -DNDEBUG -rdynamic CMakeFiles/inmemorybenchmark.dir/src/inmemorybenchmark.cpp.o -o ../../inmemorybenchmark  libFastPFor_lib.a 

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMaskedVByte.a CMakeFiles/MaskedVByte.dir/MaskedVByte/src/varintdecode.c.o CMakeFiles/MaskedVByte.dir/MaskedVByte/src/varintencode.c.o
+/usr/bin/ranlib libMaskedVByte.a

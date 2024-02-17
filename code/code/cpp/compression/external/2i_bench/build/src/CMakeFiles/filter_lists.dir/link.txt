@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++14 -march=native -O3 -ggdb -Wall -Wextra -Wno-missing-braces -O3 -DNDEBUG -rdynamic CMakeFiles/filter_lists.dir/filter_lists.cpp.o -o ../filter_lists 
