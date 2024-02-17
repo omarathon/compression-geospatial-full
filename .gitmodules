@@ -1,0 +1,3 @@
+[submodule "code/code/cpp/compression/external/TurboPFor"]
+	path = code/code/cpp/compression/external/TurboPFor
+	url = https://github.com/powturbo/TurboPFor-Integer-Compression.git
