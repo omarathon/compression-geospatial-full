@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
 
             auto forCodec = std::make_unique<FORCodecAVX512>();
             turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
-            auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+            compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
                 std::move(forCodec), std::move(turboPForCodec)
             );
             codecs.push_back(std::move(compositeCodec));
