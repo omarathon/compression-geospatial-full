@@ -18,7 +18,7 @@ void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_p
         // std::cout << "ws: " << windowStart << ", wl: " << windowData.size() << ", c: " << codec->name();
         std::cout << "c:" << ci;
 
-        codec->allocEncoded(windowData.size());
+        codec->allocEncoded(windowData.data(), windowData.size());
 
         auto startEncode = std::chrono::high_resolution_clock::now();
         try {

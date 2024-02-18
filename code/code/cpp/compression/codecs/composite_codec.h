@@ -22,16 +22,16 @@ public:
 
     // Need to allocate for both codecs but don't know how to allocate the intermediate data in advance,
     // so this is not supported.
-    void allocEncoded(size_t length) {
+    void allocEncoded(const T* in, size_t length) {
     //   throw std::runtime_error("CompisiteStatefulIntegerCodec does not support `allocEncoded`. Please use the `encode` and `decode` methods directly.");
     }
 
     void encodeArray(const T *in, const size_t length) override {
-        firstCodec->allocEncoded(length);
+        firstCodec->allocEncoded(in, length);
         firstCodec->encodeArray(in, length);
         auto& intermediateData = firstCodec->getEncoded();
         intermediateEncodedSize = intermediateData.size(); // Cache the size of the intermediate array
-        secondCodec->allocEncoded(intermediateEncodedSize);
+        secondCodec->allocEncoded(intermediateData.data(), intermediateEncodedSize);
         secondCodec->encodeArray(intermediateData.data(), intermediateEncodedSize);
         firstCodec->clear();
     }
@@ -47,7 +47,7 @@ public:
     }
 
     size_t benchEncode(const T *in, const size_t length) override {
-        firstCodec->allocEncoded(length);
+        firstCodec->allocEncoded(in, length);
 
         auto tenc1Start = std::chrono::high_resolution_clock::now();
         firstCodec->encodeArray(in, length);
@@ -56,7 +56,7 @@ public:
         auto& intermediateData = firstCodec->getEncoded();
         intermediateEncodedSize = intermediateData.size(); // Cache the size of the intermediate array
 
-        secondCodec->allocEncoded(intermediateEncodedSize);
+        secondCodec->allocEncoded(intermediateData.data(), intermediateEncodedSize);
 
         auto tenc2Start = std::chrono::high_resolution_clock::now();
         secondCodec->encodeArray(intermediateData.data(), intermediateEncodedSize);

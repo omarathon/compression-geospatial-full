@@ -69,7 +69,7 @@ public:
         return new DeltaCodec();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(length);
     };
 
@@ -156,7 +156,7 @@ public:
         return new DictCodecPacking<T>(dict, reverseDict);
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         const size_t bitsPerIndex = sizeof(T) * 8;
         const size_t indexesPerInt = 32 / bitsPerIndex;
         const size_t numPackedInts = (length + indexesPerInt - 1) / indexesPerInt;
@@ -229,7 +229,7 @@ public:
         return new DictCodec<T>(dict, reverseDict);
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(length);
     };
 
@@ -301,7 +301,7 @@ public:
         return new FORCodec();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(length + 1);
     };
 
@@ -369,7 +369,7 @@ public:
         return new RLECodec();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(2);
     };
 

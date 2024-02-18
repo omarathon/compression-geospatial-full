@@ -49,7 +49,7 @@ public:
     return new MaskedVByteCodec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(length * sizeof(int32_t));
   };
 
@@ -111,7 +111,7 @@ public:
     return new MaskedVByteDeltaCodec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(length * sizeof(int32_t));
   };
 

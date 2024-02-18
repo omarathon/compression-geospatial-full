@@ -49,7 +49,7 @@ public:
     return new StreamVByteCodec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(streamvbyte_max_compressedbytes(length));
   };
 

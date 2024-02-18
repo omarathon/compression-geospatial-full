@@ -74,7 +74,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
         }
 
         std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedCodec(baseCodec->cloneFresh());
-        clonedCodec->allocEncoded(blockData.size());
+        clonedCodec->allocEncoded(blockData.data(), blockData.size());
         clonedCodec->encodeArray(blockData.data(), blockData.size());
         codecs[blockNum] = std::move(clonedCodec);
     }

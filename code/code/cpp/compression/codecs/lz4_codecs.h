@@ -55,7 +55,7 @@ public:
     return new LZ4Codec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(LZ4_compressBound(length * sizeof(int32_t)));
   };
 

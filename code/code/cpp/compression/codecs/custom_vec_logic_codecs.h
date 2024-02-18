@@ -97,7 +97,7 @@
 //         return new DeltaCodecSSE42();
 //     }
 
-//     void allocEncoded(size_t length) override {
+//     void allocEncoded(const int32_t* in, size_t length) override {
 //         compressed_data.resize(length); // Resize instead of reserve so intermediate buffers not needed for vectorised stores.
 //     };
 
@@ -197,7 +197,7 @@ public:
         return new DeltaCodecSSE42();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length); // Resize instead of reserve so intermediate buffers not needed for vectorised stores.
     };
 
@@ -288,7 +288,7 @@ public:
 //         return new DeltaCodecAVX2();
 //     }
 
-//         void allocEncoded(size_t length) override {
+//         void allocEncoded(const int32_t* in, size_t length) override {
 //         compressed_data.reserve(length);
 //     };
 
@@ -394,7 +394,7 @@ public:
         return new DeltaCodecAVX2();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length);
     };
 
@@ -503,7 +503,7 @@ public:
         return new DeltaCodecAVX512();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length);
     }
 
@@ -604,7 +604,7 @@ public:
         return new DictCodecAVX2<T>(dict, reverseDict);
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length);
     };
 
@@ -742,7 +742,7 @@ public:
         return new DictCodecPackingAVX2<T>(dict, reverseDict);
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         const size_t bitsPerIndex = sizeof(T) * 8;
         const size_t indexesPerInt = 32 / bitsPerIndex;
         const size_t numPackedInts = (length + indexesPerInt - 1) / indexesPerInt;
@@ -859,7 +859,7 @@ public:
         return new FORCodecSSE42();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length + 1); // +1 for the reference value
     }
 
@@ -976,7 +976,7 @@ public:
         return new FORCodecAVX2();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length + 1);
     };
 
@@ -1095,7 +1095,7 @@ public:
         return new FORCodecAVX512();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.resize(length + 1); // +1 for the reference value
     }
 
@@ -1198,7 +1198,7 @@ public:
         return new RLECodecSSE42();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(2 * (length / 4 + 1));
     };
 
@@ -1302,7 +1302,7 @@ public:
         return new RLECodecAVX2();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(2 * (length / 8 + 1));
     };
 
@@ -1404,7 +1404,7 @@ public:
         return new RLECodecAVX512();
     }
 
-    void allocEncoded(size_t length) override {
+    void allocEncoded(const int32_t* in, size_t length) override {
         compressed_data.reserve(2 * (length / 16 + 1)); // Reserve more efficiently
     };
 
