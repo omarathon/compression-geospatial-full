@@ -11,6 +11,8 @@
 #include "codecs/lzma_codecs.h"
 #include "codecs/zstd_codecs.h"
 #include "codecs/turbopfor_codecs.h"
+#include "codecs/frameofreference_codecs.h"
+#include "codecs/simdcomp_codecs.h"
 #include <vector>
 #include <unordered_map>
 
@@ -53,6 +55,9 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
     codecs.push_back(std::make_unique<MaskedVByteCodec>());
     codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
     codecs.push_back(std::make_unique<StreamVByteCodec>());
+    codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
+    codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
+    codecs.push_back(std::make_unique<SimdCompCodec>());
     codecs.push_back(std::make_unique<LZ4Codec>());
     codecs.push_back(std::make_unique<ZstdCodec>(1));
     codecs.push_back(std::make_unique<ZstdCodec>(3));
