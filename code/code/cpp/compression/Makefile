@@ -1,6 +1,6 @@
 CXX = g++
-# CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include  $(shell gdal-config --cflags)
-CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include  $(shell gdal-config --cflags)
+# CXXFLAGS = -gnu99 -Wall -O2 '-msse4.1' '-mavx512f' -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include  $(shell gdal-config --cflags)
+CXXFLAGS = -std=c++17 -Wall -O2 '-msse4.1' '-mavx512f' -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include -I./external/2i_bench/include -I./external/lz4/lib $(shell gdal-config --cflags)
 # LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/2i_bench/build -lDS2ILib -L./external/2i_bench/build/external -lstreamvbyte
 LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/streamvbyte/build -lstreamvbyte -L./external/TurboPFor -lic -lm
 
@@ -8,20 +8,20 @@ LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmask
 LIBS=$(shell gdal-config --libs)
 LIBS_DEFLATE = -lz
 LIBS_LZMA = -llzma
-LIBS_LZ4 = -llz4
+LIBS_LZ4 = -L./external/lz4 -llz4
 LIBS_ZSTD = -lzstd
 
 # Targets
 all: deflate lzma lz4 zstd
 
 bench_tiff_comp: bench_tiff_comp.cpp
-	$(CXX) $(CXXFLAGS) -o bench_tiff_comp bench_tiff_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+	$(CXX) $(CXXFLAGS) -o bench_tiff_comp bench_tiff_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
 random_access_comp: random_access_comp.cpp
-	$(CXX) $(CXXFLAGS) -o random_access_comp random_access_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+	$(CXX) $(CXXFLAGS) -o random_access_comp random_access_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
 bench: bench.cpp
-	$(CXX) $(CXXFLAGS) -o bench bench.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+	$(CXX) $(CXXFLAGS) -o bench bench.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
 deflate: deflate.cpp
 	$(CXX) $(CXXFLAGS) -o deflate deflate.cpp $(LDFLAGS) $(LIBS_DEFLATE)
