@@ -11,14 +11,14 @@
 template <typename T> // T: type of data being compressed
 class StatefulIntegerCodec {
 public:
-  virtual void allocEncoded(size_t length) = 0;
+  virtual void allocEncoded(const T* in, size_t length) = 0;
 
   virtual void encodeArray(const T *in, const size_t length) = 0;
 
   // Allocates storage for encoded data and times how long it takes to encode it.
   // Returns the duration in **nanoseconds**.
   virtual size_t benchEncode(const T *in, const size_t length) {
-    allocEncoded(length);
+    allocEncoded(in, length);
     auto tencStart = std::chrono::high_resolution_clock::now();
     encodeArray(in, length);
     auto tencEnd = std::chrono::high_resolution_clock::now();

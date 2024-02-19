@@ -59,7 +59,7 @@ public:
     return new ZstdCodec(compressionLevel);
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     size_t maxOutputSize = ZSTD_compressBound(length * sizeof(int32_t));
     compressed.resize(maxOutputSize);
   };

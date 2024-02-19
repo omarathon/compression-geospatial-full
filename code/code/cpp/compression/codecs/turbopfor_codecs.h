@@ -290,7 +290,7 @@ public:
   }
 
   
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(CBUF1(length));
     if (method == 15) {
         tmp32.resize(CBUF4(length));

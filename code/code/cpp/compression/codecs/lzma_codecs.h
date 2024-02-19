@@ -79,7 +79,7 @@ public:
     return new LZMACodec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     // Only known after encoding stream is formed.
   };
 

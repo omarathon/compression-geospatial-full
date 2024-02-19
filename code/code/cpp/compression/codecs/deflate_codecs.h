@@ -54,7 +54,7 @@ public:
     return new DeflateCodec();
   }
 
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     uLongf outputSize = compressBound(length * sizeof(int32_t));
     compressed.resize(outputSize); // NOTE: reserve doesn't work.
   };

@@ -63,7 +63,7 @@ public:
   }
 
   
-  void allocEncoded(size_t length) override {
+  void allocEncoded(const int32_t* in, size_t length) override {
     compressed.resize(length * 2); // Emirically found that this works. NOTE: reserve doesn't work.
   };
 

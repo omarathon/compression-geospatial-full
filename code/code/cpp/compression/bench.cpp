@@ -24,11 +24,13 @@
 #include "codecs/lzma_codecs.h"
 #include "codecs/zstd_codecs.h"
 #include "codecs/turbopfor_codecs.h"
+#include "codecs/frameofreference_codecs.h"
+#include "codecs/simdcomp_codecs.h"
 
 bool test_codec(std::vector<int32_t>& data, StatefulIntegerCodec<int32_t>& codec) {
     try {
         codec.clear();
-        codec.allocEncoded(data.size());
+        codec.allocEncoded(data.data(), data.size());
         codec.encodeArray(data.data(), data.size());
     }
     catch (const std::exception& error) {
@@ -215,6 +217,9 @@ int main(int argc, char* argv[]) {
     codecs.push_back(std::make_unique<MaskedVByteCodec>());
     codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
     codecs.push_back(std::make_unique<StreamVByteCodec>());
+    codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
+    codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
+    codecs.push_back(std::make_unique<SimdCompCodec>());
     codecs.push_back(std::make_unique<LZ4Codec>()); // WORKS but slow
     // codecs.push_back(std::make_unique<LZMACodec>()); // WORKS but slow
     codecs.push_back(std::make_unique<ZstdCodec>(3));
