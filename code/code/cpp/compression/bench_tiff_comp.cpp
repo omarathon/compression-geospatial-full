@@ -15,7 +15,6 @@ void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_p
     for (int ci = 0; ci < codecs.size(); ci++) {
         auto& codec = codecs[ci];
 
-        // std::cout << "ws: " << windowStart << ", wl: " << windowData.size() << ", c: " << codec->name();
         std::cout << "c:" << ci;
 
         codec->allocEncoded(windowData.data(), windowData.size());
@@ -70,49 +69,6 @@ void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_p
     }
 }
 
-// std::vector<int32_t> readGeoTiffLinearWindow(GDALRasterBand* band, int windowStart, int windowSize, int totalPixels, int w, int h) {
-//     int xStart = windowStart % w;
-//     int yStart = windowStart / w;
-
-//     int windowEnd = std::min(windowStart + windowSize, totalPixels);
-//     int xEnd = windowEnd % w;
-//     int yEnd = windowEnd / w;
-
-//     // Adjust yEnd for the edge case where windowEnd is at the start of a new row
-//     if (xEnd == 0 && windowEnd != totalPixels) {
-//         yEnd -= 1; // Move yEnd back by one row
-//     }
-
-//     // Ensure yEnd does not exceed the raster height
-//     yEnd = std::min(yEnd, h - 1);
-
-//     int readWidth = w; // Always read full width of the raster
-//     int readHeight = yEnd - yStart + 1; // Calculate the number of rows to read
-
-//     std::vector<int32_t> data(readWidth * readHeight);
-//     band->RasterIO(GF_Read, 0, yStart, readWidth, readHeight, data.data(), readWidth, readHeight, GDT_Int32, 0, 0);
-
-//     std::vector<int32_t> windowData;
-//     windowData.reserve(windowSize);
-
-//     for (int row = 0; row < readHeight; ++row) {
-//         int rowStart = row * w;
-//         int rowEnd = rowStart + w;
-
-//         // Adjust for the start and end of the window
-//         if (row == 0) {
-//             rowStart += xStart;
-//         }
-//         if (row == readHeight - 1 && xEnd != 0) {
-//             rowEnd = row * w + xEnd;
-//         }
-
-//         windowData.insert(windowData.end(), data.begin() + rowStart, data.begin() + rowEnd);
-//     }
-
-//     return windowData;
-// }
-
 std::vector<int32_t> readGeoTiffBlock(GDALRasterBand* band, int xOff, int yOff, int blockSize, int rasterWidth, int rasterHeight) {
     int blockWidth = std::min(blockSize, rasterWidth - xOff);
     int blockHeight = std::min(blockSize, rasterHeight - yOff);
@@ -121,6 +77,17 @@ std::vector<int32_t> readGeoTiffBlock(GDALRasterBand* band, int xOff, int yOff, 
     band->RasterIO(GF_Read, xOff, yOff, blockWidth, blockHeight, blockData.data(), blockWidth, blockHeight, GDT_Int32, 0, 0);
 
     return blockData;
+}
+
+// Function to process a single block for min and unique values
+void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, int xOff, int yOff, int blockSize, int32_t& min, std::unordered_set<int32_t>& unique_values_set) {
+    std::vector<int32_t> blockData(blockSize * blockSize);
+    band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
+
+    for (auto& value : blockData) {
+        min = std::min(min, value);
+        unique_values_set.insert(value);
+    }
 }
 
 int main(int argc, char** argv) {
@@ -143,41 +110,36 @@ int main(int argc, char** argv) {
     GDALRasterBand* band = dataset->GetRasterBand(1);
     int rasterWidth = band->GetXSize();
     int rasterHeight = band->GetYSize();
-    // int w = 1253;
-    // int h = 4021;
     int totalPixels = rasterWidth * rasterHeight;
-
-    // if (windowSize == -1) {
-    //     windowSize = totalPixels;
-    // }
-
-    // windowSize = std::min(windowSize, totalPixels);
-    // int windowStride = nWindows == -1 ? 1 : std::max(1, (totalPixels / windowSize) / nWindows);
 
     std::cout << "**BENCHMARK**\nfile=" << argv[1] << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks << std::endl;
 
-    // Read the full raster data
-    std::vector<int32_t> data_large(totalPixels);
-    band->RasterIO(GF_Read, 0, 0, rasterWidth, rasterHeight, data_large.data(), rasterWidth, rasterHeight, GDT_Int32, 0, 0);
+    int32_t min = std::numeric_limits<int32_t>::max();
+    std::unordered_set<int32_t> unique_values_set;
 
-    // Normalise to all positive
-    int32_t min = *std::min_element(data_large.begin(), data_large.end());
+    int blocksInWidth = rasterWidth / blockSize;
+    int blocksInHeight = rasterHeight / blockSize;
 
-    std::cout << "min = " << min << std::endl;
-    if (min < 0) {
-        for (int i = 0; i < data_large.size(); i++) {
-            data_large[i] += (-min);
+    for (int y = 0; y < blocksInHeight; ++y) {
+        for (int x = 0; x < blocksInWidth; ++x) {
+            int xOff = x * blockSize;
+            int yOff = y * blockSize;
+            computeMinAndUniqueValuesForBlock(band, xOff, yOff, blockSize, min, unique_values_set);
         }
     }
 
-    // Extract unique values
-    std::unordered_set<int32_t> unique_values_set(data_large.begin(), data_large.end());
-    size_t num_unique_values = unique_values_set.size();
+    // Adjust unique_values_set to normalize all values
+    std::unordered_set<int32_t> normalised_unique_values_set;
+    for (const auto& value : unique_values_set) {
+        normalised_unique_values_set.insert(min < 0 ? value - min : value);
+    }
+
+    size_t num_unique_values = normalised_unique_values_set.size();
 
     std::cout << "num_unique_values = " << num_unique_values << std::endl;
 
     // Convert unordered_set to vector for unique values
-    std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
+    std::vector<int32_t> unique_values(normalised_unique_values_set.begin(), normalised_unique_values_set.end());
 
     std::any dict;
     std::vector<int32_t> reverseDict;
@@ -229,25 +191,14 @@ int main(int argc, char** argv) {
     }
     std::cout << "*ENDCODECS*" << std::endl;
 
-    // Free memory used by data_large
-    data_large.clear();
-    data_large.shrink_to_fit();
-
-
     // Calculate the total number of blocks that fit in the raster
-    int blocksInWidth = rasterWidth / blockSize;
-    int blocksInHeight = rasterHeight / blockSize;
     int totalBlocks = blocksInWidth * blocksInHeight;
 
     // Calculate spacing between blocks to process
     int blockSpacing = std::max(1, totalBlocks / nBlocks);
 
-    // Process each window
-    // Ignore the last window as it's nonconsistently sized
-
     // Counter for processed blocks
     int processedBlocks = 0;
-
     int windowIndex = 0;
 
     // Iterate through the raster in NxN blocks
@@ -277,26 +228,6 @@ int main(int argc, char** argv) {
             processedBlocks++; // Increment the count of processed blocks
         }
     }
-
-
-    // int windowIndex = 0;
-    // for (int windowStart = 0; windowStart < totalPixels; windowStart += windowStride * windowSize) {
-    //     std::vector<int32_t> windowData = readGeoTiffLinearWindow(band, windowStart, windowSize, totalPixels, w, h);
-    //     if (windowData.size() != windowSize) {
-    //         continue;
-    //     }
-    //     // Normalise window to all positive
-    //     if (min < 0) {
-    //         for (int i = 0; i < windowData.size(); i++) {
-    //             windowData[i] += (-min);
-    //         }
-    //     }
-    //     std::cout << "*wi:" << windowIndex++ << std::endl;
-    //     benchmarkWindow(windowData, codecs, windowStart);
-    //     // if (!benchmarkWindow(windowData, codecs, windowStart)) {
-    //         // return 1;
-    //     // }
-    // }
 
     GDALClose(dataset);
     return 0;
