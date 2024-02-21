@@ -1,6 +1,6 @@
 CXX = g++
 # CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include  $(shell gdal-config --cflags)
-CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include -I./external/FrameOfReference/include -I./external/simdcomp/include  $(shell gdal-config --cflags)
+CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include -I./external/FrameOfReference/include -I./external/simdcomp/include -I./external/libmorton/include/libmorton  $(shell gdal-config --cflags)
 # LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/2i_bench/build -lDS2ILib -L./external/2i_bench/build/external -lstreamvbyte
 LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/streamvbyte/build -lstreamvbyte -L./external/TurboPFor -lic -lm -L./external/FrameOfReference/release -lFrameOfReference -L./external/simdcomp -lsimdcomp
 
