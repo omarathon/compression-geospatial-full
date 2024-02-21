@@ -25,3 +25,6 @@
 [submodule "code/code/cpp/compression/external/FrameOfReference"]
 	path = code/code/cpp/compression/external/FrameOfReference
 	url = https://github.com/omarathon/FrameOfReference.git
+[submodule "code/code/cpp/compression/external/libmorton"]
+	path = code/code/cpp/compression/external/libmorton
+	url = https://github.com/Forceflow/libmorton.git
