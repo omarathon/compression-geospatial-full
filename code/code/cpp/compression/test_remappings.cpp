@@ -1,7 +1,7 @@
 #include "remappings.h"
 #include <iostream>
 
-void test(const int N) {
+void test(const int N, bool output) {
     std::vector<int32_t> block;
     for (int i = 1; i <= N*N; i++) {
         block.push_back(i);
@@ -18,6 +18,8 @@ void test(const int N) {
         std::cout << std::endl;
     };
 
+    if (!output) return;
+
     std::cout << "in:" << std::endl;
     print(block);
     std::cout << "morton:" << std::endl;
@@ -27,7 +29,8 @@ void test(const int N) {
 }
 
 int main() {
-    test(2);
-    test(4);
-    test(8);
+    test(2, true);
+    test(4, true);
+    test(8, true);
+    test(256, false); // test perf
 }
