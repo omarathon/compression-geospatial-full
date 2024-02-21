@@ -14,12 +14,13 @@
 #include <iostream>
 #include <string>
 #include <sys/wait.h>
+#include "remappings.h"
 
 #define GDAL_DTYPE GDT_Int32
 
 std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
     GDALRasterBand* band, int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
-    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec, const int32_t min) {
+    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec, const int32_t min, const int ordering) {
     
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs(numBlocks);
 
@@ -55,6 +56,15 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
             }
         }
 
+        // blockData is currently in row-major order. remap according to desired ordering
+        if (ordering == 1) {
+            blockData = remapToZigzagOrder(blockData, blockSize);
+        }
+        else if (ordering == 2) {
+            blockData = remapToMortonOrder(blockData, blockSize);
+        }
+
+        // Compress block data and store
         std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedCodec(baseCodec->cloneFresh());
         clonedCodec->allocEncoded(blockData.data(), blockData.size());
         clonedCodec->encodeArray(blockData.data(), blockData.size());
@@ -121,8 +131,8 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, int xOff, int yOff,
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 6) {
-        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num random samples> <codec name>\n";
+    if (argc < 7) {
+        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num random samples> <codec name> <block ordering {0=row_major,1=zig_zag,2=morton}>\n";
         return 1;
     }
 
@@ -131,6 +141,12 @@ int main(int argc, char* argv[]) {
     int numBlocks = atoi(argv[3]);
     int numRandomSamples = atoi(argv[4]);
     const char* codecName = argv[5];
+    int ordering = atoi(argv[6]);
+
+    if (ordering < 0 || ordering > 2) {
+        std::cerr << "invalid ordering" << std::endl;
+        return 1;
+    }
 
     srand(1); // Seed the random number generator
 
@@ -232,7 +248,7 @@ int main(int argc, char* argv[]) {
     allCodecs.shrink_to_fit();
 
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs = splitIntoFullBlocks(
-        band, nXSize, nYSize, blockSize, numBlocks, std::move(baseCodec), min);
+        band, nXSize, nYSize, blockSize, numBlocks, std::move(baseCodec), min, ordering);
 
     // <block size> <num blocks> <num random samples> <codec name>
     std::cout << "**BENCHMARK RANDOM ACCESS**" << std::endl;

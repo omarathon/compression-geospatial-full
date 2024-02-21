@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <any>
 #include <variant>
+#include "remappings.h"
 
 // Function to benchmark a window of data
 void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
@@ -91,8 +92,8 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, int xOff, int yOff,
 }
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <GeoTIFF file path> <block size> <num blocks>" << std::endl;
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <GeoTIFF file path> <block size> <num blocks> <block ordering {0=row_major,1=zig_zag,2=morton}>" << std::endl;
         return 1;
     }
 
@@ -100,6 +101,12 @@ int main(int argc, char** argv) {
     const char* filename = argv[1];
     int blockSize = std::stoi(argv[2]);
     int nBlocks = std::stoi(argv[3]);
+    int ordering = std::stoi(argv[4]);
+
+    if (ordering < 0 || ordering > 2) {
+        std::cerr << "invalid ordering" << std::endl;
+        return 1;
+    }
 
     GDALDataset* dataset = (GDALDataset*) GDALOpen(filename, GA_ReadOnly);
     if (!dataset) {
@@ -221,6 +228,16 @@ int main(int argc, char** argv) {
                     blockData[i] += (-min);
                 }
             }
+
+            // blockData is currently in row-major order. remap according to desired ordering
+            if (ordering == 1) {
+                blockData = remapToZigzagOrder(blockData, blockSize);
+            }
+            else if (ordering == 2) {
+                blockData = remapToMortonOrder(blockData, blockSize);
+            }
+
+
             std::cout << "*wi:" << windowIndex++ << "(" << xOff << "," << yOff << ")" << std::endl;
 
             benchmarkWindow(blockData, codecs);

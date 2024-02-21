@@ -1,6 +1,6 @@
 CXX = g++
 # CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include  $(shell gdal-config --cflags)
-CXXFLAGS = -Wall -O2 '-msse4.1' '-mavx512f' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include -I./external/FrameOfReference/include -I./external/simdcomp/include -I./external/libmorton/include/libmorton  $(shell gdal-config --cflags)
+CXXFLAGS = -cpp -Wall -O2 '-msse4.1' '-mavx512f' '-mbmi2' -fopenmp -I./external -I./external/MaskedVByte/include -I./external/streamvbyte/include -I./external/2i_bench/external -I./external/2i_bench/include -I./external/TurboPFor/include -I./external/FrameOfReference/include -I./external/simdcomp/include -I./external/libmorton/include/libmorton  $(shell gdal-config --cflags)
 # LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/2i_bench/build -lDS2ILib -L./external/2i_bench/build/external -lstreamvbyte
 LDFLAGS = -L./external/FastPFor/build -lFastPFOR -L./external/MaskedVByte -lmaskedvbyte -L./external/streamvbyte/build -lstreamvbyte -L./external/TurboPFor -lic -lm -L./external/FrameOfReference/release -lFrameOfReference -L./external/simdcomp -lsimdcomp
 
@@ -13,6 +13,9 @@ LIBS_ZSTD = -lzstd
 
 # Targets
 all: deflate lzma lz4 zstd
+
+test_remappings: test_remappings.cpp
+	$(CXX) $(CXXFLAGS) -o test_remappings test_remappings.cpp
 
 bench_tiff_comp: bench_tiff_comp.cpp
 	$(CXX) $(CXXFLAGS) -o bench_tiff_comp bench_tiff_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
