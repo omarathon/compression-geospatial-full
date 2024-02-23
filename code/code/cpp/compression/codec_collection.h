@@ -55,7 +55,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
     codecs.push_back(std::make_unique<MaskedVByteCodec>());
     codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
     codecs.push_back(std::make_unique<StreamVByteCodec>());
-    codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
+    // codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
     codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
     codecs.push_back(std::make_unique<SimdCompCodec>());
     codecs.push_back(std::make_unique<LZ4Codec>());
@@ -113,7 +113,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initCodecs
             auto cascadeCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(cascadeCodec->cloneFresh());
             auto pCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(pCodec->cloneFresh());
             auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(cascadeCodecFresh), std::move(pCodec)
+                std::move(cascadeCodecFresh), std::move(pCodecFresh)
             );
             codecs.push_back(std::move(compositeCodec));
         }

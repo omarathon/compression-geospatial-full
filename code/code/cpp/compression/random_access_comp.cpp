@@ -14,35 +14,13 @@
 #include <iostream>
 #include <string>
 #include <sys/wait.h>
+#include "remappings.h"
 
 #define GDAL_DTYPE GDT_Int32
-// #define BLOCK_SIZE 512
-// #define NUM_RANDOM_SAMPLE 1000
-// #define COMPRESS_GRID true
-
-// std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoBlocks(int32_t* raster, int rasterSize, int& blockSize, int& numBlocks, std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec) {
-//     blockSize = std::min(blockSize, rasterSize);
-//     numBlocks = std::min(numBlocks, (rasterSize + blockSize - 1) / blockSize);
-//     int blockStep = std::max(1, (rasterSize / blockSize) / numBlocks);
-
-//     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs(numBlocks);
-
-//     for (int i = 0; i < numBlocks; i++) {
-//         std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedCodec(baseCodec->cloneFresh());
-    
-//         int offset = (blockStep * i) * blockSize;
-//         int size = (offset + blockSize >= rasterSize) ? (rasterSize - offset) : blockSize;
-
-//         clonedCodec->encodeArray(raster + offset, (std::size_t)size);
-
-//         codecs[i] = std::move(clonedCodec);
-//     }
-//     return codecs;
-// }
 
 std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
-    int32_t* raster, int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
-    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec) {
+    GDALRasterBand* band, int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
+    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec, const int32_t min, const int ordering) {
     
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs(numBlocks);
 
@@ -56,27 +34,41 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
         return codecs; // Return empty list if requested more blocks than available
     }
 
-    // Determine interval for block selection to distribute blocks evenly
-    int blockInterval = std::max(1, totalFullBlocks / numBlocks);
+    // Calculate interval to sample blocks evenly
+    int sampleInterval = std::max(1, totalFullBlocks / numBlocks);
 
-    for (int blockNum = 0; blockNum < numBlocks; ++blockNum) {
-        // Calculate block position based on interval and block number
-        int blockIndex = blockNum * blockInterval;
+    for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks && blockNum < totalFullBlocks; blockNum += sampleInterval, sampledBlocks++) {
+        int blockIndex = blockNum;
         int bx = (blockIndex % blocksInWidth) * blockSize;
         int by = (blockIndex / blocksInWidth) * blockSize;
 
-        // Encode block data
+        // Fetch and encode block data
         std::vector<int32_t> blockData(blockSize * blockSize);
-        for (int y = 0; y < blockSize; ++y) {
-            for (int x = 0; x < blockSize; ++x) {
-                blockData[y * blockSize + x] = raster[(by + y) * rasterWidth + (bx + x)];
+        CPLErr err = band->RasterIO(GF_Read, bx, by, blockSize, blockSize, blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
+        if (err != CE_None) {
+            throw std::runtime_error("Error reading raster block data");
+        }
+
+        // Normalise block data
+        if (min < 0) {
+            for (int i = 0; i < blockData.size(); i++) {
+                blockData[i] += (-min);
             }
         }
 
+        // blockData is currently in row-major order. remap according to desired ordering
+        if (ordering == 1) {
+            blockData = remapToZigzagOrder(blockData, blockSize);
+        }
+        else if (ordering == 2) {
+            blockData = remapToMortonOrder(blockData, blockSize);
+        }
+
+        // Compress block data and store
         std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedCodec(baseCodec->cloneFresh());
         clonedCodec->allocEncoded(blockData.data(), blockData.size());
         clonedCodec->encodeArray(blockData.data(), blockData.size());
-        codecs[blockNum] = std::move(clonedCodec);
+        codecs[sampledBlocks] = std::move(clonedCodec);
     }
 
     return codecs;
@@ -124,9 +116,23 @@ void benchmarkRandomAccess(const std::vector<std::unique_ptr<StatefulIntegerCode
     free(decbuf);
 }
 
+// Function to process a single block for min and unique values
+void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, int xOff, int yOff, int blockSize, int32_t& min, std::unordered_set<int32_t>& unique_values_set) {
+    std::vector<int32_t> blockData(blockSize * blockSize, 0);
+    auto error = band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
+    if (error != CE_None) {
+        std::cerr << "Error reading block data at offset (" << xOff << ", " << yOff << ")." << std::endl;
+        return;
+    }
+    for (auto& value : blockData) {
+        min = std::min(min, value);
+        unique_values_set.insert(value);
+    }
+}
+
 int main(int argc, char* argv[]) {
-    if (argc < 6) {
-        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num random samples> <codec name>\n";
+    if (argc < 7) {
+        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num random samples> <codec name> <block ordering {0=row_major,1=zig_zag,2=morton}>\n";
         return 1;
     }
 
@@ -135,36 +141,46 @@ int main(int argc, char* argv[]) {
     int numBlocks = atoi(argv[3]);
     int numRandomSamples = atoi(argv[4]);
     const char* codecName = argv[5];
+    int ordering = atoi(argv[6]);
 
-    srand(time(NULL)); // Seed the random number generator
+    if (ordering < 0 || ordering > 2) {
+        std::cerr << "invalid ordering" << std::endl;
+        return 1;
+    }
 
-    GDALDatasetH hDataset;
+    srand(1); // Seed the random number generator
+
     GDALAllRegister();
 
-    hDataset = GDALOpen(filePath, GA_ReadOnly);
-    if (hDataset == NULL) {
+    GDALDataset* dataset = (GDALDataset*) GDALOpen(filePath, GA_ReadOnly);
+    if (dataset == NULL) {
         std::cout << "Failed to open file.\n";
         return 1;
     }
 
-    GDALRasterBandH hBand = GDALGetRasterBand(hDataset, 1);
-    int nXSize = GDALGetRasterBandXSize(hBand);
-    int nYSize = GDALGetRasterBandYSize(hBand);
+    GDALRasterBand* band = dataset->GetRasterBand(1);
+    int nXSize = band->GetXSize();
+    int nYSize = band->GetYSize();
 
-    int32_t* rasterData = (int32_t*)malloc(nXSize * nYSize * sizeof(int32_t));
-    if (GDALRasterIO(hBand, GF_Read, 0, 0, nXSize, nYSize, rasterData, nXSize, nYSize, GDT_Int32, 0, 0) != CE_None) {
-        std::cout << "RasterIO read error\n";
-        free(rasterData);
-        GDALClose(hDataset);
-        return 1;
-    }
-    // Normalise all to positive
-    int32_t min = *std::min_element(rasterData, rasterData + nXSize * nYSize);
-    std::cout << "min = " << min << std::endl;
-    if (min < 0) {
-        for (int i = 0; i < nXSize * nYSize; i++) {
-            rasterData[i] += (-min);
+    int32_t min = std::numeric_limits<int32_t>::max();
+    std::unordered_set<int32_t> unique_values_set;
+
+    int blocksInWidth = nXSize / blockSize;
+    int blocksInHeight = nYSize / blockSize;
+
+    // Process each block to compute min and unique values
+    for (int y = 0; y < blocksInHeight; ++y) {
+        for (int x = 0; x < blocksInWidth; ++x) {
+            int xOff = x * blockSize;
+            int yOff = y * blockSize;
+            computeMinAndUniqueValuesForBlock(band, xOff, yOff, blockSize, min, unique_values_set);
         }
+    }
+
+    // Adjust unique_values_set to normalize all values based on the computed min
+    std::unordered_set<int32_t> normalised_unique_values;
+    for (const auto& value : unique_values_set) {
+        normalised_unique_values.insert(min < 0 ? value - min : value);
     }
 
     std::any dict;
@@ -194,8 +210,7 @@ int main(int argc, char* argv[]) {
         /* nonCascaded */ true, std::move(cascadeCodec));
     };
 
-    std::unordered_set<int32_t> unique_values_set(rasterData, rasterData + nXSize * nYSize);
-    std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
+    std::vector<int32_t> unique_values(normalised_unique_values.begin(), normalised_unique_values.end());
 
     std::cout << "num_unique_values = " << unique_values.size() << std::endl;
 
@@ -225,8 +240,7 @@ int main(int argc, char* argv[]) {
 
     if (!baseCodec) {
         std::cerr << "NO CODEC WITH NAME " << codecName << std::endl;
-        free(rasterData);
-        GDALClose(hDataset);
+        GDALClose(dataset);
         return 1;
     }
 
@@ -234,69 +248,60 @@ int main(int argc, char* argv[]) {
     allCodecs.shrink_to_fit();
 
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs = splitIntoFullBlocks(
-        rasterData, nXSize, nYSize, blockSize, numBlocks, std::move(baseCodec));
+        band, nXSize, nYSize, blockSize, numBlocks, std::move(baseCodec), min, ordering);
 
     // <block size> <num blocks> <num random samples> <codec name>
     std::cout << "**BENCHMARK RANDOM ACCESS**" << std::endl;
     std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",randomsamples=" << numRandomSamples << ",codec=" << codecName << std::endl;
 
-    // for (auto& codec : codecs) {
-        // compressBlock(codec, rasterData, blockSize);
-    // }
-
-    // Data is encoded, we can free the original data.
-    free(rasterData);
-
     if (codecs.size() == 0) {
         std::cerr << "NO CODECS FORMING GRID." << std::endl;
-        GDALClose(hDataset);
+        GDALClose(dataset);
         return 1;
     }
 
     // Benchmark random accesses, with perf running.
 
-    // Fork process here
-    int pid = getpid();
-    int cpid = fork();
+    // // Fork process here
+    // int pid = getpid();
+    // int cpid = fork();
 
-    if (cpid == 0) {
-        // Child process: run perf stat
-        char buf[500];
-        sprintf(buf, "perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations -p %d > stat.log 2>&1", pid);
-        execl("/bin/sh", "sh", "-c", buf, NULL);
-        exit(0); // Ensure child exits if execl fails
-    } 
-    else {
-        // Parent process: continue with the program
+    // if (cpid == 0) {
+    //     // Child process: run perf stat
+    //     char buf[500];
+    //     sprintf(buf, "perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations -p %d > stat.log 2>&1", pid);
+    //     execl("/bin/sh", "sh", "-c", buf, NULL);
+    //     exit(0); // Ensure child exits if execl fails
+    // } 
+    // else {
+    //     // Parent process: continue with the program
 
-        // Set the child as the leader of its process group
-        setpgid(cpid, 0);
+    //     // Set the child as the leader of its process group
+    //     setpgid(cpid, 0);
 
-        // Give a moment for the child process to start perf
-        sleep(.5); // Might need adjustment
+    //     // Give a moment for the child process to start perf
+    //     sleep(.5); // Might need adjustment
         
-        // Perform random accesses - part to be measured
-        benchmarkRandomAccess(codecs, blockSize, numRandomSamples);
+    // Perform random accesses - part to be measured
+    benchmarkRandomAccess(codecs, blockSize, numRandomSamples);
 
-        // Kill child process and its descendants
-        kill(-cpid, SIGINT);
+    // // Kill child process and its descendants
+    // kill(-cpid, SIGINT);
 
-        // Wait for the child process to complete
-        waitpid(cpid, NULL, 0);
+    // // Wait for the child process to complete
+    // waitpid(cpid, NULL, 0);
 
-        sleep(.5);
+    // sleep(.5);
 
-        // Read and output the contents of stat.log
-        std::ifstream statFile("stat.log");
-        std::string line;
-        while (std::getline(statFile, line)) {
-            std::cout << line << std::endl;
-        }
-        statFile.close();
+    // // Read and output the contents of stat.log
+    // std::ifstream statFile("stat.log");
+    // std::string line;
+    // while (std::getline(statFile, line)) {
+    //     std::cout << line << std::endl;
+    // }
+    // statFile.close();
 
-        // Continue with the rest of your program
-        GDALClose(hDataset);
-
-        return 0;
-    }
+    GDALClose(dataset);
+    return 0;
+    // }
 }

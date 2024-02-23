@@ -50,7 +50,7 @@ public:
   }
 
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(length * sizeof(int32_t));
+    compressed.resize((2 * length) * sizeof(int32_t));
   };
 
   void clear() override {
@@ -112,7 +112,7 @@ public:
   }
 
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(length * sizeof(int32_t));
+    compressed.resize(2 * length * sizeof(int32_t));
   };
 
   void clear() override {
