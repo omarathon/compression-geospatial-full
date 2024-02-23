@@ -10,6 +10,7 @@
 #pragma clang diagnostic ignored "-Wreturn-local-addr"
 #endif
 
+// NOTE: Disabled because it fails after transformations: threshold and valueShift.
 class FrameOfReferenceCodec : public StatefulIntegerCodec<int32_t> {
 public:
 

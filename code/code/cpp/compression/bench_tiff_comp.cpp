@@ -126,6 +126,12 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
         min = std::min(min, value);
     }
 
+    if (min < 0) {
+        for (int i = 0; i < blockData.size(); i++) {
+            blockData[i] += (-min);
+        }
+    }
+
     remapAndTransformData(blockData, ordering, transformation, blockSize);
 
     for (auto& value : blockData) {
@@ -189,17 +195,17 @@ int main(int argc, char** argv) {
                     }
 
                     // Adjust unique_values_set to normalize all values
-                    std::unordered_set<int32_t> normalised_unique_values_set;
-                    for (const auto& value : unique_values_set) {
-                        normalised_unique_values_set.insert(min < 0 ? value - min : value);
-                    }
+                    // std::unordered_set<int32_t> normalised_unique_values_set;
+                    // for (const auto& value : unique_values_set) {
+                    //     normalised_unique_values_set.insert(min < 0 ? value - min : value);
+                    // }
 
-                    size_t num_unique_values = normalised_unique_values_set.size();
+                    size_t num_unique_values = unique_values_set.size();
 
                     std::cout << "num_unique_values = " << num_unique_values << std::endl;
 
                     // Convert unordered_set to vector for unique values
-                    std::vector<int32_t> unique_values(normalised_unique_values_set.begin(), normalised_unique_values_set.end());
+                    std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
 
                     std::any dict;
                     std::vector<int32_t> reverseDict;
