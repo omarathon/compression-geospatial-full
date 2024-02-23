@@ -55,7 +55,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
     codecs.push_back(std::make_unique<MaskedVByteCodec>());
     codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
     codecs.push_back(std::make_unique<StreamVByteCodec>());
-    codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
+    // codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
     codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
     codecs.push_back(std::make_unique<SimdCompCodec>());
     codecs.push_back(std::make_unique<LZ4Codec>());
