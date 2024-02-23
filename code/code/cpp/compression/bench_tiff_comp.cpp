@@ -91,9 +91,10 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, int xOff, int yOff,
     }
 }
 
+// BEHAVIOUR: if composite codec matches the name of a codec, then we will only benchmark composites of that codec + physical codecs. if composite codec does not match, then we benchmark all non-cascades (both logical & physical algorithms)
 int main(int argc, char** argv) {
-    if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <GeoTIFF file path> <block size> <num blocks> <block ordering {0=row_major,1=zig_zag,2=morton}>" << std::endl;
+    if (argc != 6) {
+        std::cerr << "Usage: " << argv[0] << " <GeoTIFF file path> <block size> <num blocks> <block ordering {0=row_major,1=zig_zag,2=morton}> <composite codec>" << std::endl;
         return 1;
     }
 
@@ -102,6 +103,7 @@ int main(int argc, char** argv) {
     int blockSize = std::stoi(argv[2]);
     int nBlocks = std::stoi(argv[3]);
     int ordering = std::stoi(argv[4]);
+    const char* composite_codec_name = argv[5];
 
     if (ordering < 0 || ordering > 2) {
         std::cerr << "invalid ordering" << std::endl;
@@ -119,7 +121,7 @@ int main(int argc, char** argv) {
     int rasterHeight = band->GetYSize();
     int totalPixels = rasterWidth * rasterHeight;
 
-    std::cout << "**BENCHMARK**\nfile=" << argv[1] << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks << std::endl;
+    std::cout << "**BENCHMARK**\nfile=" << argv[1] << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks << ",ordering=" << ordering << ",composite=" << composite_codec_name << std::endl;
 
     int32_t min = std::numeric_limits<int32_t>::max();
     std::unordered_set<int32_t> unique_values_set;
@@ -165,14 +167,25 @@ int main(int argc, char** argv) {
 
         dict = std::move(localDict); // Store the dictionary in std::any
 
-        // auto cascadeCodec = std::make_unique<DictCodecPacking<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
-        // auto cascadeCodec = std::make_unique<DeltaCodecAVX2>();
-        // auto cascadeCodec = std::make_unique<DeltaCodecAVX512>();
-        // auto cascadeCodec = std::make_unique<FORCodecAVX512>();
-        auto cascadeCodec = std::make_unique<RLECodecAVX2>();
+        auto all_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                          /* nonCascaded */ true, /* cascadeCodec */ nullptr);
+        
+        // Build cascades if desired.
+        // Select the codec with the specified name
+        std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec;
+        for (auto& codec : all_codecs) {
+            if (codec->name() == composite_codec_name) {
+                baseCodec = std::move(codec);
+                break;
+            }
+        }
 
-        return initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                          /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeCodec));
+        if (baseCodec) {
+            return initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                          /* nonCascaded */ false, /* cascadeCodec */ std::move(baseCodec));
+        }
+        
+        return all_codecs;
     };
 
     int num_bits_required = std::ceil(std::log2(num_unique_values));

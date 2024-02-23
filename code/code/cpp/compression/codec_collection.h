@@ -113,7 +113,7 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initCodecs
             auto cascadeCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(cascadeCodec->cloneFresh());
             auto pCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(pCodec->cloneFresh());
             auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(cascadeCodecFresh), std::move(pCodec)
+                std::move(cascadeCodecFresh), std::move(pCodecFresh)
             );
             codecs.push_back(std::move(compositeCodec));
         }
