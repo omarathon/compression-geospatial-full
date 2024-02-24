@@ -271,18 +271,20 @@ int main(int argc, char** argv) {
 
                     // Initialize codecs based on dictType
                     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
-                    if (num_bits_required <= 8) {
-                        std::cout << "uint8 dict" << std::endl;
-                        codecs = createAndAddCodecs(uint8_t{});
-                    }
-                    else if (num_bits_required <= 16) {
-                        std::cout << "uint16 dict" << std::endl;
-                        codecs = createAndAddCodecs(uint16_t{});
-                    }
-                    else { // Assuming 32
-                        std::cout << "uint32 dict" << std::endl;
-                        codecs = createAndAddCodecs(uint32_t{});
-                    }
+                    // NOTE: Dict type always same bit width as compression occurs on the physical layer.
+                    // if (num_bits_required <= 8) {
+                    //     std::cout << "uint8 dict" << std::endl;
+                    //     codecs = createAndAddCodecs(uint8_t{});
+                    // }
+                    // else if (num_bits_required <= 16) {
+                    //     std::cout << "uint16 dict" << std::endl;
+                    //     codecs = createAndAddCodecs(uint16_t{});
+                    // }
+                    // else { // Assuming 32
+                    //     std::cout << "uint32 dict" << std::endl;
+                    //     codecs = createAndAddCodecs(uint32_t{});
+                    // }
+                    codecs = createAndAddCodecs(uint32_t{});
 
                     std::cout << "*CODECS:*" << std::endl;
                     for (int ci = 0; ci < codecs.size(); ci++) {

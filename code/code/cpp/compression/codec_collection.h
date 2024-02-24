@@ -24,8 +24,10 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initLogicalCodecs
 
     codecs.push_back(std::make_unique<DictCodec<T>>(dict, reverseDict));
     codecs.push_back(std::make_unique<DictCodecAVX2<T>>(dict, reverseDict));
-    codecs.push_back(std::make_unique<DictCodecPacking<T>>(dict, reverseDict));
-    codecs.push_back(std::make_unique<DictCodecPackingAVX2<T>>(dict, reverseDict));
+
+    // NOTE: Packing occurs with physical.
+    // codecs.push_back(std::make_unique<DictCodecPacking<T>>(dict, reverseDict));
+    // codecs.push_back(std::make_unique<DictCodecPackingAVX2<T>>(dict, reverseDict));
 
     codecs.push_back(std::make_unique<DeltaCodec>());
     codecs.push_back(std::make_unique<DeltaCodecSSE42>());
