@@ -59,8 +59,10 @@ void valueBasedClassification(std::vector<int32_t>& data, int num_classes) {
     int32_t range = maxVal - minVal;
     int32_t binSize = range / (num_classes - 1); // Determine the size of each bin, adjusting for inclusive range
 
+    std::cout << range << ", " << binSize << std::endl;
+
     for (auto& val : data) {
-        if (range == 0) // Avoid division by zero if all values are the same
+        if (range == 0 || binSize == 0) // Avoid division by zero
             val = 0;
         else
             val = (val - minVal) / binSize; // Assign class based on value

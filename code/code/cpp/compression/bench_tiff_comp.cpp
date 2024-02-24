@@ -13,6 +13,13 @@
 #include "transformations.h"
 #include "util.h"
 
+struct CodecStats {
+    float cf  = 0;
+    float bpi = 0;
+    float tenc = 0;
+    float tdec = 0;
+};
+
 void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& ordering, const std::string& transformation, const int blockSize) {
     // blockData is currently in row-major order. remap according to desired ordering
     if (ordering == "zigzag") {
@@ -43,11 +50,15 @@ void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& o
 }
 
 // Function to benchmark a window of data
-void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
+std::vector<CodecStats> benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
+    std::vector<CodecStats> allCodecStats(codecs.size());
+
     for (int ci = 0; ci < codecs.size(); ci++) {
         auto& codec = codecs[ci];
 
-        std::cout << "c:" << ci;
+        CodecStats stats;
+
+        // std::cout << "c:" << ci;
 
         codec->allocEncoded(windowData.data(), windowData.size());
 
@@ -95,16 +106,24 @@ void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_p
         // Calculate compression factor
         auto compressionFactor = (float)(numCodedValues * sizeCodedValue) / (float)(windowData.size() * sizeof(int32_t));
         auto bitsPerInt = (float)(numCodedValues * sizeCodedValue) / (float)windowData.size();
-        std::cout << ",cf:" << compressionFactor << ",bpi:" << bitsPerInt; 
+        // std::cout << ",cf:" << compressionFactor << ",bpi:" << bitsPerInt; 
+        stats.cf = compressionFactor;
+        stats.bpi = bitsPerInt;
 
         // Calculate time taken
         auto compressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
         auto decompressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count();
-        std::cout << ",tenc:" << compressTime << ",tdec:" << decompressTime << std::endl;
+        // std::cout << ",tenc:" << compressTime << ",tdec:" << decompressTime << std::endl;
+        stats.tenc = compressTime;
+        stats.tdec = decompressTime;
 
         // Reset codec.
         codecs[ci] = std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->cloneFresh());
+
+        allCodecStats[ci] = stats;
     }
+
+    return allCodecStats;
 }
 
 std::vector<int32_t> readGeoTiffBlock(GDALRasterBand* band, int xOff, int yOff, int blockSize, int rasterWidth, int rasterHeight) {
@@ -175,139 +194,187 @@ int main(int argc, char** argv) {
 
                 /* BEGIN SEARCH */
 
-                std::cout << "**BENCHMARK**\nfile=" << argv[1] << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks << ",composite=" << composite_codec_name << ",ordering=" << ordering << ",transformation=" << transformation << std::endl;
+                try {
 
-                // Make dict etc.
+                    std::cout << "**BENCHMARK**\nfile=" << argv[1] << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks << ",composite=" << composite_codec_name << ",ordering=" << ordering << ",transformation=" << transformation << std::endl;
 
-                    int blocksInWidth = rasterWidth / blockSize;
-                    int blocksInHeight = rasterHeight / blockSize;
+                    // Make dict etc.
 
-                    int32_t min = std::numeric_limits<int32_t>::max();
-                    std::unordered_set<int32_t> unique_values_set;
+                        int blocksInWidth = rasterWidth / blockSize;
+                        int blocksInHeight = rasterHeight / blockSize;
 
-                    
-                    for (int y = 0; y < blocksInHeight; ++y) {
-                        for (int x = 0; x < blocksInWidth; ++x) {
-                            int xOff = x * blockSize;
-                            int yOff = y * blockSize;
-                            computeMinAndUniqueValuesForBlock(band, ordering, transformation, xOff, yOff, blockSize, min, unique_values_set);
-                        }
-                    }
+                        int32_t min = std::numeric_limits<int32_t>::max();
+                        std::unordered_set<int32_t> unique_values_set;
 
-                    // Adjust unique_values_set to normalize all values
-                    // std::unordered_set<int32_t> normalised_unique_values_set;
-                    // for (const auto& value : unique_values_set) {
-                    //     normalised_unique_values_set.insert(min < 0 ? value - min : value);
-                    // }
-
-                    size_t num_unique_values = unique_values_set.size();
-
-                    std::cout << "num_unique_values = " << num_unique_values << std::endl;
-
-                    // Convert unordered_set to vector for unique values
-                    std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
-
-                    std::any dict;
-                    std::vector<int32_t> reverseDict;
-                
-                
-                auto createAndAddCodecs = [&](auto dummy) {
-                    using dict_type = decltype(dummy);
-                    std::unordered_map<int32_t, dict_type> localDict;
-
-                    reverseDict.resize(num_unique_values);
-                    dict_type index = 0;
-                    for (int32_t value : unique_values) {
-                        localDict[value] = index;
-                        reverseDict[index] = value;
-                        ++index;
-                    }
-
-                    dict = std::move(localDict); // Store the dictionary in std::any
-
-                    auto all_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                    /* nonCascaded */ true, /* cascadeCodec */ nullptr);
-                    
-                    // Build cascades if desired.
-                    // Select the codec with the specified name
-                    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec;
-                    for (auto& codec : all_codecs) {
-                        if (codec->name() == composite_codec_name) {
-                            baseCodec = std::move(codec);
-                            break;
-                        }
-                    }
-
-                    if (baseCodec) {
-                        return initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(baseCodec));
-                    }
-                    
-                    return all_codecs;
-                };
-
-                int num_bits_required = std::ceil(std::log2(num_unique_values));
-
-                // Initialize codecs based on dictType
-                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
-                if (num_bits_required <= 8) {
-                    std::cout << "uint8 dict" << std::endl;
-                    codecs = createAndAddCodecs(uint8_t{});
-                }
-                else if (num_bits_required <= 16) {
-                    std::cout << "uint16 dict" << std::endl;
-                    codecs = createAndAddCodecs(uint16_t{});
-                }
-                else { // Assuming 32
-                    std::cout << "uint32 dict" << std::endl;
-                    codecs = createAndAddCodecs(uint32_t{});
-                }
-
-                std::cout << "*CODECS:*" << std::endl;
-                for (int ci = 0; ci < codecs.size(); ci++) {
-                    std::cout << ci << "=" << codecs[ci]->name() << std::endl;
-                }
-                std::cout << "*ENDCODECS*" << std::endl;
-
-                // Calculate the total number of blocks that fit in the raster
-                int totalBlocks = blocksInWidth * blocksInHeight;
-
-                // Calculate spacing between blocks to process
-                int blockSpacing = nBlocks == 0 ? 0 : std::max(1, totalBlocks / nBlocks);
-
-                // Counter for processed blocks
-                int processedBlocks = 0;
-                int windowIndex = 0;
-
-                // Iterate through the raster in NxN blocks
-                for (int by = 0; by < blocksInHeight && processedBlocks < nBlocks; by++) {
-                    for (int bx = 0; bx < blocksInWidth && processedBlocks < nBlocks; bx++) {
-                        // Check if the current block index matches the spacing criteria
-                        if ((by * blocksInWidth + bx) % blockSpacing != 0) continue;
-
-                        int xOff = bx * blockSize;
-                        int yOff = by * blockSize;
-
-                        std::vector<int32_t> blockData = readGeoTiffBlock(band, xOff, yOff, blockSize, rasterWidth, rasterHeight);
-                        if (blockData.size() != blockSize * blockSize) {
-                            continue;
-                        }
-
-                        // Normalise window to all positive
-                        if (min < 0) {
-                            for (int i = 0; i < blockData.size(); i++) {
-                                blockData[i] += (-min);
+                        
+                        for (int y = 0; y < blocksInHeight; ++y) {
+                            for (int x = 0; x < blocksInWidth; ++x) {
+                                int xOff = x * blockSize;
+                                int yOff = y * blockSize;
+                                computeMinAndUniqueValuesForBlock(band, ordering, transformation, xOff, yOff, blockSize, min, unique_values_set);
                             }
                         }
 
-                        remapAndTransformData(blockData, ordering, transformation, blockSize);
+                        // Adjust unique_values_set to normalize all values
+                        // std::unordered_set<int32_t> normalised_unique_values_set;
+                        // for (const auto& value : unique_values_set) {
+                        //     normalised_unique_values_set.insert(min < 0 ? value - min : value);
+                        // }
 
-                        std::cout << "*wi:" << windowIndex++ << "(" << xOff << "," << yOff << ")" << std::endl;
+                        size_t num_unique_values = unique_values_set.size();
 
-                        benchmarkWindow(blockData, codecs);
+                        std::cout << "num_unique_values = " << num_unique_values << std::endl;
 
-                        processedBlocks++; // Increment the count of processed blocks
+                        // Convert unordered_set to vector for unique values
+                        std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
+
+                        std::any dict;
+                        std::vector<int32_t> reverseDict;
+                    
+                    
+                    auto createAndAddCodecs = [&](auto dummy) {
+                        using dict_type = decltype(dummy);
+                        std::unordered_map<int32_t, dict_type> localDict;
+
+                        reverseDict.resize(num_unique_values);
+                        dict_type index = 0;
+                        for (int32_t value : unique_values) {
+                            localDict[value] = index;
+                            reverseDict[index] = value;
+                            ++index;
+                        }
+
+                        dict = std::move(localDict); // Store the dictionary in std::any
+
+                        auto all_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                        /* nonCascaded */ true, /* cascadeCodec */ nullptr);
+                        
+                        // Build cascades if desired.
+                        // Select the codec with the specified name
+                        std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec;
+                        for (auto& codec : all_codecs) {
+                            if (codec->name() == composite_codec_name) {
+                                baseCodec = std::move(codec);
+                                break;
+                            }
+                        }
+
+                        if (baseCodec) {
+                            return initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                        /* nonCascaded */ false, /* cascadeCodec */ std::move(baseCodec));
+                        }
+                        
+                        return all_codecs;
+                    };
+
+                    int num_bits_required = std::ceil(std::log2(num_unique_values));
+
+                    // Initialize codecs based on dictType
+                    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
+                    if (num_bits_required <= 8) {
+                        std::cout << "uint8 dict" << std::endl;
+                        codecs = createAndAddCodecs(uint8_t{});
                     }
+                    else if (num_bits_required <= 16) {
+                        std::cout << "uint16 dict" << std::endl;
+                        codecs = createAndAddCodecs(uint16_t{});
+                    }
+                    else { // Assuming 32
+                        std::cout << "uint32 dict" << std::endl;
+                        codecs = createAndAddCodecs(uint32_t{});
+                    }
+
+                    std::cout << "*CODECS:*" << std::endl;
+                    for (int ci = 0; ci < codecs.size(); ci++) {
+                        std::cout << ci << "=" << codecs[ci]->name() << std::endl;
+                    }
+                    std::cout << "*ENDCODECS*" << std::endl;
+
+                    // Calculate the total number of blocks that fit in the raster
+                    int totalBlocks = blocksInWidth * blocksInHeight;
+
+                    // Calculate spacing between blocks to process
+                    int blockSpacing = nBlocks == 0 ? 0 : std::max(1, totalBlocks / nBlocks);
+
+                    // Counter for processed blocks
+                    int processedBlocks = 0;
+                    int windowIndex = 0;
+
+                    // Benchmark each window
+                    std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
+                    for (int by = 0; by < blocksInHeight && processedBlocks < nBlocks; by++) {
+                        for (int bx = 0; bx < blocksInWidth && processedBlocks < nBlocks; bx++) {
+                            // Check if the current block index matches the spacing criteria
+                            if ((by * blocksInWidth + bx) % blockSpacing != 0) continue;
+
+                            int xOff = bx * blockSize;
+                            int yOff = by * blockSize;
+
+                            std::vector<int32_t> blockData = readGeoTiffBlock(band, xOff, yOff, blockSize, rasterWidth, rasterHeight);
+                            if (blockData.size() != blockSize * blockSize) {
+                                continue;
+                            }
+
+                            // Normalise window to all positive
+                            if (min < 0) {
+                                for (int i = 0; i < blockData.size(); i++) {
+                                    blockData[i] += (-min);
+                                }
+                            }
+
+                            remapAndTransformData(blockData, ordering, transformation, blockSize);
+
+                            // std::cout << "*wi:" << windowIndex++ << "(" << xOff << "," << yOff << ")" << std::endl;
+
+                            std::vector<CodecStats> allCodecStats = benchmarkWindow(blockData, codecs);
+                            for (int ci = 0; ci < codecs.size(); ci++) {
+                                codecWindowStats[ci].push_back(allCodecStats[ci]);
+                            }
+
+                            processedBlocks++; // Increment the count of processed blocks
+                        }
+                    }
+
+                    for (int ci = 0; ci < codecs.size(); ci++) {
+                        std::cout << "c:" << ci;
+
+                        std::vector<CodecStats>& codecStatsAcrossWindows = codecWindowStats[ci];
+                        /* REF:
+                            struct CodecStats {
+                                float cf  = 0;
+                                float bpi = 0;
+                                float tenc = 0;
+                                float tdec = 0;
+                            };
+                        */
+                        std::vector<float> cfs;
+                        std::vector<float> bpis;
+                        std::vector<float> tencs;
+                        std::vector<float> tdecs;
+                        for (CodecStats& stats : codecStatsAcrossWindows) {
+                            cfs.push_back(stats.cf);
+                            bpis.push_back(stats.bpi);
+                            tencs.push_back(stats.tenc);
+                            tdecs.push_back(stats.tdec);
+                        }
+                        float cfmean = mean(cfs);
+                        float cfvar = variance(cfs, cfmean);
+                        float bpimean = mean(bpis);
+                        float bpivar = variance(bpis, bpimean);
+                        float tencmean = mean(tencs);
+                        float tencvar = variance(tencs, tencmean);
+                        float tdecmean = mean(tdecs);
+                        float tdecvar = variance(tdecs, tdecmean);
+                        std::cout << ",cfmean:" << cfmean << ",cfvar:" << cfvar
+                                  << ",bpimean:" << bpimean << ",bpivar:" << bpivar 
+                                  << ",tencmean:" << tencmean << ",tencvar:" << tencvar 
+                                  << ",tdecmean:" << tdecmean << ",tdecvar:" << tdecvar << std::endl; 
+                    }
+                }
+                catch (const std::exception& e) {
+                    std::cout << " ERROR see cerr " << std::endl;
+                    std::cerr << "Error for bench search: " << e.what() << std::endl;
+                    continue;
                 }
 
                 /* END SEARCH */

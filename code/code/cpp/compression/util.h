@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <numeric>
+#include <cmath>
 
 std::vector<std::string> parseCommaDelimited(std::string str) {
     std::stringstream ss(str);
@@ -20,4 +21,15 @@ int32_t avg(const std::vector<int32_t>& data) {
 
     int64_t sum = std::accumulate(data.begin(), data.end(), int64_t(0));
     return static_cast<int32_t>(sum / data.size());
+}
+
+float mean(const std::vector<float>& values) {
+    if (values.empty()) return 0;
+    return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+}
+
+float variance(const std::vector<float>& values, float meanValue) {
+    float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
+        [meanValue](double a, double b) { return a + (b - meanValue) * (b - meanValue); });
+    return sq_sum / values.size();
 }
