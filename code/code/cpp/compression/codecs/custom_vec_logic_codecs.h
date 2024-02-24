@@ -614,6 +614,9 @@ public:
     }
 
     std::vector<int32_t>& getEncoded() override {
+        if (sizeof(T) == sizeof(int32_t)) {
+            return reinterpret_cast<std::vector<int32_t>&>(compressed_data);
+        }
         throw std::runtime_error("Encoded format does not match input. Cannot forward.");
         std::vector<int32_t> dummy{};
         return dummy;

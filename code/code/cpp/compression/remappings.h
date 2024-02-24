@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 // Remap a 1D array from row-major to Morton order using the libmorton library
+// TODO: Fix so it works with N=48. Get an out-of-bounds access with N=48 for some reason. Works with N=16,32,64,128,256.
 std::vector<int32_t> remapToMortonOrder(const std::vector<int32_t>& input, int N) {
     if (input.size() != N * N) {
         throw std::invalid_argument("Morton remap input size does not match the specified dimensions.");
