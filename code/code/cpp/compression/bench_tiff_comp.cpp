@@ -13,6 +13,13 @@
 #include "transformations.h"
 #include "util.h"
 
+struct CodecStats {
+    float cf  = 0;
+    float bpi = 0;
+    float tenc = 0;
+    float tdec = 0;
+};
+
 void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& ordering, const std::string& transformation, const int blockSize) {
     // blockData is currently in row-major order. remap according to desired ordering
     if (ordering == "zigzag") {
@@ -43,11 +50,15 @@ void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& o
 }
 
 // Function to benchmark a window of data
-void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
+std::vector<CodecStats> benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
+    std::vector<CodecStats> allCodecStats(codecs.size());
+
     for (int ci = 0; ci < codecs.size(); ci++) {
         auto& codec = codecs[ci];
 
-        std::cout << "c:" << ci;
+        CodecStats stats;
+
+        // std::cout << "c:" << ci;
 
         codec->allocEncoded(windowData.data(), windowData.size());
 
@@ -95,16 +106,24 @@ void benchmarkWindow(std::vector<int32_t>& windowData, std::vector<std::unique_p
         // Calculate compression factor
         auto compressionFactor = (float)(numCodedValues * sizeCodedValue) / (float)(windowData.size() * sizeof(int32_t));
         auto bitsPerInt = (float)(numCodedValues * sizeCodedValue) / (float)windowData.size();
-        std::cout << ",cf:" << compressionFactor << ",bpi:" << bitsPerInt; 
+        // std::cout << ",cf:" << compressionFactor << ",bpi:" << bitsPerInt; 
+        stats.cf = compressionFactor;
+        stats.bpi = bitsPerInt;
 
         // Calculate time taken
         auto compressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
         auto decompressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count();
-        std::cout << ",tenc:" << compressTime << ",tdec:" << decompressTime << std::endl;
+        // std::cout << ",tenc:" << compressTime << ",tdec:" << decompressTime << std::endl;
+        stats.tenc = compressTime;
+        stats.tdec = decompressTime;
 
         // Reset codec.
         codecs[ci] = std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->cloneFresh());
+
+        allCodecStats[ci] = stats;
     }
+
+    return allCodecStats;
 }
 
 std::vector<int32_t> readGeoTiffBlock(GDALRasterBand* band, int xOff, int yOff, int blockSize, int rasterWidth, int rasterHeight) {
@@ -281,7 +300,8 @@ int main(int argc, char** argv) {
                     int processedBlocks = 0;
                     int windowIndex = 0;
 
-                    // Iterate through the raster in NxN blocks
+                    // Benchmark each window
+                    std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
                     for (int by = 0; by < blocksInHeight && processedBlocks < nBlocks; by++) {
                         for (int bx = 0; bx < blocksInWidth && processedBlocks < nBlocks; bx++) {
                             // Check if the current block index matches the spacing criteria
@@ -304,12 +324,51 @@ int main(int argc, char** argv) {
 
                             remapAndTransformData(blockData, ordering, transformation, blockSize);
 
-                            std::cout << "*wi:" << windowIndex++ << "(" << xOff << "," << yOff << ")" << std::endl;
+                            // std::cout << "*wi:" << windowIndex++ << "(" << xOff << "," << yOff << ")" << std::endl;
 
-                            benchmarkWindow(blockData, codecs);
+                            std::vector<CodecStats> allCodecStats = benchmarkWindow(blockData, codecs);
+                            for (int ci = 0; ci < codecs.size(); ci++) {
+                                codecWindowStats[ci].push_back(allCodecStats[ci]);
+                            }
 
                             processedBlocks++; // Increment the count of processed blocks
                         }
+                    }
+
+                    for (int ci = 0; ci < codecs.size(); ci++) {
+                        std::cout << "c:" << ci;
+
+                        std::vector<CodecStats>& codecStatsAcrossWindows = codecWindowStats[ci];
+                        /* REF:
+                            struct CodecStats {
+                                float cf  = 0;
+                                float bpi = 0;
+                                float tenc = 0;
+                                float tdec = 0;
+                            };
+                        */
+                        std::vector<float> cfs;
+                        std::vector<float> bpis;
+                        std::vector<float> tencs;
+                        std::vector<float> tdecs;
+                        for (CodecStats& stats : codecStatsAcrossWindows) {
+                            cfs.push_back(stats.cf);
+                            bpis.push_back(stats.bpi);
+                            tencs.push_back(stats.tenc);
+                            tdecs.push_back(stats.tdec);
+                        }
+                        float cfmean = mean(cfs);
+                        float cfvar = variance(cfs, cfmean);
+                        float bpimean = mean(bpis);
+                        float bpivar = variance(bpis, bpimean);
+                        float tencmean = mean(tencs);
+                        float tencvar = variance(tencs, tencmean);
+                        float tdecmean = mean(tdecs);
+                        float tdecvar = variance(tdecs, tdecmean);
+                        std::cout << ",cfmean:" << cfmean << ",cfvar:" << cfvar
+                                  << ",bpimean:" << bpimean << ",bpivar:" << bpivar 
+                                  << ",tencmean:" << tencmean << ",tencvar:" << tencvar 
+                                  << ",tdecmean:" << tdecmean << ",tdecvar:" << tdecvar << std::endl; 
                     }
                 }
                 catch (const std::exception& e) {
