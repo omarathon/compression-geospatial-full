@@ -20,7 +20,7 @@
 #! The Cascade Lake (cclake) nodes have 56 CPUs (cores) each and
 #! 3420 MiB of memory per CPU.
 #SBATCH --ntasks=1
-#SBATCH --mem=20000
+#SBATCH --mem=500
 #! How much wallclock time will be required?
 #SBATCH --time=00:30:00
 #! What types of email messages do you wish to receive?
