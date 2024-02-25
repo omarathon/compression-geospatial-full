@@ -749,7 +749,7 @@ public:
         const size_t bitsPerIndex = sizeof(T) * 8;
         const size_t indexesPerInt = 32 / bitsPerIndex;
         const size_t numPackedInts = (length + indexesPerInt - 1) / indexesPerInt;
-        compressed_data.reserve(numPackedInts);
+        compressed_data.resize(numPackedInts);
     };
 
     void clear() override {
@@ -1202,7 +1202,7 @@ public:
     }
 
     void allocEncoded(const int32_t* in, size_t length) override {
-        compressed_data.reserve(2 * (length / 4 + 1));
+        compressed_data.resize(2 * (length / 4 + 1));
     };
 
     void clear() override {
@@ -1306,7 +1306,7 @@ public:
     }
 
     void allocEncoded(const int32_t* in, size_t length) override {
-        compressed_data.reserve(2 * (length / 8 + 1));
+        compressed_data.resize(2 * (length / 8 + 1));
     };
 
     void clear() override {
@@ -1408,7 +1408,7 @@ public:
     }
 
     void allocEncoded(const int32_t* in, size_t length) override {
-        compressed_data.reserve(2 * (length / 16 + 1)); // Reserve more efficiently
+        compressed_data.resize(2 * (length / 16 + 1)); // Reserve more efficiently
     };
 
     void clear() override {
