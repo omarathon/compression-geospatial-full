@@ -154,9 +154,14 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
             }
             else if (readAccessPattern == "random") {
                 volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
-                auto startRead = std::chrono::high_resolution_clock::now();
+                std::vector<int> bis(blockSize*blockSize,0);
                 for (int iti = 0; iti < blockSize*blockSize; iti++) {
                     int bi = rand() % (blockSize*blockSize);
+                    bis[iti] = bi;
+                }
+                auto startRead = std::chrono::high_resolution_clock::now();
+                for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                    int bi = bis[iti];
                     dummy ^= decbuf[bi];
                 }
                 auto endRead = std::chrono::high_resolution_clock::now();
