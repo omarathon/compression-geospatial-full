@@ -181,7 +181,7 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
             }
         };
 
-        if (isDirectAccess) {
+        if (!isDirectAccess) {
             benchblock(decbuf);
         }
         else {
