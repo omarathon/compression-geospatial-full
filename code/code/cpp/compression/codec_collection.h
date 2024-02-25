@@ -1,4 +1,5 @@
 #include "codecs/generic_codecs.h"
+// #include "codecs/direct_codec.h"
 #include "codecs/composite_codec.h"
 #include "codecs/deflate_codecs.h"
 #include "codecs/fastpfor_codecs.h"
@@ -64,6 +65,8 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
     codecs.push_back(std::make_unique<ZstdCodec>(1));
     codecs.push_back(std::make_unique<ZstdCodec>(3));
     codecs.push_back(std::make_unique<ZstdCodec>(5));
+
+    // codecs.push_back(std::make_unique<DirectAccessCodec>());
 
     // TurboPFor Codecs
     for (size_t tpfCodecId = 1; tpfCodecId <= 20; tpfCodecId++) {

@@ -373,7 +373,7 @@ public:
     }
 
     void allocEncoded(const int32_t* in, size_t length) override {
-        compressed_data.reserve(2);
+        compressed_data.resize(2);
     };
 
     void clear() override {
