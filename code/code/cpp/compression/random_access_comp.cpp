@@ -17,6 +17,7 @@
 #include "remappings.h"
 #include "util.h"
 #include "transformations.h"
+#include "codecs/direct_codec.h"
 
 #define GDAL_DTYPE GDT_Int32
 
@@ -109,6 +110,8 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
 void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, int blockSize, int numAccesses, const std::string& sampleAccessPattern, const std::string& readAccessPattern, const std::string& operatorStr) {
     srand(1);  // Seed the random number generator with 1
 
+    bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
+
     std::vector<int32_t> decbuf;
     decbuf.resize(blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize));
     
@@ -127,51 +130,63 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
 
         auto& codec = codecs[blockIndex];
 
-        /* decode */
-
-        auto startDecode = std::chrono::high_resolution_clock::now();
-        codec->decodeArray(decbuf.data(), blockSize*blockSize);
-        auto endDecode = std::chrono::high_resolution_clock::now();
-        auto decodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count();
-
-        /* perform read */
-
-        std::size_t readTime = 0;
-        if (readAccessPattern == "linear") {
-            volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
-            auto startRead = std::chrono::high_resolution_clock::now();
-            for (int bi = 0; bi < blockSize*blockSize; bi++) {
-                dummy ^= decbuf[bi];
+        auto benchblock = [&](std::vector<int32_t>& decbuf) {
+            /* decode */
+            std::size_t decodeTime = 0;
+            if (!isDirectAccess) {
+                auto startDecode = std::chrono::high_resolution_clock::now();
+                codec->decodeArray(decbuf.data(), blockSize*blockSize);
+                auto endDecode = std::chrono::high_resolution_clock::now();
+                decodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count();
             }
-            auto endRead = std::chrono::high_resolution_clock::now();
-            readTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead).count();
-        }
-        else if (readAccessPattern == "random") {
-            volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
-            auto startRead = std::chrono::high_resolution_clock::now();
-            for (int iti = 0; iti < blockSize*blockSize; iti++) {
-                int bi = rand() % (blockSize*blockSize);
-                dummy ^= decbuf[bi];
+
+            /* perform read */
+
+            std::size_t readTime = 0;
+            if (readAccessPattern == "linear") {
+                volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+                auto startRead = std::chrono::high_resolution_clock::now();
+                for (int bi = 0; bi < blockSize*blockSize; bi++) {
+                    dummy ^= decbuf[bi];
+                }
+                auto endRead = std::chrono::high_resolution_clock::now();
+                readTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead).count();
             }
-            auto endRead = std::chrono::high_resolution_clock::now();
-            readTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead).count();
-        }
+            else if (readAccessPattern == "random") {
+                volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+                auto startRead = std::chrono::high_resolution_clock::now();
+                for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                    int bi = rand() % (blockSize*blockSize);
+                    dummy ^= decbuf[bi];
+                }
+                auto endRead = std::chrono::high_resolution_clock::now();
+                readTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead).count();
+            }
 
-        /* re-encode*/
+            /* re-encode*/
 
-        if (reEnc) {
-            auto startEncode= std::chrono::high_resolution_clock::now();
-            codec->allocEncoded(decbuf.data(), blockSize * blockSize);
-            codec->encodeArray(decbuf.data(), blockSize*blockSize);
-            auto endEncode = std::chrono::high_resolution_clock::now();
-            auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
+            if (!isDirectAccess && reEnc) {
+                auto startEncode= std::chrono::high_resolution_clock::now();
+                codec->allocEncoded(decbuf.data(), blockSize * blockSize);
+                codec->encodeArray(decbuf.data(), blockSize*blockSize);
+                auto endEncode = std::chrono::high_resolution_clock::now();
+                auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
 
-            totalNanos += decodeTime + encodeTime + readTime;
-            times.push_back(decodeTime + encodeTime + readTime);
+                totalNanos += decodeTime + encodeTime + readTime;
+                times.push_back(decodeTime + encodeTime + readTime);
+            }
+            else {
+                totalNanos += decodeTime + readTime;
+                times.push_back(decodeTime + readTime);
+            }
+        };
+
+        if (isDirectAccess) {
+            benchblock(decbuf);
         }
         else {
-            totalNanos += decodeTime + readTime;
-            times.push_back(decodeTime + readTime);
+            // special case for direct access codec
+            benchblock(codec->getEncoded());
         }
     }
 
@@ -305,6 +320,9 @@ int main(int argc, char* argv[]) {
                                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
                     base_codecs.push_back(std::move(cascade));
                 }
+
+                auto directAccessCodec = std::make_unique<DirectAccessCodec>();
+                base_codecs.push_back(std::move(directAccessCodec));
 
                 return base_codecs;
             };
