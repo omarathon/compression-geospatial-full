@@ -67,16 +67,11 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
     int blocksInHeight = rasterHeight / blockSize;
     int totalFullBlocks = blocksInWidth * blocksInHeight;
 
-    if (numBlocks > totalFullBlocks) {
-        std::cerr << "Requested number of blocks exceeds the total number of full blocks available." << std::endl;
-        return codecs; // Return empty list if requested more blocks than available
-    }
-
     // Calculate interval to sample blocks evenly
     int sampleInterval = std::max(1, totalFullBlocks / numBlocks);
 
-    for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks && blockNum < totalFullBlocks; blockNum += sampleInterval, sampledBlocks++) {
-        int blockIndex = blockNum;
+    for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks; blockNum += sampleInterval, sampledBlocks++) {
+        int blockIndex = blockNum % totalFullBlocks;
         int bx = (blockIndex % blocksInWidth) * blockSize;
         int by = (blockIndex / blocksInWidth) * blockSize;
 
