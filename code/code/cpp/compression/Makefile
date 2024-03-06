@@ -23,6 +23,9 @@ bench_tiff_comp: bench_tiff_comp.cpp
 random_access_comp: random_access_comp.cpp
 	$(CXX) $(CXXFLAGS) -o random_access_comp random_access_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
 
+access_comp: access_comp.cpp
+	$(CXX) $(CXXFLAGS) -o access_comp access_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+
 bench: bench.cpp
 	$(CXX) $(CXXFLAGS) -o bench bench.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
 

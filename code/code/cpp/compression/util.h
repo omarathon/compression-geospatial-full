@@ -33,3 +33,22 @@ float variance(const std::vector<float>& values, float meanValue) {
         [meanValue](double a, double b) { return a + (b - meanValue) * (b - meanValue); });
     return sq_sum / values.size();
 }
+
+std::size_t sum(const std::vector<std::size_t>& values) {
+    std::size_t result = 0;
+    for (auto& value : values) {
+        result += value;
+    }
+    return result;
+}
+
+float mean(const std::vector<std::size_t>& values) {
+    if (values.empty()) return 0;
+    return ((float)sum(values)) / ((float)values.size()); 
+}
+
+float variance(const std::vector<std::size_t>& values, float meanValue) {
+    float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
+        [meanValue](std::size_t a, std::size_t b) { return (float)a + ((float)b - meanValue) * ((float)b - meanValue); });
+    return sq_sum / values.size();
+}
