@@ -217,8 +217,8 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
                 timesEnc.push_back(0);
             }
             else {
-                auto startEncode= std::chrono::high_resolution_clock::now();
                 codec->allocEncoded(decbuf.data(), blockSize * blockSize);
+                auto startEncode= std::chrono::high_resolution_clock::now();
                 codec->encodeArray(decbuf.data(), blockSize*blockSize);
                 auto endEncode = std::chrono::high_resolution_clock::now();
                 auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
