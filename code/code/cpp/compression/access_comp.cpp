@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <algorithm>
+#include <random>
 #include <any>
 #include <variant>
 #include <fstream>
@@ -162,7 +163,8 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
 }
 
 // access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}
-void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, int blockSize, int numAccesses, const std::string& sampleAccessPattern, const std::string& accessTransformation) {
+void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
+                     std::vector<std::size_t>& timesDec, std::vector<std::size_t>& timesAccessTransformation, std::vector<std::size_t>& timesEnc) {
     srand(1);  // Seed the random number generator with 1
 
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
@@ -172,10 +174,6 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
     
     // int32_t* decbuf = (int32_t*)malloc((blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize)) * sizeof(int32_t));
 
-    std::vector<std::size_t> timesDec;
-    std::vector<std::size_t> timesAccessTransformation;
-    std::vector<std::size_t> timesEnc;
-
     bool dataChange = 
            accessTransformation == "threshold" 
         || accessTransformation == "smoothAndShift" 
@@ -183,9 +181,19 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
         || accessTransformation == "valueBasedClassification" 
         || accessTransformation == "valueShift";
 
-    for (int i = 0; i < numAccesses; i++) {
-        int blockIndex = sampleAccessPattern == "linear" ? i % codecs.size() : rand() % (codecs.size());
-
+    // access indexes
+    std::vector<std::size_t> accessIndexes;
+    for (int i = 0; i < codecs.size(); i++) {
+        accessIndexes.push_back(i);
+    }
+    if (sampleAccessPattern != "linear") {
+        // random
+        std::default_random_engine engine(1);
+        std::shuffle(accessIndexes.begin(), accessIndexes.end(), engine);
+    }
+    
+    for (int i = 0; i < codecs.size(); i++) {
+        int blockIndex = accessIndexes[i];
         auto& codec = codecs[blockIndex];
 
         auto benchblock = [&](std::vector<int32_t>& decbuf) {
@@ -227,18 +235,6 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
             benchblock(codec->getEncoded());
         }
     }
-
-    std::cout << "tottimedec:" << sum(timesDec);
-    std::cout << ",meantimedec:" << mean(timesDec);
-    std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
-
-    std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
-    std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
-    std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
-
-    std::cout << ",tottimeenc:" << sum(timesEnc);
-    std::cout << ",meantimeenc:" << mean(timesEnc);
-    std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
 }
 
 // Function to process a single block for min and unique values
@@ -265,14 +261,14 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
 
 int main(int argc, char* argv[]) {
     if (argc < 10) {
-        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num block samples> <codec names | 'all'>[] <block ordering {default: row-major | 'zigzag' | 'morton'}>[] <initial transformation {default: none | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[] <sample access pattern {default: 'random' | 'linear'}>[] <access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[]";
+        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num reps> <codec names | 'all'>[] <block ordering {default: row-major | 'zigzag' | 'morton'}>[] <initial transformation {default: none | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[] <sample access pattern {default: 'random' | 'linear'}>[] <access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[]";
         return 1;
     }
 
     const char* filePath = argv[1];
     int blockSize = atoi(argv[2]);
     int numBlocks = atoi(argv[3]);
-    int numBlockSamples = atoi(argv[4]);
+    int numReps = atoi(argv[4]);
     std::vector<std::string> codecNames = parseCommaDelimited(std::string(argv[5]));
     std::vector<std::string> orderings = parseCommaDelimited(std::string(argv[6]));
     std::vector<std::string> initialTransformations = parseCommaDelimited(std::string(argv[7]));
@@ -395,14 +391,19 @@ int main(int argc, char* argv[]) {
                 
                 for (auto& sampleAccessPattern : sampleAccessPatterns) {
                     for (auto& accessTransformation : accessTransformations) {
-                            if (accessTransformation == initialTransformation) {
-                                std::cout << "Skipping double transformation." << std::endl;
-                                continue;
-                            }
+                        if (accessTransformation == initialTransformation) {
+                            std::cout << "Skipping double transformation." << std::endl;
+                            continue;
+                        }
 
-                            std::cout << "**BENCHMARK ACCESS**" << std::endl;
-                            std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numblocksamples=" << numBlockSamples << ",basecodec=" << baseCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
+                        std::cout << "**BENCHMARK ACCESS**" << std::endl;
+                        std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
 
+                        std::vector<std::size_t> timesDec;
+                        std::vector<std::size_t> timesAccessTransformation;
+                        std::vector<std::size_t> timesEnc;
+
+                        for (int rep = 0; rep < numReps; rep++) {
                             std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
 
                             std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
@@ -415,7 +416,20 @@ int main(int argc, char* argv[]) {
                             }
                                 
                             // Perform accesses - part to be measured
-                            benchmarkAccess(codecGrid, blockSize, numBlockSamples, sampleAccessPattern, accessTransformation);
+                            benchmarkAccess(codecGrid, blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
+                        }
+
+                        std::cout << "tottimedec:" << sum(timesDec);
+                        std::cout << ",meantimedec:" << mean(timesDec);
+                        std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
+
+                        std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
+                        std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
+                        std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
+
+                        std::cout << ",tottimeenc:" << sum(timesEnc);
+                        std::cout << ",meantimeenc:" << mean(timesEnc);
+                        std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
                     }
                 }
             }
