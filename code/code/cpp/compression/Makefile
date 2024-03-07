@@ -26,6 +26,9 @@ random_access_comp: random_access_comp.cpp
 access_comp: access_comp.cpp
 	$(CXX) $(CXXFLAGS) -o access_comp access_comp.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
+access_comp_vary: access_comp_vary.cpp
+	$(CXX) $(CXXFLAGS) -o access_comp_vary access_comp_vary.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+
 bench: bench.cpp
 	$(CXX) $(CXXFLAGS) -o bench bench.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 

@@ -163,23 +163,26 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
 }
 
 // access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}
-void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
+void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, std::unique_ptr<StatefulIntegerCodec<int32_t>> accessCodec, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
                      std::vector<std::size_t>& timesDec, std::vector<std::size_t>& timesAccessTransformation, std::vector<std::size_t>& timesEnc) {
     srand(1);  // Seed the random number generator with 1
 
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
+    bool isDirectReenc = (accessCodec->name() == "custom_direct_access");
+
+    bool codecChanged = (codecs[0]->name() == accessCodec->name());
 
     std::vector<int32_t> decbuf;
     decbuf.resize(blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize));
     
     // int32_t* decbuf = (int32_t*)malloc((blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize)) * sizeof(int32_t));
 
-    bool dataChange = 
-           accessTransformation == "threshold" 
-        || accessTransformation == "smoothAndShift" 
-        || accessTransformation == "indexBasedClassification" 
-        || accessTransformation == "valueBasedClassification" 
-        || accessTransformation == "valueShift";
+    // bool dataChange = 
+    //        accessTransformation == "threshold" 
+    //     || accessTransformation == "smoothAndShift" 
+    //     || accessTransformation == "indexBasedClassification" 
+    //     || accessTransformation == "valueBasedClassification" 
+    //     || accessTransformation == "valueShift";
 
     // access indexes
     std::vector<std::size_t> accessIndexes;
@@ -212,18 +215,26 @@ void benchmarkAccess(const std::vector<std::unique_ptr<StatefulIntegerCodec<int3
             std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize);
             timesAccessTransformation.push_back(accessTransformationTime);
 
-            /* re-encode if not direct access and the data didn't change */
-            if (isDirectAccess || dataChange) {
+            /* re-encode with new codec */
+            std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedAccessCodec(accessCodec->cloneFresh());
+            std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = codecChanged ? clonedAccessCodec : codecs[blockIndex];
+
+            if (isDirectReenc) {
                 timesEnc.push_back(0);
+                reencCodec->allocEncoded(decbuf.data(), blockSize*blockSize);
+                reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
             }
             else {
-                codec->allocEncoded(decbuf.data(), blockSize * blockSize);
+                reencCodec->allocEncoded(decbuf.data(), blockSize * blockSize);
                 auto startEncode= std::chrono::high_resolution_clock::now();
-                codec->encodeArray(decbuf.data(), blockSize*blockSize);
+                reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
                 auto endEncode = std::chrono::high_resolution_clock::now();
                 auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
-
                 timesEnc.push_back(encodeTime);
+            }
+
+            if (codecChanged) {
+                codecs[blockIndex] = std::move(clonedAccessCodec);
             }
         };
 
@@ -260,8 +271,8 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 10) {
-        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num reps> <codec names | 'all'>[] <block ordering {default: row-major | 'zigzag' | 'morton'}>[] <initial transformation {default: none | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[] <sample access pattern {default: 'random' | 'linear'}>[] <access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[]";
+    if (argc < 11) {
+        std::cout << "Usage: " << argv[0] << " <file path> <block size> <num blocks> <num reps> <initial codec names | 'all'>[] <access codec names | 'all'>[] <block ordering {default: row-major | 'zigzag' | 'morton'}>[] <initial transformation {default: none | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[] <sample access pattern {default: 'random' | 'linear'}>[] <access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}>[]";
         return 1;
     }
 
@@ -269,11 +280,12 @@ int main(int argc, char* argv[]) {
     int blockSize = atoi(argv[2]);
     int numBlocks = atoi(argv[3]);
     int numReps = atoi(argv[4]);
-    std::vector<std::string> codecNames = parseCommaDelimited(std::string(argv[5]));
-    std::vector<std::string> orderings = parseCommaDelimited(std::string(argv[6]));
-    std::vector<std::string> initialTransformations = parseCommaDelimited(std::string(argv[7]));
-    std::vector<std::string> sampleAccessPatterns = parseCommaDelimited(std::string(argv[8]));
-    std::vector<std::string> accessTransformations = parseCommaDelimited(std::string(argv[9]));
+    std::vector<std::string> initialCodecNames = parseCommaDelimited(std::string(argv[5]));
+    std::vector<std::string> accessCodecNames = parseCommaDelimited(std::string(argv[6]));
+    std::vector<std::string> orderings = parseCommaDelimited(std::string(argv[7]));
+    std::vector<std::string> initialTransformations = parseCommaDelimited(std::string(argv[8]));
+    std::vector<std::string> sampleAccessPatterns = parseCommaDelimited(std::string(argv[9]));
+    std::vector<std::string> accessTransformations = parseCommaDelimited(std::string(argv[10]));
 
     srand(1); // Seed the random number generator
 
@@ -367,16 +379,31 @@ int main(int argc, char* argv[]) {
 
             // Select the codecs with the specified names
             std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> baseCodecs;
+            std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> accessCodecs;
             for (auto& codec : allCodecs) {
-                if (codecNames.size() == 1 && (codecNames[0] == "all" || codecNames[0] == "*")) {
+                if (initialCodecNames.size() == 1 && (initialCodecNames[0] == "all" || initialCodecNames[0] == "*")) {
                     std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
                     baseCodecs.push_back(std::move(newCodec));
                     continue;
                 }
-                for (auto& codecName : codecNames) {
+                for (auto& codecName : initialCodecNames) {
                     if (codecName == codec->name()) {
                         std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
                         baseCodecs.push_back(std::move(newCodec));
+                        break;
+                    }
+                }
+            }
+            for (auto& codec : allCodecs) {
+                if (accessCodecNames.size() == 1 && (accessCodecNames[0] == "all" || accessCodecNames[0] == "*")) {
+                    std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                    accessCodecs.push_back(std::move(newCodec));
+                    continue;
+                }
+                for (auto& codecName : accessCodecNames) {
+                    if (codecName == codec->name()) {
+                        std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                        accessCodecs.push_back(std::move(newCodec));
                         break;
                     }
                 }
@@ -386,50 +413,55 @@ int main(int argc, char* argv[]) {
             allCodecs.shrink_to_fit();
 
             for (auto& baseCodec : baseCodecs) {
-                assert(baseCodec);
-                std::string baseCodecName = baseCodec->name();
-                
-                for (auto& sampleAccessPattern : sampleAccessPatterns) {
-                    for (auto& accessTransformation : accessTransformations) {
-                        if (accessTransformation == initialTransformation) {
-                            std::cout << "Skipping double transformation." << std::endl;
-                            continue;
-                        }
-
-                        std::cout << "**BENCHMARK ACCESS**" << std::endl;
-                        std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
-
-                        std::vector<std::size_t> timesDec;
-                        std::vector<std::size_t> timesAccessTransformation;
-                        std::vector<std::size_t> timesEnc;
-
-                        for (int rep = 0; rep < numReps; rep++) {
-                            std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
-
-                            std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
-                                band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, initialTransformation, ordering);
-
-                            if (codecGrid.size() == 0) {
-                                std::cerr << "NO CODECS FORMING GRID." << std::endl;
-                                GDALClose(dataset);
-                                return 1;
+                for (auto& accessCodec : accessCodecs) {
+                    assert(baseCodec);
+                    assert(accessCodec);
+                    std::string baseCodecName = baseCodec->name();
+                    std::string accessCodecName = accessCodec->name();
+                    
+                    for (auto& sampleAccessPattern : sampleAccessPatterns) {
+                        for (auto& accessTransformation : accessTransformations) {
+                            if (accessTransformation == initialTransformation) {
+                                std::cout << "Skipping double transformation." << std::endl;
+                                continue;
                             }
-                                
-                            // Perform accesses - part to be measured
-                            benchmarkAccess(codecGrid, blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
+
+                            std::cout << "**BENCHMARK ACCESS**" << std::endl;
+                            std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",accesscodec=" << accessCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
+
+                            std::vector<std::size_t> timesDec;
+                            std::vector<std::size_t> timesAccessTransformation;
+                            std::vector<std::size_t> timesEnc;
+
+                            for (int rep = 0; rep < numReps; rep++) {
+                                std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
+                                std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentAccessCodec(accessCodec->cloneFresh());
+
+                                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
+                                    band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, initialTransformation, ordering);
+
+                                if (codecGrid.size() == 0) {
+                                    std::cerr << "NO CODECS FORMING GRID." << std::endl;
+                                    GDALClose(dataset);
+                                    return 1;
+                                }
+                                    
+                                // Perform accesses - part to be measured
+                                benchmarkAccess(codecGrid, std::move(experimentAccessCodec), blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
+                            }
+
+                            std::cout << "tottimedec:" << sum(timesDec);
+                            std::cout << ",meantimedec:" << mean(timesDec);
+                            std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
+
+                            std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
+                            std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
+                            std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
+
+                            std::cout << ",tottimeenc:" << sum(timesEnc);
+                            std::cout << ",meantimeenc:" << mean(timesEnc);
+                            std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
                         }
-
-                        std::cout << "tottimedec:" << sum(timesDec);
-                        std::cout << ",meantimedec:" << mean(timesDec);
-                        std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
-
-                        std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
-                        std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
-                        std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
-
-                        std::cout << ",tottimeenc:" << sum(timesEnc);
-                        std::cout << ",meantimeenc:" << mean(timesEnc);
-                        std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
                     }
                 }
             }
