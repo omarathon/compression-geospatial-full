@@ -113,10 +113,20 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                             if transformation == access_transformation:
                                 access_codecs = pareto_compression
 
-                if initial_codecs is None:
+                if initial_codecs is None or len(initial_codecs) == 0:
                     sys.exit("no matching initial_codecs")
-                if access_codecs is None:
+                if access_codecs is None or len(access_codecs) == 0:
                     sys.exit("no matching access_codecs")
+
+                # add mantatory codecs
+                if "FastPFor_JustCopy" not in initial_codecs:
+                    initial_codecs += ",FastPFor_JustCopy"
+                if "custom_direct_access" not in initial_codecs:
+                    initial_codecs += ",custom_direct_access"
+                if "FastPFor_JustCopy" not in access_codecs:
+                    access_codecs += ",FastPFor_JustCopy"
+                if "custom_direct_access" not in access_codecs:
+                    access_codecs += ",custom_direct_access"
                 
                 create_slurm_script(i, tiff, initial_transformation, access_transformation, initial_codecs, access_codecs, output_dir)
 
