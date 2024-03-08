@@ -170,7 +170,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
     bool isDirectReenc = (accessCodec->name() == "custom_direct_access");
 
-    bool codecChanged = (codecs[0]->name() != accessCodec->name());
+    // bool codecChanged = (codecs[0]->name() != accessCodec->name());
 
     std::vector<int32_t> decbuf;
     decbuf.resize(blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize));
@@ -217,7 +217,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 
             /* re-encode with new codec */
             std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedAccessCodec(accessCodec->cloneFresh());
-            std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = codecChanged ? clonedAccessCodec : codecs[blockIndex];
+            std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = clonedAccessCodec;
 
             if (isDirectReenc) {
                 timesEnc.push_back(0);
@@ -233,9 +233,9 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
                 timesEnc.push_back(encodeTime);
             }
 
-            if (codecChanged) {
+            // if (codecChanged) {
                 codecs[blockIndex] = std::move(clonedAccessCodec);
-            }
+            // }
         };
 
         if (!isDirectAccess) {
@@ -249,7 +249,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 }
 
 // Function to process a single block for min and unique values
-void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& ordering, std::string& transformation, int xOff, int yOff, int blockSize, int32_t& min, std::unordered_set<int32_t>& unique_values_set) {
+void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& ordering, std::string& initialTransformation, std::string& accessTransformation, int xOff, int yOff, int blockSize, int32_t& min, std::unordered_set<int32_t>& unique_values_set_initial, std::unordered_set<int32_t>& unique_values_set_access) {
     std::vector<int32_t> blockData(blockSize * blockSize);
     band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
 
@@ -263,10 +263,25 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
         }
     }
 
-    remapAndTransformData(blockData, ordering, transformation, blockSize);
+    remapAndTransformData(blockData, ordering, initialTransformation, blockSize);
 
     for (auto& value : blockData) {
-        unique_values_set.insert(value);
+        unique_values_set_initial.insert(value);
+    }
+    
+    bool dataChange = 
+           accessTransformation == "threshold" 
+        || accessTransformation == "smoothAndShift" 
+        || accessTransformation == "indexBasedClassification" 
+        || accessTransformation == "valueBasedClassification" 
+        || accessTransformation == "valueShift";
+
+    if (dataChange) {
+        applyAccessTransformation(blockData, accessTransformation, blockSize);
+    }
+    
+    for (auto& value : blockData) {
+        unique_values_set_access.insert(value);
     }
 }
 
@@ -308,159 +323,171 @@ int main(int argc, char* argv[]) {
 
     for (auto& ordering : orderings) {
         for (auto& initialTransformation : initialTransformations) {
+            for (auto& accessTransformation : accessTransformations) {
 
-            int32_t min = std::numeric_limits<int32_t>::max();
-            std::unordered_set<int32_t> unique_values_set;
+                // if (accessTransformation == initialTransformation) {
+                //     std::cout << "Skipping double transformation." << std::endl;
+                //     continue;
+                // }
 
-            // Process each block to compute min and unique values
-            for (int y = 0; y < blocksInHeight; ++y) {
-                for (int x = 0; x < blocksInWidth; ++x) {
-                    int xOff = x * blockSize;
-                    int yOff = y * blockSize;
-                    computeMinAndUniqueValuesForBlock(band, ordering, initialTransformation, xOff, yOff, blockSize, min, unique_values_set);
-                }
-            }
+                int32_t min = std::numeric_limits<int32_t>::max();
+                std::unordered_set<int32_t> unique_values_set_initial;
+                std::unordered_set<int32_t> unique_values_set_access;
 
-            // Convert unordered_set to vector for unique values
-            std::vector<int32_t> unique_values(unique_values_set.begin(), unique_values_set.end());
+                // Calculate full blocks that fit in the raster dimensions
+                int totalFullBlocks = blocksInWidth * blocksInHeight;
+                // Calculate interval to sample blocks evenly
+                int sampleInterval = std::max(1, totalFullBlocks / numBlocks);
 
-            std::any dict;
-            std::vector<int32_t> reverseDict;
-
-            auto createAndAddCodecs = [&](auto dummy, const std::vector<int32_t>& unique_values) {
-                using dict_type = decltype(dummy);
-                std::unordered_map<int32_t, dict_type> localDict;
-                reverseDict.resize(unique_values.size());
-
-                dict_type index = 0;
-                for (int32_t value : unique_values) {
-                    localDict[value] = index;
-                    reverseDict[index] = value;
-                    ++index;
+                for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks; blockNum += sampleInterval, sampledBlocks++) {
+                    int blockIndex = blockNum % totalFullBlocks;
+                    int xOff = (blockIndex % blocksInWidth) * blockSize;
+                    int yOff = (blockIndex / blocksInWidth) * blockSize;
+                    computeMinAndUniqueValuesForBlock(band, ordering, initialTransformation, accessTransformation, xOff, yOff, blockSize, min, unique_values_set_initial, unique_values_set_access);
                 }
 
-                dict = std::move(localDict); // Store the dictionary in std::any
+                // Convert unordered_set to vector for unique values
+                std::vector<int32_t> unique_values_initial(unique_values_set_initial.begin(), unique_values_set_initial.end());
+                std::vector<int32_t> unique_values_access(unique_values_set_access.begin(), unique_values_set_access.end());
 
-                auto base_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                /* nonCascaded */ true, /* cascadeCodec */ nullptr);
+                std::any dict_initial;
+                std::vector<int32_t> reverseDict_initial;
+                std::any dict_access;
+                std::vector<int32_t> reverseDict_access;
 
-                auto cascadeDictCodec = std::make_unique<DictCodecAVX2<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
-                auto cascadeDeltaCodec = std::make_unique<DeltaCodecAVX512>();
-                auto cascadeRleCodec = std::make_unique<RLECodecAVX512>();
-                auto cascadeForCodec = std::make_unique<FORCodecAVX512>();
+                auto createAndAddCodecs = [&](auto dummy, const std::vector<int32_t>& unique_values, std::any& dict, std::vector<int32_t>& reverseDict) {
+                    using dict_type = decltype(dummy);
+                    std::unordered_map<int32_t, dict_type> localDict;
+                    reverseDict.resize(unique_values.size());
 
-                for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDictCodec))) {
-                    base_codecs.push_back(std::move(cascade));
-                }
-                for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDeltaCodec))) {
-                    base_codecs.push_back(std::move(cascade));
-                }
-                for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeRleCodec))) {
-                    base_codecs.push_back(std::move(cascade));
-                }
-                for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
-                    base_codecs.push_back(std::move(cascade));
-                }
+                    dict_type index = 0;
+                    for (int32_t value : unique_values) {
+                        localDict[value] = index;
+                        reverseDict[index] = value;
+                        ++index;
+                    }
 
-                auto directAccessCodec = std::make_unique<DirectAccessCodec>();
-                base_codecs.push_back(std::move(directAccessCodec));
+                    dict = std::move(localDict); // Store the dictionary in std::any
 
-                return base_codecs;
-            };
+                    auto base_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                                    /* nonCascaded */ true, /* cascadeCodec */ nullptr);
 
-            std::cout << "num_unique_values = " << unique_values.size() << std::endl;
+                    auto cascadeDictCodec = std::make_unique<DictCodecAVX2<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
+                    auto cascadeDeltaCodec = std::make_unique<DeltaCodecAVX512>();
+                    auto cascadeRleCodec = std::make_unique<RLECodecAVX512>();
+                    auto cascadeForCodec = std::make_unique<FORCodecAVX512>();
 
-            std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> allCodecs;
-            allCodecs = createAndAddCodecs(uint32_t{}, unique_values);
+                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDictCodec))) {
+                        base_codecs.push_back(std::move(cascade));
+                    }
+                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDeltaCodec))) {
+                        base_codecs.push_back(std::move(cascade));
+                    }
+                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeRleCodec))) {
+                        base_codecs.push_back(std::move(cascade));
+                    }
+                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
+                        base_codecs.push_back(std::move(cascade));
+                    }
 
-            // Select the codecs with the specified names
-            std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> baseCodecs;
-            std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> accessCodecs;
-            for (auto& codec : allCodecs) {
-                if (initialCodecNames.size() == 1 && (initialCodecNames[0] == "all" || initialCodecNames[0] == "*")) {
-                    std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
-                    baseCodecs.push_back(std::move(newCodec));
-                    continue;
-                }
-                for (auto& codecName : initialCodecNames) {
-                    if (codecName == codec->name()) {
+                    auto directAccessCodec = std::make_unique<DirectAccessCodec>();
+                    base_codecs.push_back(std::move(directAccessCodec));
+
+                    return base_codecs;
+                };
+
+                std::cout << "num_unique_values_initial = " << unique_values_initial.size() << std::endl;
+                std::cout << "num_unique_values_access = " << unique_values_access.size() << std::endl;
+
+                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> allCodecs_initial;
+                allCodecs_initial = createAndAddCodecs(uint32_t{}, unique_values_initial, dict_initial, reverseDict_initial);
+                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> allCodecs_access;
+                allCodecs_access = createAndAddCodecs(uint32_t{}, unique_values_access, dict_access, reverseDict_access);
+
+                // Select the codecs with the specified names
+                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> baseCodecs;
+                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> accessCodecs;
+                for (auto& codec : allCodecs_initial) {
+                    if (initialCodecNames.size() == 1 && (initialCodecNames[0] == "all" || initialCodecNames[0] == "*")) {
                         std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
                         baseCodecs.push_back(std::move(newCodec));
-                        break;
+                        continue;
+                    }
+                    for (auto& codecName : initialCodecNames) {
+                        if (codecName == codec->name()) {
+                            std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                            baseCodecs.push_back(std::move(newCodec));
+                            break;
+                        }
                     }
                 }
-            }
-            for (auto& codec : allCodecs) {
-                if (accessCodecNames.size() == 1 && (accessCodecNames[0] == "all" || accessCodecNames[0] == "*")) {
-                    std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
-                    accessCodecs.push_back(std::move(newCodec));
-                    continue;
-                }
-                for (auto& codecName : accessCodecNames) {
-                    if (codecName == codec->name()) {
+                for (auto& codec : allCodecs_access) {
+                    if (accessCodecNames.size() == 1 && (accessCodecNames[0] == "all" || accessCodecNames[0] == "*")) {
                         std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
                         accessCodecs.push_back(std::move(newCodec));
-                        break;
+                        continue;
+                    }
+                    for (auto& codecName : accessCodecNames) {
+                        if (codecName == codec->name()) {
+                            std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                            accessCodecs.push_back(std::move(newCodec));
+                            break;
+                        }
                     }
                 }
-            }
 
-            allCodecs.clear();
-            allCodecs.shrink_to_fit();
+                allCodecs_initial.clear();
+                allCodecs_initial.shrink_to_fit();
+                allCodecs_access.clear();
+                allCodecs_access.shrink_to_fit();
 
-            for (auto& baseCodec : baseCodecs) {
-                for (auto& accessCodec : accessCodecs) {
-                    assert(baseCodec);
-                    assert(accessCodec);
-                    std::string baseCodecName = baseCodec->name();
-                    std::string accessCodecName = accessCodec->name();
-                    
-                    for (auto& sampleAccessPattern : sampleAccessPatterns) {
-                        for (auto& accessTransformation : accessTransformations) {
-                            if (accessTransformation == initialTransformation) {
-                                std::cout << "Skipping double transformation." << std::endl;
-                                continue;
-                            }
+                for (auto& baseCodec : baseCodecs) {
+                    for (auto& accessCodec : accessCodecs) {
+                        assert(baseCodec);
+                        assert(accessCodec);
+                        std::string baseCodecName = baseCodec->name();
+                        std::string accessCodecName = accessCodec->name();
+                        
+                        for (auto& sampleAccessPattern : sampleAccessPatterns) {
+                                std::cout << "**BENCHMARK ACCESS**" << std::endl;
+                                std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",accesscodec=" << accessCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
 
-                            std::cout << "**BENCHMARK ACCESS**" << std::endl;
-                            std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",accesscodec=" << accessCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
+                                std::vector<std::size_t> timesDec;
+                                std::vector<std::size_t> timesAccessTransformation;
+                                std::vector<std::size_t> timesEnc;
 
-                            std::vector<std::size_t> timesDec;
-                            std::vector<std::size_t> timesAccessTransformation;
-                            std::vector<std::size_t> timesEnc;
+                                for (int rep = 0; rep < numReps; rep++) {
+                                    std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
+                                    std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentAccessCodec(accessCodec->cloneFresh());
 
-                            for (int rep = 0; rep < numReps; rep++) {
-                                std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
-                                std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentAccessCodec(accessCodec->cloneFresh());
+                                    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
+                                        band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, initialTransformation, ordering);
 
-                                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
-                                    band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, initialTransformation, ordering);
-
-                                if (codecGrid.size() == 0) {
-                                    std::cerr << "NO CODECS FORMING GRID." << std::endl;
-                                    GDALClose(dataset);
-                                    return 1;
+                                    if (codecGrid.size() == 0) {
+                                        std::cerr << "NO CODECS FORMING GRID." << std::endl;
+                                        GDALClose(dataset);
+                                        return 1;
+                                    }
+                                        
+                                    // Perform accesses - part to be measured
+                                    benchmarkAccess(codecGrid, std::move(experimentAccessCodec), blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
                                 }
-                                    
-                                // Perform accesses - part to be measured
-                                benchmarkAccess(codecGrid, std::move(experimentAccessCodec), blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
-                            }
 
-                            std::cout << "tottimedec:" << sum(timesDec);
-                            std::cout << ",meantimedec:" << mean(timesDec);
-                            std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
+                                std::cout << "tottimedec:" << sum(timesDec);
+                                std::cout << ",meantimedec:" << mean(timesDec);
+                                std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
 
-                            std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
-                            std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
-                            std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
+                                std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
+                                std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
+                                std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
 
-                            std::cout << ",tottimeenc:" << sum(timesEnc);
-                            std::cout << ",meantimeenc:" << mean(timesEnc);
-                            std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
+                                std::cout << ",tottimeenc:" << sum(timesEnc);
+                                std::cout << ",meantimeenc:" << mean(timesEnc);
+                                std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
                         }
                     }
                 }
