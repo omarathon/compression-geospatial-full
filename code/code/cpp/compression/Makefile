@@ -30,7 +30,7 @@ access_comp_vary: access_comp_vary.cpp
 	$(CXX) $(CXXFLAGS) -o access_comp_vary access_comp_vary.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
 access_comp_vary_change_dict: access_comp_vary_change_dict.cpp
-	$(CXX) $(CXXFLAGS) -o access_comp_vary_change_dict access_comp_vary_change_dict.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
+	$(CXX) $(CXXFLAGS) -o access_comp_vary_change_dict access_comp_vary_change_dict.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
 
 bench: bench.cpp
 	$(CXX) $(CXXFLAGS) -o bench bench.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte,-rpath,./external/streamvbyte/build
