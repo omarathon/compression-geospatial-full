@@ -325,10 +325,10 @@ int main(int argc, char* argv[]) {
         for (auto& initialTransformation : initialTransformations) {
             for (auto& accessTransformation : accessTransformations) {
 
-                if (accessTransformation == initialTransformation) {
-                    std::cout << "Skipping double transformation." << std::endl;
-                    continue;
-                }
+                // if (accessTransformation == initialTransformation) {
+                //     std::cout << "Skipping double transformation." << std::endl;
+                //     continue;
+                // }
 
                 int32_t min = std::numeric_limits<int32_t>::max();
                 std::unordered_set<int32_t> unique_values_set_initial;
