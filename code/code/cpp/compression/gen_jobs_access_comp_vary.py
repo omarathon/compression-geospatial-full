@@ -119,13 +119,13 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                     sys.exit("no matching access_codecs")
 
                 # add mantatory codecs
-                if "FastPFor_JustCopy" not in initial_codecs:
+                if "FastPFor_JustCopy" not in initial_codecs.split(','):
                     initial_codecs += ",FastPFor_JustCopy"
-                if "custom_direct_access" not in initial_codecs:
+                if "custom_direct_access" not in initial_codecs.split(','):
                     initial_codecs += ",custom_direct_access"
-                if "FastPFor_JustCopy" not in access_codecs:
+                if "FastPFor_JustCopy" not in access_codecs.split(','):
                     access_codecs += ",FastPFor_JustCopy"
-                if "custom_direct_access" not in access_codecs:
+                if "custom_direct_access" not in access_codecs.split(','):
                     access_codecs += ",custom_direct_access"
                 
                 create_slurm_script(i, tiff, initial_transformation, access_transformation, initial_codecs, access_codecs, output_dir)
