@@ -70,7 +70,7 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         valueShift(blockData, /* delta */ pow(2,23));
     }
     else if (transformation == "linearSum") {
-        volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
         for (int bi = 0; bi < blockSize*blockSize; bi++) {
             dummy += blockData[bi];
         }
@@ -89,7 +89,7 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         }
     }
     else if (transformation == "randomSum") {
-        volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
         std::vector<int> bis(blockSize*blockSize,0);
         for (int iti = 0; iti < blockSize*blockSize; iti++) {
             int bi = rand() % (blockSize*blockSize);
