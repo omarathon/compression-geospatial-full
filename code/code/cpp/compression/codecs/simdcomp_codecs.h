@@ -22,7 +22,10 @@ public:
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {
-    simdunpack_length((const __m128i *)compressed.data(), length, reinterpret_cast<uint32_t *>(out), b);
+    uint64_t sum;
+    simdunpack_length((const __m128i *)compressed.data(), length, reinterpret_cast<uint32_t *>(out), b, &sum);
+    out[length] = static_cast<int32_t>(sum & 0xFFFFFFFF); // Lower 32 bits of sum
+    out[length + 1] = static_cast<int32_t>(sum >> 32);    // Higher 32 bits of sum
   }
 
   std::size_t encodedNumValues() override {
@@ -40,7 +43,7 @@ public:
   }
 
   std::size_t getOverflowSize(size_t) const override {
-    return 0;
+    return 2;
   }
 
   StatefulIntegerCodec<int32_t>* cloneFresh() const override {
