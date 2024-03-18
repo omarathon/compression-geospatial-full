@@ -44,14 +44,17 @@ bool test_codec(std::vector<int32_t>& data, StatefulIntegerCodec<int32_t>& codec
     std::vector<int32_t> data_back(data.size() + codec.getOverflowSize(data.size()));
 
     try {
-        setlinebuf(stdout);
         codec.decodeArray(data_back.data(), data.size());
-        // fflush( stdout );
-        setbuf(stdout, NULL);
     }
     catch (const std::exception& error) {
         std::cerr << "error decoding " << codec.name() << ": " << error.what() << std::endl;
         return false;
+    }
+
+    if (data.size() < 20) {
+        for (int i = 0; i < data.size() + 2; i++) {
+            std::cout << data_back[i] << std::endl;
+        }
     }
 
     uint32_t* data_back_unsigned = reinterpret_cast<uint32_t*>(data_back.data());
@@ -292,11 +295,15 @@ int main(int argc, char* argv[]) {
             // Broken.
             continue;
         }
-        if (fastpfor_codec->name() != "VariableByte") {
+        // if (fastpfor_codec->name() != "VariableByte") {
             // Only VariableByte
+            // continue;
+        // }
+        if (fastpfor_codec->name() != "SIMDPFor+VariableByte") {
+            // Only SIMDPFor
             continue;
         }
-        // codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
+        codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
 
         // Make composites
         // auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
