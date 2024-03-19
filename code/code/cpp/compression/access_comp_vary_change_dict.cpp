@@ -177,12 +177,12 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
     
     // int32_t* decbuf = (int32_t*)malloc((blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize)) * sizeof(int32_t));
 
-    // bool dataChange = 
-    //        accessTransformation == "threshold" 
-    //     || accessTransformation == "smoothAndShift" 
-    //     || accessTransformation == "indexBasedClassification" 
-    //     || accessTransformation == "valueBasedClassification" 
-    //     || accessTransformation == "valueShift";
+    bool dataChange = 
+           accessTransformation == "threshold" 
+        || accessTransformation == "smoothAndShift" 
+        || accessTransformation == "indexBasedClassification" 
+        || accessTransformation == "valueBasedClassification" 
+        || accessTransformation == "valueShift";
 
     // access indexes
     std::vector<std::size_t> accessIndexes;
@@ -215,27 +215,27 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
             std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize);
             timesAccessTransformation.push_back(accessTransformationTime);
 
-            /* re-encode with new codec */
-            std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedAccessCodec(accessCodec->cloneFresh());
-            std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = clonedAccessCodec;
+            if (dataChange) {
+                /* re-encode with new codec */
+                std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedAccessCodec(accessCodec->cloneFresh());
+                std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = clonedAccessCodec;
 
-            if (isDirectReenc) {
-                timesEnc.push_back(0);
-                reencCodec->allocEncoded(decbuf.data(), blockSize*blockSize);
-                reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
-            }
-            else {
-                reencCodec->allocEncoded(decbuf.data(), blockSize * blockSize);
-                auto startEncode= std::chrono::high_resolution_clock::now();
-                reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
-                auto endEncode = std::chrono::high_resolution_clock::now();
-                auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
-                timesEnc.push_back(encodeTime);
-            }
+                if (isDirectReenc) {
+                    timesEnc.push_back(0);
+                    reencCodec->allocEncoded(decbuf.data(), blockSize*blockSize);
+                    reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
+                }
+                else {
+                    reencCodec->allocEncoded(decbuf.data(), blockSize * blockSize);
+                    auto startEncode= std::chrono::high_resolution_clock::now();
+                    reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
+                    auto endEncode = std::chrono::high_resolution_clock::now();
+                    auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
+                    timesEnc.push_back(encodeTime);
+                }
 
-            // if (codecChanged) {
                 codecs[blockIndex] = std::move(clonedAccessCodec);
-            // }
+            }
         };
 
         if (!isDirectAccess) {
@@ -295,8 +295,8 @@ int main(int argc, char* argv[]) {
     int blockSize = atoi(argv[2]);
     int numBlocks = atoi(argv[3]);
     int numReps = atoi(argv[4]);
-    std::vector<std::string> initialCodecNames = parseCommaDelimited(std::string(argv[5]));
-    std::vector<std::string> accessCodecNames = parseCommaDelimited(std::string(argv[6]));
+    std::vector<std::string> initialCodecNames = parseBarDelimited(std::string(argv[5]));
+    std::vector<std::string> accessCodecNames = parseBarDelimited(std::string(argv[6]));
     std::vector<std::string> orderings = parseCommaDelimited(std::string(argv[7]));
     std::vector<std::string> initialTransformations = parseCommaDelimited(std::string(argv[8]));
     std::vector<std::string> sampleAccessPatterns = parseCommaDelimited(std::string(argv[9]));

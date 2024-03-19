@@ -16,6 +16,18 @@ std::vector<std::string> parseCommaDelimited(std::string str) {
     return result;
 }
 
+std::vector<std::string> parseBarDelimited(std::string str) {
+    std::stringstream ss(str);
+    std::vector<std::string> result;
+    while(ss.good())
+    {
+        std::string substr;
+        std::getline(ss, substr, '|');
+        result.push_back(substr);
+    }
+    return result;
+}
+
 int32_t avg(const std::vector<int32_t>& data) {
     if (data.empty()) return 0; // Avoid division by zero
 
@@ -29,12 +41,14 @@ float mean(const std::vector<float>& values) {
 }
 
 float variance(const std::vector<float>& values, float meanValue) {
+    if (values.empty()) return 0;
     float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
         [meanValue](double a, double b) { return a + (b - meanValue) * (b - meanValue); });
     return sq_sum / values.size();
 }
 
 std::size_t sum(const std::vector<std::size_t>& values) {
+    if (values.empty()) return 0;
     std::size_t result = 0;
     for (auto& value : values) {
         result += value;
@@ -48,6 +62,7 @@ float mean(const std::vector<std::size_t>& values) {
 }
 
 float variance(const std::vector<std::size_t>& values, float meanValue) {
+    if (values.empty()) return 0;
     float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
         [meanValue](std::size_t a, std::size_t b) { return (float)a + ((float)b - meanValue) * ((float)b - meanValue); });
     return sq_sum / values.size();
