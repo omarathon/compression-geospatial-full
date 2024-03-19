@@ -100,7 +100,7 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
 
     ######## TRANS
 
-    initial_transformations = ["none"]
+    initial_transformations = ["No Transformation"]
     access_transformations =  ["threshold", "smoothAndShift", "valueBasedClassification", "valueShift"] # not including "linearSum", "randomSum".
 
 
@@ -195,7 +195,7 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
 
     ####### AGG FROM NONE - don't need to consider encoding
 
-    initial_transformations = ["none"]
+    initial_transformations = ["No Transformation"]
     access_transformations =  ["linearSum", "randomSum"]
 
     for tiff in tiffs:
