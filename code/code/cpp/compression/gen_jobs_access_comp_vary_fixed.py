@@ -7,7 +7,7 @@ def create_slurm_script(index, file, initial_transformation, access_transformati
     slurm_script_template = f"""#!/bin/bash
 #SBATCH -J brr_access{index}
 #SBATCH -A MADHAVAPEDDY-SL3-CPU
-#SBATCH -p cclake
+#SBATCH -p cclake-himem
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=5000
@@ -79,18 +79,17 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
             "../../../../tiffs/geotiffs/srtm_45_15.tif"]
 
     initial_transformations = ["none", "threshold", "smoothAndShift", "valueBasedClassification", "valueShift"]
-    access_transformations =  ["linearXOR", "linearSum", "randomXOR", "randomSum", 
-                                "threshold", "smoothAndShift", "valueBasedClassification", "valueShift"]
+    access_transformations =  ["linearSum", "randomSum", "threshold", "smoothAndShift", "valueBasedClassification", "valueShift"]
 
-    def convert_to_comma_separated(input_string):
+    def convert_to_bar_separated(input_string):
         codecs = [codec.strip('"') for codec in input_string.split()]
-        return ','.join(codecs)
+        return '|'.join(codecs)
 
-    def union_of_comma_separated_strings(str1, str2):
-        list1 = str1.split(',')
-        list2 = str2.split(',')
+    def union_of_bar_separated_strings(str1, str2):
+        list1 = str1.split('|')
+        list2 = str2.split('|')
         union_set = set(list1) | set(list2)
-        result = ','.join(union_set)
+        result = '|'.join(union_set)
         return result
 
     i = 0
@@ -105,13 +104,13 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                     for row in reader:
                         file = row['File']
                         transformation = row['Transformation']
-                        pareto_decompression = convert_to_comma_separated(row['Pareto Decompression'])
-                        pareto_compression = convert_to_comma_separated(row['Pareto Compression'])
+                        pareto_decompression = convert_to_bar_separated(row['Pareto Decompression'])
+                        pareto_compression = convert_to_bar_separated(row['Pareto Compression'])
 
                         if tiff == file:
                             if transformation == initial_transformation:
                                 initial_codecs = pareto_decompression
-                                if access_transformation in ["linearXOR", "linearSum", "randomXOR", "randomSum"]: # no data change
+                                if access_transformation in ["linearSum", "randomSum"]: # no data change
                                     access_codecs = pareto_compression
                             if transformation == access_transformation:
                                 access_codecs = pareto_compression
@@ -122,16 +121,16 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                     sys.exit("no matching access_codecs")
 
                 # add mantatory codecs
-                if "FastPFor_JustCopy" not in initial_codecs.split(','):
-                    initial_codecs += ",FastPFor_JustCopy"
-                if "custom_direct_access" not in initial_codecs.split(','):
-                    initial_codecs += ",custom_direct_access"
-                if "FastPFor_JustCopy" not in access_codecs.split(','):
-                    access_codecs += ",FastPFor_JustCopy"
-                if "custom_direct_access" not in access_codecs.split(','):
-                    access_codecs += ",custom_direct_access"
+                if "FastPFor_JustCopy" not in initial_codecs.split('|'):
+                    initial_codecs += "|FastPFor_JustCopy"
+                if "custom_direct_access" not in initial_codecs.split('|'):
+                    initial_codecs += "|custom_direct_access"
+                if "FastPFor_JustCopy" not in access_codecs.split('|'):
+                    access_codecs += "|FastPFor_JustCopy"
+                if "custom_direct_access" not in access_codecs.split('|'):
+                    access_codecs += "|custom_direct_access"
 
-                pareto_codecs = union_of_comma_separated_strings(initial_codecs, access_codecs)
+                pareto_codecs = union_of_bar_separated_strings(initial_codecs, access_codecs)
                 
                 create_slurm_script(i, tiff, initial_transformation, access_transformation, pareto_codecs, pareto_codecs, output_dir)
 

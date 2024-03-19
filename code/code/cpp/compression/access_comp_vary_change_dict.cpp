@@ -295,8 +295,8 @@ int main(int argc, char* argv[]) {
     int blockSize = atoi(argv[2]);
     int numBlocks = atoi(argv[3]);
     int numReps = atoi(argv[4]);
-    std::vector<std::string> initialCodecNames = parseCommaDelimited(std::string(argv[5]));
-    std::vector<std::string> accessCodecNames = parseCommaDelimited(std::string(argv[6]));
+    std::vector<std::string> initialCodecNames = parseBarDelimited(std::string(argv[5]));
+    std::vector<std::string> accessCodecNames = parseBarDelimited(std::string(argv[6]));
     std::vector<std::string> orderings = parseCommaDelimited(std::string(argv[7]));
     std::vector<std::string> initialTransformations = parseCommaDelimited(std::string(argv[8]));
     std::vector<std::string> sampleAccessPatterns = parseCommaDelimited(std::string(argv[9]));
