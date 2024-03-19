@@ -16,6 +16,18 @@ std::vector<std::string> parseCommaDelimited(std::string str) {
     return result;
 }
 
+std::vector<std::string> parseBarDelimited(std::string str) {
+    std::stringstream ss(str);
+    std::vector<std::string> result;
+    while(ss.good())
+    {
+        std::string substr;
+        std::getline(ss, substr, '|');
+        result.push_back(substr);
+    }
+    return result;
+}
+
 int32_t avg(const std::vector<int32_t>& data) {
     if (data.empty()) return 0; // Avoid division by zero
 
