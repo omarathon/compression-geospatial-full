@@ -101,8 +101,8 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
         for initial_transformation in initial_transformations:
             for access_transformation in access_transformations:
                 # find initial codecs and access codecs from csv
-                initial_codecs=None
-                initial_codecs2=None
+                initial_codecs=""
+                initial_codecs2=""
                 access_codec="FastPFor_JustCopy" # dummy
                 with open(csv_file_path, mode='r', encoding='utf-8-sig') as csvfile:
                     reader = csv.DictReader(csvfile)
@@ -122,8 +122,8 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                             # if transformation == access_transformation:
                             #     access_codecs = pareto_compression
 
-                if initial_codecs is None or len(initial_codecs) == 0 or len(initial_codecs2) == 0:
-                    sys.exit("no matching initial_codecs")
+                # if initial_codecs is None or len(initial_codecs) == 0 or len(initial_codecs2) == 0:
+                #     sys.exit("no matching initial_codecs")
                 # if access_codecs is None or len(access_codecs) == 0:
                 #     sys.exit("no matching access_codecs")
 
@@ -142,6 +142,7 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                 initial_codecs_arr.append('FastPFor_JustCopy')
                 initial_codecs_arr.append('custom_direct_access')
 
+                print(len(initial_codecs_arr))
 
 
 
