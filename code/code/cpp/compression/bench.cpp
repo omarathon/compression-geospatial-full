@@ -51,11 +51,11 @@ bool test_codec(std::vector<int32_t>& data, StatefulIntegerCodec<int32_t>& codec
         return false;
     }
 
-    if (data.size() < 20) {
-        for (int i = 0; i < data.size() + 2; i++) {
-            std::cout << data_back[i] << std::endl;
-        }
-    }
+    // if (data.size() < 20) {
+    //     for (int i = 0; i < data.size() + 2; i++) {
+    //         std::cout << data_back[i] << std::endl;
+    //     }
+    // }
 
     uint32_t* data_back_unsigned = reinterpret_cast<uint32_t*>(data_back.data());
     uint32_t* data_unsigned = reinterpret_cast<uint32_t*>(data.data());
@@ -145,14 +145,15 @@ int main(int argc, char* argv[]) {
 
     std::random_device rd;  // Obtain a random number from hardware
     std::mt19937 gen(rd()); // Seed the generator
-    std::uniform_int_distribution<> distr(min, max); // Define the range
+    std::uniform_int_distribution<> distr(0, max); // Define the range
 
     std::vector<int32_t> data_large;
     // NOTE: 250,000 number of values means the dictionary must be int32s so dictionary compressors don't give a <1 compression ratio.
     // Corresponds to 1MB of data
     for (int i = 0; i < n_val; i++) {
         data_large.push_back(i);
-        data_large.push_back(min + i);
+
+        // data_large.push_back(min + i);
         data_large.push_back(max - i);
 
         data_large.push_back(distr(gen));
@@ -236,7 +237,7 @@ int main(int argc, char* argv[]) {
     // codecs.push_back(std::make_unique<DeltaCodecAVX2>());
     // codecs.push_back(std::make_unique<DeltaCodecAVX512>());
     // codecs.push_back(std::make_unique<FORCodecAVX512>());
-    // codecs.push_back(std::make_unique<RLECodecAVX512>());
+    codecs.push_back(std::make_unique<RLECodecAVX512>());
     // // codecs.push_back(std::make_unique<DictCodec<dict_type>>(dict, reverseDict));
     // // codecs.push_back(std::make_unique<DictCodecPacking<dict_type>>(dict, reverseDict));
     // codecs.push_back(std::make_unique<FORCodec>());

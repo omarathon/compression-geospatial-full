@@ -1366,9 +1366,11 @@ public:
 
     void decodeArray(int32_t *out, const size_t length) override {
         size_t outIndex = 0;
+        uint64_t sum = 0;
         for (size_t i = 0; i < compressed_data.size(); i += 2) {
             int32_t value = compressed_data[i];
             size_t runLength = compressed_data[i + 1];
+            sum += (static_cast<uint32_t>(value) * runLength);
 
             // Vectorized filling of output array using AVX-512
             __m512i val_vec = _mm512_set1_epi32(value);
@@ -1383,6 +1385,9 @@ public:
                 out[outIndex++] = value;
             }
         }
+        // store sum
+        out[length] = static_cast<uint32_t>(sum & 0xFFFFFFFF); // Lower 32 bits of sum
+        out[length + 1] = static_cast<uint32_t>(sum >> 32);    // Higher 32 bits of sum
     }
     
     std::size_t encodedNumValues() override {
@@ -1400,7 +1405,7 @@ public:
     }
 
     std::size_t getOverflowSize(size_t) const override {
-      return 0;
+      return 2; // for lower and upper bits of sum.
     }
 
     StatefulIntegerCodec<int32_t>* cloneFresh() const override {
