@@ -55,7 +55,7 @@ numBlock=${{numBlocks[$SLURM_ARRAY_TASK_ID]}}
 
 # Run the command
 source ./modules.sh
-CMD="./access_comp_vary_change_dict '{file}' '256' '$numblock' '10' '{initial_codecs}' '{access_codecs}' 'morton' '{initial_transformation}' 'linear' '{access_transformation}'"
+CMD="./access_comp_vary_change_dict '{file}' '256' '$numBlock' '10' '{initial_codecs}' '{access_codecs}' 'morton' '{initial_transformation}' 'linear' '{access_transformation}'"
 echo "Executing command: $CMD"
 eval $CMD
 """
