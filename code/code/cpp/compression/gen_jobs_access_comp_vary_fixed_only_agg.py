@@ -149,7 +149,7 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                 # if "custom_direct_access" not in access_codecs.split('|'):
                 #     access_codecs += "|custom_direct_access"
                 
-                create_slurm_script(i, tiff, initial_transformation, access_transformation, initial_codecs_arr.join('|'), access_codec, output_dir)
+                create_slurm_script(i, tiff, initial_transformation, access_transformation, '|'.join(initial_codecs_arr), access_codec, output_dir)
 
                 i+=1
 
