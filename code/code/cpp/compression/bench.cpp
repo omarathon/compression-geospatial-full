@@ -254,6 +254,12 @@ int main(int argc, char* argv[]) {
     // codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
     // codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
     codecs.push_back(std::make_unique<SimdCompCodec>());
+    auto rleCodec = std::make_unique<RLECodecAVX512>();
+    auto simdCompCodec = std::make_unique<SimdCompCodec>();
+    auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+        std::move(rleCodec), std::move(simdCompCodec)
+    );
+    codecs.push_back(std::move(compositeCodec));
     // codecs.push_back(std::make_unique<LZ4Codec>()); // WORKS but slow
     // // codecs.push_back(std::make_unique<LZMACodec>()); // WORKS but slow
     // codecs.push_back(std::make_unique<ZstdCodec>(3));
