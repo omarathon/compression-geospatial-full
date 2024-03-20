@@ -52,7 +52,7 @@ void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& o
 }
 
 // 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum'
-std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std::string& transformation, std::size_t blockSize) {
+std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std::string& transformation, std::size_t blockSize, bool isSumOptimised) {
     auto startRead = std::chrono::high_resolution_clock::now();
     if (transformation == "threshold") {
         threshold(blockData, /* threshold_value */ avg(blockData));
@@ -70,10 +70,17 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         valueShift(blockData, /* delta */ pow(2,23));
     }
     else if (transformation == "linearSum") {
-        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
-        for (int bi = 0; bi < blockSize*blockSize; bi++) {
-            dummy += blockData[bi];
+        if (isSumOptimised) {
+            volatile uint64_t sum = 0;
+            sum = (static_cast<uint64_t>(blockData[blockSize*blockSize + 1]) << 32) | blockData[blockSize*blockSize];
         }
+        else {
+            volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
+            for (int bi = 0; bi < blockSize*blockSize; bi++) {
+                dummy += blockData[bi];
+            }
+        }
+        
     }
     else if (transformation == "randomXOR") {
         volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
@@ -89,16 +96,22 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         }
     }
     else if (transformation == "randomSum") {
-        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
-        std::vector<int> bis(blockSize*blockSize,0);
-        for (int iti = 0; iti < blockSize*blockSize; iti++) {
-            int bi = rand() % (blockSize*blockSize);
-            bis[iti] = bi;
+        if (isSumOptimised) {
+            volatile uint64_t sum = 0;
+            sum = (static_cast<uint64_t>(blockData[blockSize*blockSize + 1]) << 32) | blockData[blockSize*blockSize];
         }
-        startRead = std::chrono::high_resolution_clock::now();
-        for (int iti = 0; iti < blockSize*blockSize; iti++) {
-            int bi = bis[iti];
-            dummy += blockData[bi];
+        else {
+            volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
+            std::vector<int> bis(blockSize*blockSize,0);
+            for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                int bi = rand() % (blockSize*blockSize);
+                bis[iti] = bi;
+            }
+            startRead = std::chrono::high_resolution_clock::now();
+            for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                int bi = bis[iti];
+                dummy += blockData[bi];
+            }
         }
     }
     else { // includes linearXOR
@@ -162,6 +175,19 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
     return codecs;
 }
 
+bool isCodecSumOptimised(const std::string& str) {
+    if (str == "simdcomp") {
+        return true;
+    }
+    else if (str == "FastPFor_SIMDPFor+VariableByte") {
+        return true;
+    }
+    else if (str.substr(0, 24) == "[+]_custom_rle_vecavx512") {
+        return true;
+    }
+    return false;
+}
+
 // access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}
 void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, std::unique_ptr<StatefulIntegerCodec<int32_t>> accessCodec, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
                      std::vector<std::size_t>& timesDec, std::vector<std::size_t>& timesAccessTransformation, std::vector<std::size_t>& timesEnc) {
@@ -169,6 +195,8 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
     bool isDirectReenc = (accessCodec->name() == "custom_direct_access");
+
+    bool isSumOptimised = isCodecSumOptimised(codecs[0]->name());
 
     // bool codecChanged = (codecs[0]->name() != accessCodec->name());
 
@@ -212,7 +240,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
             timesDec.push_back(decodeTime);
 
             /* perform transformation */
-            std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize);
+            std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize, isSumOptimised);
             timesAccessTransformation.push_back(accessTransformationTime);
 
             if (dataChange) {
@@ -277,7 +305,7 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
         || accessTransformation == "valueShift";
 
     if (dataChange) {
-        applyAccessTransformation(blockData, accessTransformation, blockSize);
+        applyAccessTransformation(blockData, accessTransformation, blockSize, false);
     }
     
     for (auto& value : blockData) {

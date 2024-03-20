@@ -102,6 +102,7 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
             for access_transformation in access_transformations:
                 # find initial codecs and access codecs from csv
                 initial_codecs=None
+                initial_codecs2=None
                 access_codec="FastPFor_JustCopy" # dummy
                 with open(csv_file_path, mode='r', encoding='utf-8-sig') as csvfile:
                     reader = csv.DictReader(csvfile)
@@ -110,16 +111,18 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                         transformation = row['Transformation']
                         pareto_decompression = convert_to_bar_separated(row['Pareto Decompression'])
                         pareto_compression = convert_to_bar_separated(row['Pareto Compression'])
+                        pareto_compression_decompression = convert_to_bar_separated(row['Pareto Compression Decompression'])
 
                         if tiff == file:
                             if transformation == initial_transformation:
                                 initial_codecs = pareto_decompression
+                                initial_codecs2 = pareto_compression_decompression
                                 # if access_transformation in ["linearSum", "randomSum"]: # no data change
                                 #     access_codecs = pareto_compression
                             # if transformation == access_transformation:
                             #     access_codecs = pareto_compression
 
-                if initial_codecs is None or len(initial_codecs) == 0:
+                if initial_codecs is None or len(initial_codecs) == 0 or len(initial_codecs2) == 0:
                     sys.exit("no matching initial_codecs")
                 # if access_codecs is None or len(access_codecs) == 0:
                 #     sys.exit("no matching access_codecs")
@@ -129,6 +132,9 @@ def create_slurm_scripts_from_csv(csv_file_path, output_dir):
                 initial_codecs_arr = []
                 for initial_codec in initial_codecs.split('|'):
                     if initial_codec.startswith('[+]_custom_rle_vecavx512'):
+                        initial_codecs_arr.append(initial_codec)
+                for initial_codec in initial_codecs2.split('|'):
+                    if initial_codec.startswith('[+]_custom_rle_vecavx512') and (initial_codec not in initial_codecs_arr): 
                         initial_codecs_arr.append(initial_codec)
 
                 initial_codecs_arr.append('simdcomp')
