@@ -6,7 +6,7 @@ def create_slurm_script(index, file, initial_transformation, access_transformati
     # Define the template of the Slurm script with placeholders
     slurm_script_template = f"""#!/bin/bash
 #SBATCH -J brr_access{index}
-#SBATCH -A MADHAVAPEDDY-SL3-CPU
+#SBATCH -A REDACTED
 #SBATCH -p cclake-himem
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

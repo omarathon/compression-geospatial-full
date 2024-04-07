@@ -12,7 +12,7 @@
 #! Name of the job:
 #SBATCH -J cpujob
 #! Which project should be charged:
-#SBATCH -A MADHAVAPEDDY-SL3-CPU
+#SBATCH -A REDACTED
 #SBATCH -p cclake
 #! How many whole nodes should be allocated?
 #SBATCH --nodes=1
