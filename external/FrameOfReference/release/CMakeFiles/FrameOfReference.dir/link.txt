@@ -1,0 +1,2 @@
+/usr/bin/ar qc libFrameOfReference.a CMakeFiles/FrameOfReference.dir/src/bpacking.cpp.o
+/usr/bin/ranlib libFrameOfReference.a

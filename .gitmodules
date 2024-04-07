@@ -1,30 +1,30 @@
-[submodule "code/code/cpp/compression/external/TurboPFor"]
-	path = code/code/cpp/compression/external/TurboPFor
+[submodule "external/TurboPFor"]
+	path = external/TurboPFor
 	url = https://github.com/powturbo/TurboPFor-Integer-Compression.git
-[submodule "code/code/cpp/compression/external/2i_bench"]
-	path = code/code/cpp/compression/external/2i_bench
+[submodule "external/2i_bench"]
+	path = external/2i_bench
 	url = https://github.com/jermp/2i_bench.git
-[submodule "code/code/cpp/compression/external/FastPFor"]
-	path = code/code/cpp/compression/external/FastPFor
+[submodule "external/FastPFor"]
+	path = external/FastPFor
 	url = https://github.com/lemire/FastPFor.git
-[submodule "code/code/cpp/compression/external/MaskedVByte"]
-	path = code/code/cpp/compression/external/MaskedVByte
+[submodule "external/MaskedVByte"]
+	path = external/MaskedVByte
 	url = https://github.com/lemire/MaskedVByte.git
-[submodule "code/code/cpp/compression/external/dictionary"]
-	path = code/code/cpp/compression/external/dictionary
+[submodule "external/dictionary"]
+	path = external/dictionary
 	url = https://github.com/lemire/dictionary
-[submodule "code/code/cpp/compression/external/lz4"]
-	path = code/code/cpp/compression/external/lz4
+[submodule "external/lz4"]
+	path = external/lz4
 	url = https://github.com/lz4/lz4.git
-[submodule "code/code/cpp/compression/external/streamvbyte"]
-	path = code/code/cpp/compression/external/streamvbyte
+[submodule "external/streamvbyte"]
+	path = external/streamvbyte
 	url = https://github.com/lemire/streamvbyte.git
-[submodule "code/code/cpp/compression/external/simdcomp"]
-	path = code/code/cpp/compression/external/simdcomp
+[submodule "external/simdcomp"]
+	path = external/simdcomp
 	url = https://github.com/lemire/simdcomp.git
-[submodule "code/code/cpp/compression/external/FrameOfReference"]
-	path = code/code/cpp/compression/external/FrameOfReference
+[submodule "external/FrameOfReference"]
+	path = external/FrameOfReference
 	url = https://github.com/omarathon/FrameOfReference.git
-[submodule "code/code/cpp/compression/external/libmorton"]
-	path = code/code/cpp/compression/external/libmorton
+[submodule "external/libmorton"]
+	path = external/libmorton
 	url = https://github.com/Forceflow/libmorton.git

@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall -std=c++11 -O3 -DNDEBUG -rdynamic CMakeFiles/unit.dir/src/test.cpp.o -o unit  libFrameOfReference.a 

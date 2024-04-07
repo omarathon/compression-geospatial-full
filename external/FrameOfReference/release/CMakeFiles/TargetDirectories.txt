@@ -1,0 +1,5 @@
+/home/omar/cam-mini-project/code/code/cpp/compression/external/FrameOfReference/release/CMakeFiles/FrameOfReference.dir
+/home/omar/cam-mini-project/code/code/cpp/compression/external/FrameOfReference/release/CMakeFiles/unit.dir
+/home/omar/cam-mini-project/code/code/cpp/compression/external/FrameOfReference/release/CMakeFiles/test.dir
+/home/omar/cam-mini-project/code/code/cpp/compression/external/FrameOfReference/release/CMakeFiles/edit_cache.dir
+/home/omar/cam-mini-project/code/code/cpp/compression/external/FrameOfReference/release/CMakeFiles/rebuild_cache.dir
