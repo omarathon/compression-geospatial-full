@@ -5,7 +5,6 @@
 #include <stdexcept>
 
 // Remap a 1D array from row-major to Morton order using the libmorton library
-// TODO: Fix so it works with N=48. Get an out-of-bounds access with N=48 for some reason. Works with N=16,32,64,128,256.
 std::vector<int32_t> remapToMortonOrder(const std::vector<int32_t>& input, int N) {
     if (input.size() != N * N) {
         throw std::invalid_argument("Morton remap input size does not match the specified dimensions.");
@@ -30,20 +29,18 @@ std::vector<int32_t> remapToMortonOrder(const std::vector<int32_t>& input, int N
 
 // Remap a 1D array from row-major to zigzag order
 std::vector<int32_t> remapToZigzagOrder(const std::vector<int32_t>& input, int N) {
-    std::vector<int32_t> output(N * N); // Initialize output vector with the same size as input
+    std::vector<int32_t> output(N * N);
 
     for (int y = 0; y < N; ++y) {
         if (y % 2 == 0) {
-            // Even rows: left to right
             for (int x = 0; x < N; ++x) {
-                int index = y * N + x; // Calculate index in the original (row-major) array
+                int index = y * N + x; 
                 output[index] = input[index];
             }
         } else {
-            // Odd rows: right to left
             for (int x = 0; x < N; ++x) {
-                int index = y * N + x; // Calculate index in the original (row-major) array
-                int zigzagIndex = y * N + (N - 1 - x); // Calculate the zigzag index
+                int index = y * N + x;
+                int zigzagIndex = y * N + (N - 1 - x);
                 output[zigzagIndex] = input[index];
             }
         }

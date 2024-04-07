@@ -1,9 +1,7 @@
 #include "codecs/generic_codecs.h"
-// #include "codecs/direct_codec.h"
 #include "codecs/composite_codec.h"
 #include "codecs/deflate_codecs.h"
 #include "codecs/fastpfor_codecs.h"
-// #include "codecs/2ibench_codecs.h"
 #include "codecs/custom_unvec_logic_codecs.h"
 #include "codecs/custom_vec_logic_codecs.h"
 #include "codecs/maskedvbyte_codecs.h"
@@ -25,10 +23,6 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initLogicalCodecs
 
     codecs.push_back(std::make_unique<DictCodec<T>>(dict, reverseDict));
     codecs.push_back(std::make_unique<DictCodecAVX2<T>>(dict, reverseDict));
-
-    // NOTE: Packing occurs with physical.
-    // codecs.push_back(std::make_unique<DictCodecPacking<T>>(dict, reverseDict));
-    // codecs.push_back(std::make_unique<DictCodecPackingAVX2<T>>(dict, reverseDict));
 
     codecs.push_back(std::make_unique<DeltaCodec>());
     codecs.push_back(std::make_unique<DeltaCodecSSE42>());
@@ -58,15 +52,12 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
     codecs.push_back(std::make_unique<MaskedVByteCodec>());
     codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
     codecs.push_back(std::make_unique<StreamVByteCodec>());
-    // codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
     codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
     codecs.push_back(std::make_unique<SimdCompCodec>());
     codecs.push_back(std::make_unique<LZ4Codec>());
     codecs.push_back(std::make_unique<ZstdCodec>(1));
     codecs.push_back(std::make_unique<ZstdCodec>(3));
     codecs.push_back(std::make_unique<ZstdCodec>(5));
-
-    // codecs.push_back(std::make_unique<DirectAccessCodec>());
 
     // TurboPFor Codecs
     for (size_t tpfCodecId = 1; tpfCodecId <= 20; tpfCodecId++) {

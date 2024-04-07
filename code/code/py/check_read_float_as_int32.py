@@ -9,14 +9,8 @@ def compare_float32_and_int32_reading(tiff_file):
         return
 
     band = dataset.GetRasterBand(1)
-
-    # Reading data as float32
     data_float32 = band.ReadAsArray(0, 0, band.XSize, band.YSize, buf_type=gdal.GDT_Float32)
-
-    # Reading data as int32
     data_int32 = band.ReadAsArray(0, 0, band.XSize, band.YSize, buf_type=gdal.GDT_Int32)
-
-    # Compare
     if np.array_equal(data_float32, data_int32):
         print("Reading as float32 and int32 yields the same data.")
     else:
