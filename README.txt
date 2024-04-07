@@ -1,4 +1,4 @@
-Cambridge MRes Project titled "Assessing high-performance lightweight compression formats for Geospatial computation".
+Cambridge MRes Project "Assessing high-performance lightweight compression formats for Geospatial computation".
 
 Main programs:
 * test_comp.cpp - test codecs
@@ -15,3 +15,11 @@ Additional:
 Setup:
 1. obtain the submodules in `external` and build them
 2. `make`
+
+Branches (uncleaned):
+* agg - with modifications for fusing aggregation into decompression
+* hpc - with modifications for running on HPC
+
+Note for fusing aggregation into decompression: use the `agg` branch & re-build `external` with the following forks:
+* FastPFor: https://github.com/omarathon/FastPFor
+* simdcomp: https://github.com/omarathon/simdcomp
