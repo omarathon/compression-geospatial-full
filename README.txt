@@ -21,5 +21,5 @@ Branches (uncleaned):
 * hpc - with modifications for running on HPC
 
 Note for fusing aggregation into decompression: use the `agg` branch & re-build `external` with the following forks:
-* FastPFor: https://github.com/omarathon/FastPFor
-* simdcomp: https://github.com/omarathon/simdcomp
+* FastPFor - https://github.com/omarathon/FastPFor
+* simdcomp - https://github.com/omarathon/simdcomp
