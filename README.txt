@@ -23,3 +23,5 @@ Branches (uncleaned):
 Note for fusing aggregation into decompression: use the `agg` branch & re-build `external` with the following forks:
 * FastPFor: https://github.com/omarathon/FastPFor
 * simdcomp: https://github.com/omarathon/simdcomp
+
+License: CC BY 4.0
