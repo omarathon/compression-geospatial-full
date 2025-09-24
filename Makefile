@@ -8,7 +8,16 @@ LIBS_LZMA = -llzma
 LIBS_LZ4 = -llz4
 LIBS_ZSTD = -lzstd
 
-all: test_comp test_remappings bench_comp bench_pipeline
+PYTHON      = python
+PYTHON_INC  = $(shell $(PYTHON) -m pybind11 --includes)
+PYEXT       = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX'))")
+PYLIBDIR    = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+PYLDLIB     = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))")
+PYLDFLAGS   = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('LDFLAGS'))")
+PYLIBS      = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('LIBS'))")
+PYSYSLIBS   = $(shell $(PYTHON) -c "import sysconfig; print(sysconfig.get_config_var('SYSLIBS'))")
+
+all: test_comp bench_comp bench_pipeline codec$(PYEXT)
 
 test_comp: test_comp.cpp
 	$(CXX) $(CXXFLAGS) -o test_comp test_comp.cpp $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
@@ -22,5 +31,17 @@ bench_comp: bench_comp.cpp
 bench_pipeline: bench_pipeline.cpp
 	$(CXX) $(CXXFLAGS) -o bench_pipeline bench_pipeline.cpp $(LIBS) $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) -Wl,-rpath,./external/MaskedVByte
 
+codec$(PYEXT): codec.cpp
+	$(CXX) $(CXXFLAGS) -O3 -Wall -shared -fPIC \
+	    codec.cpp -o codec$(PYEXT) \
+	    $(PYTHON_INC) \
+	    -L$(PYLIBDIR) -l$(PYLDLIB:lib%.so=%) \
+	    $(PYLDFLAGS) $(PYLIBS) $(PYSYSLIBS) \
+	    $(LDFLAGS) $(LIBS_DEFLATE) $(LIBS_LZMA) $(LIBS_LZ4) $(LIBS_ZSTD) \
+		-Wl,-rpath,./external/MaskedVByte
+
+codec: codec$(PYEXT)
+	@echo "Built Python extension: $<"
+	
 clean:
 	rm -f test_comp test_remappings bench_comp bench_pipeline
