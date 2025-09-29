@@ -25,7 +25,7 @@ unsigned char *vszenc32(uint32_t *in, unsigned n, unsigned char *out, uint32_t *
 unsigned char *vszdec32(unsigned char *in, unsigned n, uint32_t *out) { unsigned char *p = vsdec32(in,n,out); bitzdec32(out, n, 0); return p; }
 
 class TurboPForCodec : public StatefulIntegerCodec<int32_t> {
-private:
+protected:
     std::vector<uint8_t> compressed;
     std::vector<uint8_t> tmp;
     std::vector<uint32_t> tmp32;

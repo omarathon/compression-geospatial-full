@@ -129,3 +129,110 @@ public:
       return secondCodec->getEncoded();
     }
 };
+
+template<typename T>
+class FastCompositeStatefulIntegerCodec : public StatefulIntegerCodec<T> {
+private:
+    std::unique_ptr<StatefulIntegerCodec<T>> firstCodec;
+    std::unique_ptr<StatefulIntegerCodec<T>> secondCodec;
+    size_t intermediateEncodedSize; // Cache size of intermediate array
+
+public:
+    FastCompositeStatefulIntegerCodec(std::unique_ptr<StatefulIntegerCodec<T>> first,
+                                      std::unique_ptr<StatefulIntegerCodec<T>> second)
+        : firstCodec(std::move(first)), secondCodec(std::move(second)), intermediateEncodedSize(0) {}
+
+    // ---- Core encode/decode ----
+    void encodeArray(const T *in, const size_t length) override {
+        // First stage encode (RLE)
+        firstCodec->allocEncoded(in, length);
+        firstCodec->encodeArray(in, length);
+
+        auto &intermediateData = firstCodec->getEncoded();
+        intermediateEncodedSize = intermediateData.size();
+
+        // Second stage encode (bitpack)
+        secondCodec->allocEncoded(intermediateData.data(), intermediateEncodedSize);
+        secondCodec->encodeArray(intermediateData.data(), intermediateEncodedSize);
+
+        // Free intermediate buffer ASAP
+        firstCodec->clear();
+        std::vector<T>().swap(intermediateData);  // force release
+    }
+
+    void decodeArray(T *out, const size_t length) override {
+        auto &decodedIntermediateData = firstCodec->getEncoded();
+        decodedIntermediateData.clear();
+
+        // Must resize to allocate real storage
+        decodedIntermediateData.resize(intermediateEncodedSize + secondCodec->getOverflowSize(intermediateEncodedSize));
+
+        // Decode second codec (bitpack) into RLE domain
+        secondCodec->decodeArray(decodedIntermediateData.data(), intermediateEncodedSize);
+
+        decodedIntermediateData.resize(intermediateEncodedSize);
+
+        // Decode RLE into final output
+        firstCodec->decodeArray(out, length);
+
+        // Free intermediate buffer ASAP
+        firstCodec->clear();
+        std::vector<T>().swap(decodedIntermediateData);
+    }
+
+    // ---- Bench helpers ----
+    size_t benchEncode(const T *in, const size_t length) override {
+        auto start = std::chrono::high_resolution_clock::now();
+        encodeArray(in, length);
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
+
+    size_t benchDecode(T *out, const size_t length) override {
+        auto start = std::chrono::high_resolution_clock::now();
+        decodeArray(out, length);
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
+
+    // ---- Allocation ----
+    void allocEncoded(const T* in, size_t length) override {
+        // no-op: we handle allocations inside encodeArray
+    }
+
+    // ---- Info ----
+    std::size_t encodedNumValues() override {
+        return secondCodec->encodedNumValues();
+    }
+
+    std::size_t encodedSizeValue() override {
+        return secondCodec->encodedSizeValue();
+    }
+
+    std::size_t getOverflowSize(size_t length) const override {
+        return firstCodec->getOverflowSize(length);
+    }
+
+    std::string name() const override {
+        return "[+]_" + firstCodec->name() + "+" + secondCodec->name();
+    }
+
+    // ---- Lifecycle ----
+    void clear() override {
+        firstCodec->clear();
+        secondCodec->clear();
+    }
+
+    StatefulIntegerCodec<T>* cloneFresh() const override {
+        auto clonedFirst = firstCodec->cloneFresh();
+        auto clonedSecond = secondCodec->cloneFresh();
+        return new FastCompositeStatefulIntegerCodec<T>(
+            std::move(std::unique_ptr<StatefulIntegerCodec<T>>(clonedFirst)),
+            std::move(std::unique_ptr<StatefulIntegerCodec<T>>(clonedSecond))
+        );
+    }
+
+    std::vector<T>& getEncoded() override {
+        return secondCodec->getEncoded();
+    }
+};

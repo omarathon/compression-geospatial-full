@@ -29,7 +29,7 @@ public:
     codec->encodeArray(reinterpret_cast<const uint32_t *>(in), length, compressed.data(), compressed_size);
     // Optional shrinking - NOTE: need to store the size if not shrinking
     compressed.resize(compressed_size);
-    compressed.shrink_to_fit();
+    compressed.shrink_to_fit(); // CRUCIAL - RSS becomes awful if we don't do this.
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {

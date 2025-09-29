@@ -11,16 +11,17 @@
 // direct access codec //
 /////////////////////////
 
-class DirectAccessCodec : public StatefulIntegerCodec<int32_t> {
+template <typename T> // T: type of data being compressed
+class DirectAccessCodec : public StatefulIntegerCodec<T> {
 public:
 
-  std::vector<int32_t> compressed;
+  std::vector<T> compressed;
 
-  void encodeArray(const int32_t *in, const size_t length) override {
-    std::memcpy(compressed.data(), in, length * sizeof(int32_t));
+  void encodeArray(const T *in, const size_t length) override {
+    std::memcpy(compressed.data(), in, length * sizeof(T));
   }
 
-  void decodeArray(int32_t *out, const std::size_t length) override {
+  void decodeArray(T *out, const std::size_t length) override {
   }
 
   std::size_t encodedNumValues() override {
@@ -28,7 +29,7 @@ public:
   }
 
   std::size_t encodedSizeValue() override {
-    return sizeof(int32_t);
+    return sizeof(T);
   }
 
   virtual ~DirectAccessCodec() {}
@@ -41,11 +42,11 @@ public:
     return 0;
   }
 
-  StatefulIntegerCodec<int32_t>* cloneFresh() const override {
-    return new DirectAccessCodec();
+  StatefulIntegerCodec<T>* cloneFresh() const override {
+    return new DirectAccessCodec<T>();
   }
 
-  void allocEncoded(const int32_t* in, size_t length) override {
+  void allocEncoded(const T* in, size_t length) override {
     compressed.resize(length);
   };
 
@@ -54,21 +55,22 @@ public:
       compressed.shrink_to_fit();
   }
 
-  std::vector<int32_t>& getEncoded() override {
+  std::vector<T>& getEncoded() override {
       return compressed;
   };
 };
 
-class PointerDirectAccessCodec : public StatefulIntegerCodec<int32_t> {
+template <typename T> // T: type of data being compressed
+class PointerDirectAccessCodec : public StatefulIntegerCodec<T> {
 public:
-    std::shared_ptr<int32_t[]> data;
+    std::shared_ptr<T[]> data;
     size_t length = 0;
 
-    void encodeArray(const int32_t* in, const size_t len) override {
+    void encodeArray(const T* in, const size_t len) override {
         throw std::runtime_error("PointerDirectAccessCodec has no std::vector");
     }
 
-    void decodeArray(int32_t* out, const std::size_t len) override {
+    void decodeArray(T* out, const std::size_t len) override {
         // No-op: we already point to the original data
         (void)out;
         (void)len;
@@ -79,7 +81,7 @@ public:
     }
 
     std::size_t encodedSizeValue() override {
-        return sizeof(int32_t);
+        return sizeof(T);
     }
 
     ~PointerDirectAccessCodec() override = default;
@@ -92,11 +94,11 @@ public:
         return 0;
     }
 
-    StatefulIntegerCodec<int32_t>* cloneFresh() const override {
-        return new PointerDirectAccessCodec();
+    StatefulIntegerCodec<T>* cloneFresh() const override {
+        return new PointerDirectAccessCodec<T>();
     }
 
-    void allocEncoded(const int32_t* in, size_t len) override {
+    void allocEncoded(const T* in, size_t len) override {
         throw std::runtime_error("PointerDirectAccessCodec has no std::vector");
     }
 
@@ -105,14 +107,14 @@ public:
         length = 0;
     }
 
-    std::vector<int32_t>& getEncoded() override {
+    std::vector<T>& getEncoded() override {
         throw std::runtime_error("PointerDirectAccessCodec has no std::vector");
     }
 
-    void setOwnedBuffer(std::shared_ptr<int32_t[]> buf, size_t len) {
+    void setOwnedBuffer(std::shared_ptr<T[]> buf, size_t len) {
         data = std::move(buf);
         length = len;
     }
 
-    int32_t* getPointer() const { return data.get(); }
+    T* getPointer() const { return data.get(); }
 };

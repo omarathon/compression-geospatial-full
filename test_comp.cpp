@@ -13,18 +13,44 @@
 
 #include "codecs/generic_codecs.h"
 #include "codecs/composite_codec.h"
-#include "codecs/deflate_codecs.h"
-#include "codecs/fastpfor_codecs.h"
-#include "codecs/custom_unvec_logic_codecs.h"
-#include "codecs/custom_vec_logic_codecs.h"
-#include "codecs/maskedvbyte_codecs.h"
-#include "codecs/streamvbyte_codecs.h"
-#include "codecs/lz4_codecs.h"
-#include "codecs/lzma_codecs.h"
-#include "codecs/zstd_codecs.h"
+// #include "codecs/deflate_codecs.h"
+// #include "codecs/fastpfor_codecs.h"
+// #include "codecs/custom_unvec_logic_codecs.h"
+#include "codecs/custom_vec_logic_codecs_sse.h"
+// #include "codecs/maskedvbyte_codecs.h"
+// #include "codecs/streamvbyte_codecs.h"
+// #include "codecs/lz4_codecs.h"
+// #include "codecs/lzma_codecs.h"
+// #include "codecs/zstd_codecs.h"
 #include "codecs/turbopfor_codecs.h"
-#include "codecs/frameofreference_codecs.h"
+// #include "codecs/frameofreference_codecs.h"
 #include "codecs/simdcomp_codecs.h"
+
+// helper: generate monotone increasing sequence with bounded gaps
+std::vector<int32_t> generate_monotone(int n_val, int gap) {
+    std::vector<int32_t> seq(n_val);
+    seq[0] = 0;
+    std::mt19937 gen(12345); // fixed seed for reproducibility
+    std::uniform_int_distribution<> distr(0, gap);
+
+    for (int i = 1; i < n_val; i++) {
+        seq[i] = seq[i-1] + distr(gen);
+    }
+    return seq;
+}
+
+std::vector<int32_t> generate_wiggly(int n_val, int step) {
+    std::vector<int32_t> seq(n_val);
+    seq[0] = 0;
+    std::mt19937 gen(12345); // fixed seed
+    std::uniform_int_distribution<> distr(-step, step);
+
+    for (int i = 1; i < n_val; i++) {
+        seq[i] = seq[i-1] + distr(gen);
+        if (seq[i] < 0) seq[i] = 0; // clamp to nonnegative if needed
+    }
+    return seq;
+}
 
 bool test_codec(std::vector<int32_t>& data, StatefulIntegerCodec<int32_t>& codec) {
     try {
@@ -127,119 +153,140 @@ int main(int argc, char* argv[]) {
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
 
     // Function to create and add codecs
-    auto createAndAddCodecs = [&](auto dummy) {
-        using dict_type = decltype(dummy);
-        std::unordered_map<int32_t, dict_type> localDict;
-        reverseDict.resize(num_unique_values);
-        dict_type index = 0;
-        for (int32_t value : unique_values) {
-            localDict[value] = index;
-            reverseDict[index] = value;
-            ++index;
-        }
+    // auto createAndAddCodecs = [&](auto dummy) {
+    //     using dict_type = decltype(dummy);
+    //     std::unordered_map<int32_t, dict_type> localDict;
+    //     reverseDict.resize(num_unique_values);
+    //     dict_type index = 0;
+    //     for (int32_t value : unique_values) {
+    //         localDict[value] = index;
+    //         reverseDict[index] = value;
+    //         ++index;
+    //     }
 
-        dict = std::move(localDict); // Store the dictionary in std::any
+    //     dict = std::move(localDict); // Store the dictionary in std::any
 
-        codecs.push_back(std::make_unique<DictCodec<dict_type>>(
-            std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
-        codecs.push_back(std::make_unique<DictCodecAVX2<dict_type>>(
-            std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
-        codecs.push_back(std::make_unique<DictCodecPacking<dict_type>>(
-            std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
-        codecs.push_back(std::make_unique<DictCodecPackingAVX2<dict_type>>(
-            std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
+    //     codecs.push_back(std::make_unique<DictCodec<dict_type>>(
+    //         std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
+    //     codecs.push_back(std::make_unique<DictCodecAVX2<dict_type>>(
+    //         std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
+    //     codecs.push_back(std::make_unique<DictCodecPacking<dict_type>>(
+    //         std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
+    //     codecs.push_back(std::make_unique<DictCodecPackingAVX2<dict_type>>(
+    //         std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict));
+    // };
+
+    // if (num_bits_required <= 8) {
+    //     createAndAddCodecs(uint8_t{});
+    // } else if (num_bits_required <= 16) {
+    //     createAndAddCodecs(uint16_t{});
+    // } else {
+    //     createAndAddCodecs(uint32_t{});
+    // }
+
+    // codecs.push_back(std::make_unique<DeltaCodec>());
+    // codecs.push_back(std::make_unique<DeltaCodecSSE42>());
+    // codecs.push_back(std::make_unique<DeltaCodecAVX2>());
+    // codecs.push_back(std::make_unique<DeltaCodecAVX512>());
+    // codecs.push_back(std::make_unique<FORCodecAVX512>());
+    // codecs.push_back(std::make_unique<RLECodecAVX512>());
+    // codecs.push_back(std::make_unique<FORCodec>());
+    // codecs.push_back(std::make_unique<FORCodecSSE42>());
+    // codecs.push_back(std::make_unique<FORCodecAVX2>());
+    // codecs.push_back(std::make_unique<RLECodec>());
+    // codecs.push_back(std::make_unique<RLECodecSSE42>());
+    // codecs.push_back(std::make_unique<RLECodecAVX2>());
+    
+    // codecs.push_back(std::make_unique<DeflateCodec>());
+    // codecs.push_back(std::make_unique<MaskedVByteCodec>());
+    // codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
+    // codecs.push_back(std::make_unique<StreamVByteCodec>());
+    // codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
+    // codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
+    // codecs.push_back(std::make_unique<SimdCompCodec>());
+    // codecs.push_back(std::make_unique<LZ4Codec>()); // WORKS but slow
+    // codecs.push_back(std::make_unique<ZstdCodec>(3));
+    // for (size_t tpfCodecId = 1; tpfCodecId <= 20; tpfCodecId++) {
+    //     if (tpfCodecId != 11) {
+    //         codecs.push_back(std::make_unique<TurboPForCodec>(tpfCodecId));
+
+    //         // Make composites
+    //         auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
+    //         auto turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
+    //         auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //             std::move(deltaCodec), std::move(turboPForCodec)
+    //         );
+    //         codecs.push_back(std::move(compositeCodec));
+
+    //         auto rleCodec = std::make_unique<RLECodecAVX512>();
+    //         turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
+    //         compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //             std::move(rleCodec), std::move(turboPForCodec)
+    //         );
+    //         codecs.push_back(std::move(compositeCodec));
+
+    //         auto forCodec = std::make_unique<FORCodecAVX512>();
+    //         turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
+    //         compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //             std::move(forCodec), std::move(turboPForCodec)
+    //         );
+    //         codecs.push_back(std::move(compositeCodec));
+    //     }
+    // }
+
+    // CODECFactory fastpfor_codecfactory;
+    // for (auto& fastpfor_codec : fastpfor_codecfactory.allSchemes()) {
+    //     if (fastpfor_codec->name() == "Simple8b_RLE"
+    //         || fastpfor_codec->name() == "Simple9_RLE"
+    //         || fastpfor_codec->name() == "SimplePFor+VariableByte"
+    //         || fastpfor_codec->name() == "VSEncoding") {
+    //         // Broken.
+    //         continue;
+    //     }
+    //     codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
+
+    //     // Make composites
+    //     auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
+    //     auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+    //     auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //         std::move(deltaCodec), std::move(fastPForCodec)
+    //     );
+    //     codecs.push_back(std::move(compositeCodec));
+
+    //     auto rleCodec = std::make_unique<RLECodecAVX512>();
+    //     fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+    //     compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //         std::move(rleCodec), std::move(fastPForCodec)
+    //     );
+    //     codecs.push_back(std::move(compositeCodec));
+
+    //     auto forCodec = std::make_unique<FORCodecAVX512>();
+    //     fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
+    //     compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+    //         std::move(forCodec), std::move(fastPForCodec)
+    //     );
+    //     codecs.push_back(std::move(compositeCodec));
+    // }
+
+    // ---- NEW monotone gap tests ----
+    std::vector<int> gaps = {1, 3, 7, 31, 127};  // try different max gaps
+
+    codecs.push_back(std::make_unique<SimdCompCodec>());
+    codecs.push_back(std::make_unique<SimdCompDeltaPadCodec>());
+    codecs.push_back(std::make_unique<SimdCompDeltaTailCodec>());
+    codecs.push_back(std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+        std::make_unique<DeltaCodecSSE42>(), std::make_unique<SimdCompCodec>()
+    ));
+    codecs.push_back(std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+        std::make_unique<FORCodecSSE42>(), std::make_unique<SimdCompCodec>()
+    ));
+
+    std::vector<size_t> turboPForCodecIds{
+        3, 4, 6, 8, 10, 12, 13, 15, 16, 17
     };
 
-    if (num_bits_required <= 8) {
-        createAndAddCodecs(uint8_t{});
-    } else if (num_bits_required <= 16) {
-        createAndAddCodecs(uint16_t{});
-    } else {
-        createAndAddCodecs(uint32_t{});
-    }
-
-    codecs.push_back(std::make_unique<DeltaCodec>());
-    codecs.push_back(std::make_unique<DeltaCodecSSE42>());
-    codecs.push_back(std::make_unique<DeltaCodecAVX2>());
-    codecs.push_back(std::make_unique<DeltaCodecAVX512>());
-    codecs.push_back(std::make_unique<FORCodecAVX512>());
-    codecs.push_back(std::make_unique<RLECodecAVX512>());
-    codecs.push_back(std::make_unique<FORCodec>());
-    codecs.push_back(std::make_unique<FORCodecSSE42>());
-    codecs.push_back(std::make_unique<FORCodecAVX2>());
-    codecs.push_back(std::make_unique<RLECodec>());
-    codecs.push_back(std::make_unique<RLECodecSSE42>());
-    codecs.push_back(std::make_unique<RLECodecAVX2>());
-    
-    codecs.push_back(std::make_unique<DeflateCodec>());
-    codecs.push_back(std::make_unique<MaskedVByteCodec>());
-    codecs.push_back(std::make_unique<MaskedVByteDeltaCodec>());
-    codecs.push_back(std::make_unique<StreamVByteCodec>());
-    codecs.push_back(std::make_unique<FrameOfReferenceCodec>());
-    codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
-    codecs.push_back(std::make_unique<SimdCompCodec>());
-    codecs.push_back(std::make_unique<LZ4Codec>()); // WORKS but slow
-    codecs.push_back(std::make_unique<ZstdCodec>(3));
-    for (size_t tpfCodecId = 1; tpfCodecId <= 20; tpfCodecId++) {
-        if (tpfCodecId != 11) {
-            codecs.push_back(std::make_unique<TurboPForCodec>(tpfCodecId));
-
-            // Make composites
-            auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
-            auto turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
-            auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(deltaCodec), std::move(turboPForCodec)
-            );
-            codecs.push_back(std::move(compositeCodec));
-
-            auto rleCodec = std::make_unique<RLECodecAVX512>();
-            turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
-            compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(rleCodec), std::move(turboPForCodec)
-            );
-            codecs.push_back(std::move(compositeCodec));
-
-            auto forCodec = std::make_unique<FORCodecAVX512>();
-            turboPForCodec = std::make_unique<TurboPForCodec>(tpfCodecId);
-            compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(forCodec), std::move(turboPForCodec)
-            );
-            codecs.push_back(std::move(compositeCodec));
-        }
-    }
-
-    CODECFactory fastpfor_codecfactory;
-    for (auto& fastpfor_codec : fastpfor_codecfactory.allSchemes()) {
-        if (fastpfor_codec->name() == "Simple8b_RLE"
-            || fastpfor_codec->name() == "Simple9_RLE"
-            || fastpfor_codec->name() == "SimplePFor+VariableByte"
-            || fastpfor_codec->name() == "VSEncoding") {
-            // Broken.
-            continue;
-        }
-        codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
-
-        // Make composites
-        auto deltaCodec = std::make_unique<DeltaCodecAVX512>();
-        auto fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
-        auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-            std::move(deltaCodec), std::move(fastPForCodec)
-        );
-        codecs.push_back(std::move(compositeCodec));
-
-        auto rleCodec = std::make_unique<RLECodecAVX512>();
-        fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
-        compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-            std::move(rleCodec), std::move(fastPForCodec)
-        );
-        codecs.push_back(std::move(compositeCodec));
-
-        auto forCodec = std::make_unique<FORCodecAVX512>();
-        fastPForCodec = std::make_unique<FastPForCodec>(fastpfor_codec);
-        compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-            std::move(forCodec), std::move(fastPForCodec)
-        );
-        codecs.push_back(std::move(compositeCodec));
+    for (auto tpfCodecId : turboPForCodecIds) {
+        codecs.push_back(std::make_unique<TurboPForCodec>(tpfCodecId));
     }
 
     std::cout << "#codecs=" << codecs.size() << std::endl;
@@ -251,11 +298,29 @@ int main(int argc, char* argv[]) {
         bool s1 = test_codec(data, *codec);
         std::cout << codec->name() << " large" << std::endl;
         bool s2 = test_codec(data_large, *codec);
+
+        // monotone gap tests
+        for (int gap : gaps) {
+            std::vector<int32_t> mono = generate_monotone(n_val, gap);
+            std::cout << codec->name() << " monotone gap=" << gap << std::endl;
+            bool ok = test_codec(mono, *codec);
+            if (!ok) std::cerr << codec->name() << " failed on monotone gap=" << gap << std::endl;
+        }
+
+        // wiggle tests
+         for (int gap : gaps) {
+            std::vector<int32_t> mono = generate_wiggly(n_val, gap);
+            std::cout << codec->name() << " wiggly gap=" << gap << std::endl;
+            bool ok = test_codec(mono, *codec);
+            if (!ok) std::cerr << codec->name() << " failed on wiggly gap=" << gap << std::endl;
+        }
+
         if (s1 && s2) {
             std::cout << codec->name() << " ok" << std::endl;
         }
         else {
             std::cout << codec->name() << " bad" << std::endl;
         }
+        std::cout << std::endl;
     }
 }
