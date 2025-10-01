@@ -1,6 +1,8 @@
 #include <immintrin.h> // AVX2 Intrinsics
 #include <nmmintrin.h> // SSE4.2 Intrinsics
 
+#include "generic_codecs.h"
+
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -110,6 +112,7 @@ class DeltaCodecSSE42 : public StatefulIntegerCodec<int32_t> {
 private:
     std::vector<int32_t> compressed_data;
 public:
+
     void encodeArray(const int32_t* in, const size_t length) override {
         if (length == 0) return;
 
@@ -418,12 +421,16 @@ class RLECodecSSE42 : public StatefulIntegerCodec<int32_t> {
 private:
     std::vector<int32_t> compressed_data;
 
+    static inline std::vector<int32_t> compressScratch = 
+        std::vector<int32_t>(2 * ((TILE_WIDTH * TILE_HEIGHT) / 4 + 1));
+
 public:
     RLECodecSSE42() {}
 
     void encodeArray(const int32_t *in, const size_t length) override {
         if (length == 0) return;
 
+        size_t compressedSize = 0;
         size_t i = 0;
         while (i < length) {
             int32_t currentValue = in[i];
@@ -450,11 +457,15 @@ public:
                 ++runLength;
             }
 
-            compressed_data.push_back(currentValue);
-            compressed_data.push_back(runLength);
+            compressScratch[compressedSize++] = currentValue;
+            compressScratch[compressedSize++] = runLength;
+            // compressed_data.push_back(currentValue);
+            // compressed_data.push_back(runLength);
             i += runLength;
         }
-        compressed_data.shrink_to_fit();
+        // compressed_data.shrink_to_fit();
+        compressed_data.assign(compressScratch.data(),
+                  compressScratch.data() + compressedSize);
     }
 
     void decodeArray(int32_t *out, const size_t length) override {
@@ -499,7 +510,7 @@ public:
     }
 
     void allocEncoded(const int32_t* in, size_t length) override {
-        compressed_data.reserve(2 * (length / 4 + 1));
+        // compressed_data.reserve(2 * (length / 4 + 1));
     };
 
     void clear() override {

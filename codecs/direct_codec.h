@@ -18,7 +18,8 @@ public:
   std::vector<T> compressed;
 
   void encodeArray(const T *in, const size_t length) override {
-    std::memcpy(compressed.data(), in, length * sizeof(T));
+    compressed.assign(in, in + length);
+    // std::memcpy(compressed.data(), in, length * sizeof(T));
   }
 
   void decodeArray(T *out, const std::size_t length) override {
@@ -47,7 +48,7 @@ public:
   }
 
   void allocEncoded(const T* in, size_t length) override {
-    compressed.resize(length);
+    // compressed.resize(length);
   };
 
   void clear() override {

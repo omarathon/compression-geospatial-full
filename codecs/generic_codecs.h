@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <chrono>
 
+#include "../constants.h"
+
 //////////////////////////
 // general single codec //
 //////////////////////////

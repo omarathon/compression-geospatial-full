@@ -27,8 +27,13 @@ unsigned char *vszdec32(unsigned char *in, unsigned n, uint32_t *out) { unsigned
 class TurboPForCodec : public StatefulIntegerCodec<int32_t> {
 protected:
     std::vector<uint8_t> compressed;
-    std::vector<uint8_t> tmp;
-    std::vector<uint32_t> tmp32;
+
+    static inline std::vector<uint8_t> compressScratch = 
+        std::vector<uint8_t>(CBUF1(TILE_WIDTH * TILE_HEIGHT));
+
+    static inline std::vector<uint8_t> tmp = std::vector<uint8_t>(CBUF1(TILE_WIDTH * TILE_HEIGHT));
+    static inline std::vector<uint32_t> tmp32 = std::vector<uint32_t>(CBUF4(TILE_WIDTH * TILE_HEIGHT));
+    
     const size_t method;
 
 public:
@@ -42,82 +47,82 @@ public:
     size_t compsize;
     switch (method) {
         case 1:
-            compsize = p4nenc32(in_tpf, length, compressed.data());
+            compsize = p4nenc32(in_tpf, length, compressScratch.data());
             break;
         case 2:
-            compsize = p4nenc128v32(in_tpf, length, compressed.data());
+            compsize = p4nenc128v32(in_tpf, length, compressScratch.data());
             break;
         case 3:
-            compsize = p4nenc256v32(in_tpf, length, compressed.data());
+            compsize = p4nenc256v32(in_tpf, length, compressScratch.data());
             break;
         case 4:
-            compsize = p4ndenc256v32(in_tpf, length, compressed.data());
+            compsize = p4ndenc256v32(in_tpf, length, compressScratch.data());
             break;
         case 5:
-            compsize = p4nd1enc256v32(in_tpf, length, compressed.data());
+            compsize = p4nd1enc256v32(in_tpf, length, compressScratch.data());
             break;
         case 6:
-            compsize = p4nzenc256v32(in_tpf, length, compressed.data());
+            compsize = p4nzenc256v32(in_tpf, length, compressScratch.data());
             break;
         case 7:
-            compsize = bitnpack256v32(in_tpf, length, compressed.data());
+            compsize = bitnpack256v32(in_tpf, length, compressScratch.data());
             break;
         case 8:
-            compsize = bitndpack256v32(in_tpf, length, compressed.data());
+            compsize = bitndpack256v32(in_tpf, length, compressScratch.data());
             break;
         case 9:
-            compsize = bitnd1pack256v32(in_tpf, length, compressed.data());
+            compsize = bitnd1pack256v32(in_tpf, length, compressScratch.data());
             break;
         case 10:
-            compsize = bitnzpack256v32(in_tpf, length, compressed.data());
+            compsize = bitnzpack256v32(in_tpf, length, compressScratch.data());
             break;
         // case 11:
         //     compsize = bitnfpack256v32(in_tpf, length, compressed.data());
         //     break;
         case 12:
-            compsize = bitnxpack256v32(in_tpf, length, compressed.data());
+            compsize = bitnxpack256v32(in_tpf, length, compressScratch.data());
             break;
         case 13:
-            compsize = p4nzzenc128v32(in_tpf, length, compressed.data(), /* start */ 0);
+            compsize = p4nzzenc128v32(in_tpf, length, compressScratch.data(), /* start */ 0);
             break;
         case 14: {
-            uint8_t *compend = vsenc32(in_tpf, length, compressed.data());
-            if (compend < compressed.data() || compend >= (compressed.data() + compressed.size())) {
+            uint8_t *compend = vsenc32(in_tpf, length, compressScratch.data());
+            if (compend < compressScratch.data() || compend >= (compressScratch.data() + compressScratch.size())) {
                 throw std::runtime_error("vsenc32 failed.");
                 return;
             }
-            compsize = compend - compressed.data();
+            compsize = compend - compressScratch.data();
             break;
         }
         case 15: {
-            uint8_t *compend2 = vszenc32(in_tpf, length, compressed.data(), tmp32.data());
-            if (compend2 < compressed.data() || compend2 >= compressed.data() + compressed.size()) {
+            uint8_t *compend2 = vszenc32(in_tpf, length, compressScratch.data(), tmp32.data());
+            if (compend2 < compressScratch.data() || compend2 >= compressScratch.data() + compressScratch.size()) {
                 throw std::runtime_error("vszenc32 failed.");
                 return;
             }
-            compsize = compend2 - compressed.data();
-            tmp32.clear();
-            tmp32.shrink_to_fit();
+            compsize = compend2 - compressScratch.data();
+            // tmp32.clear();
+            // tmp32.shrink_to_fit();
             break;
         }
         case 16:
-            compsize = bvzzenc32(in_tpf, length, compressed.data(), /* start */ 0);
+            compsize = bvzzenc32(in_tpf, length, compressScratch.data(), /* start */ 0);
             break;
         case 17:
-            compsize = bvzenc32(in_tpf, length, compressed.data(), /* start */ 0);
+            compsize = bvzenc32(in_tpf, length, compressScratch.data(), /* start */ 0);
             break;
         case 18:
-            compsize = trlec(reinterpret_cast<const uint8_t *>(in), length * 4, compressed.data());
+            compsize = trlec(reinterpret_cast<const uint8_t *>(in), length * 4, compressScratch.data());
             break;
         case 19:
-            compsize = trlexc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressed.data(), tmp.data());
-            tmp.clear();
-            tmp.shrink_to_fit();
+            compsize = trlexc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressScratch.data(), tmp.data());
+            // tmp.clear();
+            // tmp.shrink_to_fit();
             break;
         case 20:
-            compsize = trlezc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressed.data(), tmp.data());
-            tmp.clear();
-            tmp.shrink_to_fit();
+            compsize = trlezc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressScratch.data(), tmp.data());
+            // tmp.clear();
+            // tmp.shrink_to_fit();
             break;
         // case 21:
         //     compsize = srlec32(reinterpret_cast<const uint8_t *>(in), length, compressed.data(), RLE32);
@@ -132,7 +137,7 @@ public:
             throw std::runtime_error("Unknown TurboPFor method used.");
             return;
     }
-    compressed.resize(compsize);
+    compressed.assign(compressScratch.data(), compressScratch.data() + compsize);
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {
@@ -287,13 +292,13 @@ public:
 
   
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(CBUF1(length));
-    if (method == 15) {
-        tmp32.resize(CBUF4(length));
-    }
-    else if (method == 19 || method == 20) {
-        tmp.resize(CBUF1(length));
-    }
+    // compressed.resize(CBUF1(length));
+    // if (method == 15) {
+    //     tmp32.resize(CBUF4(length));
+    // }
+    // else if (method == 19 || method == 20) {
+    //     tmp.resize(CBUF1(length));
+    // }
   };
 
   void clear() override {

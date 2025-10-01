@@ -15,9 +15,12 @@ public:
 
   std::vector<uint8_t> compressed;
 
+  static inline std::vector<uint8_t> compressScratch =
+        std::vector<uint8_t>(streamvbyte_max_compressedbytes(TILE_WIDTH * TILE_HEIGHT));
+
   void encodeArray(const int32_t *in, const size_t length) override {
-    size_t compsize = streamvbyte_encode(reinterpret_cast<const uint32_t *>(in), length, compressed.data()); // encoding
-    compressed.resize(compsize);
+    size_t compsize = streamvbyte_encode(reinterpret_cast<const uint32_t *>(in), length, compressScratch.data()); // encoding
+    compressed.assign(compressScratch.data(), compressScratch.data() + compsize);
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {
@@ -50,7 +53,7 @@ public:
   }
 
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(streamvbyte_max_compressedbytes(length));
+    // compressed.resize(streamvbyte_max_compressedbytes(length));
   };
 
   void clear() override {

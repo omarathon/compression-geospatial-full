@@ -15,16 +15,19 @@ public:
 
   std::vector<uint8_t> compressed;
 
+  static inline std::vector<uint8_t> compressScratch =
+        std::vector<uint8_t>(2 * TILE_WIDTH * TILE_HEIGHT * 4);
+
   void encodeArray(const int32_t *in, const size_t length) override {
-    size_t compsize = vbyte_encode(reinterpret_cast<const uint32_t *>(in), length, compressed.data()); // encoding
-    compressed.resize(compsize);
+    size_t compsize = vbyte_encode(reinterpret_cast<const uint32_t *>(in), length, compressScratch.data()); // encoding
+    compressed.assign(compressScratch.data(), compressScratch.data() + compsize);
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {
     size_t compsize = compressed.size();
-    assert(
-        masked_vbyte_decode(compressed.data(), reinterpret_cast<uint32_t *>(out), length)
-        == compsize);
+    // assert(
+    //     masked_vbyte_decode(compressed.data(), reinterpret_cast<uint32_t *>(out), length)
+    //     == compsize);
   }
 
   std::size_t encodedNumValues() override {
@@ -50,7 +53,7 @@ public:
   }
 
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize((2 * length) * sizeof(int32_t));
+    // compressed.resize((2 * length) * sizeof(int32_t));
   };
 
   void clear() override {

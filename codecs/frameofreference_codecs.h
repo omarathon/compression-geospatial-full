@@ -70,11 +70,15 @@ public:
 
     std::vector<uint8_t> compressed;
 
+    static inline std::vector<uint8_t> compressScratch = 
+        std::vector<uint8_t>(TILE_WIDTH * TILE_HEIGHT * 4 + 1024);
+
   void encodeArray(const int32_t *in, const size_t length) override {
     int32_t *in_nconst = const_cast<int32_t *>(in); // Necessary as compress input is not const
-    uint8_t* out = turbocompress(reinterpret_cast<uint32_t *>(in_nconst), length, compressed.data());
-    size_t compressed_size = out - compressed.data();
-    compressed.resize(compressed_size);
+    uint8_t* out = turbocompress(reinterpret_cast<uint32_t *>(in_nconst), length, compressScratch.data());
+    size_t compressed_size = out - compressScratch.data();
+    compressed.assign(compressScratch.data(),
+                  compressScratch.data() + compressed_size);
   }
 
   void decodeArray(int32_t *out, const std::size_t length) override {
@@ -106,7 +110,7 @@ public:
   }
 
   void allocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(length * sizeof(int32_t) + 1024);
+    // compressed.resize(length * sizeof(int32_t) + 1024);
   };
 
   void clear() override {

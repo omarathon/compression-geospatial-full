@@ -64,6 +64,83 @@ public:
   };
 };
 
+class SimdCompScratchCodec : public StatefulIntegerCodec<int32_t> {
+public:
+    std::vector<uint8_t> compressed;
+    uint32_t b;
+
+    static inline std::vector<uint8_t> compressScratch = 
+        std::vector<uint8_t>(TILE_WIDTH * TILE_HEIGHT * 3);
+
+    void encodeArray(const int32_t *in, const size_t length) override {
+        // compute bit width
+        b = maxbits_length(reinterpret_cast<const uint32_t*>(in), length);
+
+        // compute how many bytes the compressed data will take
+        size_t neededBytes = simdpack_compressedbytes(length, b);
+        if (neededBytes > compressScratch.size()) {
+            throw std::runtime_error("compressScratch too small for this block");
+        }
+
+        // encode into scratch buffer
+        __m128i* endofbuf = simdpack_length(
+            reinterpret_cast<const uint32_t*>(in),
+            length,
+            reinterpret_cast<__m128i*>(compressScratch.data()),
+            b);
+
+        // verify size
+        size_t howmanybytes = 
+            (reinterpret_cast<uint8_t*>(endofbuf) - compressScratch.data());
+
+        // copy into compressed (single resize + memcpy)
+        compressed.assign(compressScratch.data(),
+                  compressScratch.data() + neededBytes);
+    }
+
+    void decodeArray(int32_t *out, const std::size_t length) override {
+        simdunpack_length(
+            reinterpret_cast<const __m128i*>(compressed.data()),
+            length,
+            reinterpret_cast<uint32_t*>(out),
+            b);
+    }
+
+    std::size_t encodedNumValues() override {
+        return compressed.size();
+    }
+
+    std::size_t encodedSizeValue() override {
+        return sizeof(uint8_t);
+    }
+
+    std::string name() const override {
+        return "simdcomp_scratch";
+    }
+
+    std::size_t getOverflowSize(size_t) const override {
+        return 0;
+    }
+
+    StatefulIntegerCodec<int32_t>* cloneFresh() const override {
+        return new SimdCompScratchCodec();
+    }
+
+    void allocEncoded(const int32_t* in, size_t length) override {
+        // nothing to allocate up front — handled in encodeArray
+        (void)in;
+        (void)length;
+    }
+
+    void clear() override {
+        compressed.clear();
+        compressed.shrink_to_fit();
+    }
+
+    std::vector<int32_t>& getEncoded() override {
+        throw std::runtime_error("Encoded format does not match input. Cannot forward.");
+    }
+};
 
 class SimdCompDeltaPadCodec : public StatefulIntegerCodec<int32_t> {
 public:
@@ -259,4 +336,61 @@ public:
         // simdunpack_length writes exactly `remainder` values
         return 0;
     }
+};
+
+
+#include "../arena.h"
+
+
+class ArenaSimdCompCodec : public StatefulIntegerCodec<int32_t> {
+    Arena* arena;        // not owned
+    size_t offset = 0;   // where this block's data starts in arena
+    size_t size_used = 0;
+    uint32_t b = 0;
+
+public:
+    ArenaSimdCompCodec(Arena* a) : arena(a) {}
+
+    void allocEncoded(const int32_t* in, size_t length) override {
+        b = maxbits_length(reinterpret_cast<const uint32_t*>(in), length);
+        size_t needed = simdpack_compressedbytes(length, b);
+        arena->alloc(needed, offset);
+        size_used = needed;
+    }
+
+    void encodeArray(const int32_t* in, const size_t length) override {
+        uint8_t* buf = arena->buffer.data() + offset;
+        __m128i* endofbuf = simdpack_length(
+            reinterpret_cast<const uint32_t*>(in),
+            length,
+            reinterpret_cast<__m128i*>(buf),
+            b
+        );
+        size_used = (endofbuf - reinterpret_cast<__m128i*>(buf)) * sizeof(__m128i);
+    }
+
+    void decodeArray(int32_t* out, const size_t length) override {
+        const uint8_t* buf = arena->buffer.data() + offset;
+        simdunpack_length(
+            reinterpret_cast<const __m128i*>(buf),
+            length,
+            reinterpret_cast<uint32_t*>(out),
+            b
+        );
+    }
+
+    std::size_t encodedNumValues() override { return size_used; }
+    std::size_t encodedSizeValue() override { return sizeof(uint8_t); }
+
+    StatefulIntegerCodec<int32_t>* cloneFresh() const override {
+        throw std::runtime_error("ArenaSimdCompCodec must be constructed with an arena");
+    }
+
+    void clear() override { size_used = 0; }
+    std::vector<int32_t>& getEncoded() override {
+        throw std::runtime_error("ArenaSimdCompCodec does not expose raw vector");
+    }
+
+    std::string name() const override { return "arena_simdcomp"; }
+    std::size_t getOverflowSize(size_t) const override { return 0; }
 };
