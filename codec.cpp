@@ -11,7 +11,7 @@
 #include "codecs/deflate_codecs.h"
 #include "codecs/fastpfor_codecs.h"
 // #include "codecs/custom_unvec_logic_codecs.h"
-#include "codecs/custom_vec_logic_codecs_sse.h"
+#include "codecs/custom_vec_logic_codecs_noavx512.h"
 // #include "codecs/maskedvbyte_codecs.h"
 #include "codecs/streamvbyte_codecs.h"
 #include "codecs/lz4_codecs.h"
@@ -224,74 +224,88 @@ struct RawNoCopyBlockSequence {
 // 201: delta(zigzag)+fastpfor_bitpack
 // 202: delta(zigzag)+simdcomp
 
-std::unique_ptr<StatefulIntegerCodec<int32_t>> make_int32_codec(uint8_t kind) {
-    switch (kind) {
-        // case 0: return std::make_unique<SimdCompCodec>();
-        case 0: return std::make_unique<SimdCompScratchCodec>();
-        case 1: return std::make_unique<FastPForCodec>(
-                    CODECFactory{}.getFromName("simdbinarypacking"));                               // <---- good for habitat
-        case 2: return std::make_unique<FastPForCodec>( // benefits from morton
-                    CODECFactory{}.getFromName("simdpfor"));
-        case 3: return std::make_unique<RLECodecSSE42>();                                           // <---- very good for range map
-        case 4: { // benefits from morton
-            auto rle = std::make_unique<RLECodecSSE42>();
-            auto simdcomp = std::make_unique<SimdCompCodec>();
-            return std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(rle), std::move(simdcomp));
-        }
-        case 5: {
-            auto rle = std::make_unique<RLECodecSSE42>();
-            auto binpack = std::make_unique<FastPForCodec>(
-                CODECFactory{}.getFromName("simdbinarypacking"));
-            return std::make_unique<FastCompositeStatefulIntegerCodec<int32_t>>(
-                std::move(rle), std::move(binpack));
-        }
-        // exotic...
-        case 6: return std::make_unique<TurboPForCodec>(3); // TurboPFor256
-        case 7: return std::make_unique<TurboPForCodec>(4); // TurboPFor_Delta+TurboPFor256
-        case 8: return std::make_unique<TurboPForCodec>(6); // TurboPFor_Zigzag+TurboPFor256
-        case 9: return std::make_unique<TurboPForCodec>(10); // TurboPFor_Zigzag+TurboPack256           <---- good for habitat & elevation
-        case 10: return std::make_unique<TurboPForCodec>(12); // TurboPFor_xor+TurboPack256             <---- good for habitat & el
-        case 11: return std::make_unique<TurboPForCodec>(13); // TurboPFor_zzag/delta+TurboPFor128
-        case 12: return std::make_unique<TurboPForCodec>(15); // TurboPFor_Zigzag+TurboVSimple
-        case 13: return std::make_unique<TurboPForCodec>(16); // TurboPFor_Zigzag/delta_bitio
-        case 14: return std::make_unique<TurboPForCodec>(17); // TurboPFor_Zigzag_bitio
-        case 15: return std::make_unique<TurboPForCodec>(18); // TurboPFor_TurboRLE
-        case 16: return std::make_unique<TurboPForCodec>(19); // TurboPFor_Xor+TurboRLE
-        case 17: return std::make_unique<TurboPForCodec>(20); // TurboPFor_Zigzag+TurboRLE
-        
-        case 20: return std::make_unique<FastPForCodec>(
-                    CODECFactory{}.getFromName("maskedvbyte"));                                            
-        case 21: return std::make_unique<StreamVByteCodec>();
-        case 22: return std::make_unique<FrameOfReferenceTurboCodec>();                             // <---- decent for elevation map
+template <typename T> // T: type of data being stored
+std::unique_ptr<StatefulIntegerCodec<T>> make_codec(uint8_t kind) {
+    if constexpr (std::is_same_v<T, int32_t>) {
+        switch (kind) {
+            // case 0: return std::make_unique<SimdCompCodec>();
+            case 0: return std::make_unique<SimdCompScratchCodec>();
+            case 1: return std::make_unique<FastPForCodec>(
+                        CODECFactory{}.getFromName("simdbinarypacking"));                               // <---- good for habitat
+            case 2: return std::make_unique<FastPForCodec>( // benefits from morton
+                        CODECFactory{}.getFromName("simdpfor"));
+            // case 3: return std::make_unique<RLECodecSSE42>();                                           // <---- very good for range map
+            case 3: return std::make_unique<RLECodecAVX2<T>>();                                           // <---- very good for range map
+            case 4: { // benefits from morton
+                auto rle = std::make_unique<RLECodecSSE42>();
+                auto simdcomp = std::make_unique<SimdCompCodec>();
+                return std::make_unique<CompositeStatefulIntegerCodec<T>>(
+                    std::move(rle), std::move(simdcomp));
+            }
+            case 5: {
+                auto rle = std::make_unique<RLECodecSSE42>();
+                auto binpack = std::make_unique<FastPForCodec>(
+                    CODECFactory{}.getFromName("simdbinarypacking"));
+                return std::make_unique<FastCompositeStatefulIntegerCodec<T>>(
+                    std::move(rle), std::move(binpack));
+            }
+            // exotic...
+            case 6: return std::make_unique<TurboPForCodec<T>>(3); // TurboPFor256
+            case 7: return std::make_unique<TurboPForCodec<T>>(4); // TurboPFor_Delta+TurboPFor256
+            case 8: return std::make_unique<TurboPForCodec<T>>(6); // TurboPFor_Zigzag+TurboPFor256
+            case 9: return std::make_unique<TurboPForCodec<T>>(10); // TurboPFor_Zigzag+TurboPack256           <---- good for habitat & elevation
+            case 10: return std::make_unique<TurboPForCodec<T>>(12); // TurboPFor_xor+TurboPack256             <---- good for habitat & el
+            case 11: return std::make_unique<TurboPForCodec<T>>(13); // TurboPFor_zzag/delta+TurboPFor128
+            case 12: return std::make_unique<TurboPForCodec<T>>(15); // TurboPFor_Zigzag+TurboVSimple
+            case 13: return std::make_unique<TurboPForCodec<T>>(16); // TurboPFor_Zigzag/delta_bitio
+            case 14: return std::make_unique<TurboPForCodec<T>>(17); // TurboPFor_Zigzag_bitio
+            case 15: return std::make_unique<TurboPForCodec<T>>(18); // TurboPFor_TurboRLE
+            case 16: return std::make_unique<TurboPForCodec<T>>(19); // TurboPFor_Xor+TurboRLE
+            case 17: return std::make_unique<TurboPForCodec<T>>(20); // TurboPFor_Zigzag+TurboRLE
+            
+            case 20: return std::make_unique<FastPForCodec>(
+                        CODECFactory{}.getFromName("maskedvbyte"));                                            
+            case 21: return std::make_unique<StreamVByteCodec>();
+            case 22: return std::make_unique<FrameOfReferenceTurboCodec>();                             // <---- decent for elevation map
 
-        case 100: {
-            return std::make_unique<LZ4Codec>();
+            case 100: {
+                return std::make_unique<LZ4Codec>();
+            }
+            case 101: {
+                return std::make_unique<DeflateCodec>();
+            }
+            case 102: {
+                return std::make_unique<ZstdCodec>(1);
+            }
+            case 103: {
+                return std::make_unique<ZstdCodec>(3);
+            }
+            case 200: {
+                auto delta = std::make_unique<DeltaCodecSSE42>();
+                auto binpack = std::make_unique<FastPForCodec>(
+                    CODECFactory{}.getFromName("simdbinarypacking"));
+                return std::make_unique<CompositeStatefulIntegerCodec<T>>(
+                    std::move(delta), std::move(binpack));
+            }
+            case 201: {
+                auto delta = std::make_unique<DeltaCodecSSE42>();
+                auto simdcomp = std::make_unique<SimdCompCodec>();
+                return std::make_unique<CompositeStatefulIntegerCodec<T>>(
+                    std::move(delta), std::move(simdcomp));
+            }
+            default: throw std::invalid_argument("Unknown codec kind");
         }
-        case 101: {
-            return std::make_unique<DeflateCodec>();
+    } else if constexpr (std::is_same_v<T, int16_t>) {
+        switch (kind) {
+            case 3: return std::make_unique<RLECodecAVX2<T>>();                                           // <---- very good for range map
+            // exotic...
+            case 10: return std::make_unique<TurboPForCodec<T>>(12); // TurboPFor_xor+TurboPack256             <---- good for habitat & el
+            default: throw std::invalid_argument("Unknown codec kind");
         }
-        case 102: {
-            return std::make_unique<ZstdCodec>(1);
-        }
-        case 103: {
-            return std::make_unique<ZstdCodec>(3);
-        }
-        case 200: {
-            auto delta = std::make_unique<DeltaCodecSSE42>();
-            auto binpack = std::make_unique<FastPForCodec>(
-                CODECFactory{}.getFromName("simdbinarypacking"));
-            return std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(delta), std::move(binpack));
-        }
-        case 201: {
-            auto delta = std::make_unique<DeltaCodecSSE42>();
-            auto simdcomp = std::make_unique<SimdCompCodec>();
-            return std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
-                std::move(delta), std::move(simdcomp));
-        }
-        default: throw std::invalid_argument("Unknown codec kind");
     }
+    else {
+        throw std::invalid_argument("Unsupported bit width");
+    };
 }
 
 struct MortonCache {
@@ -324,12 +338,13 @@ MortonCache& getMortonCache(int N) {
     return it->second;
 }
 
-static std::vector<int32_t> globalScratchCompression(TILE_WIDTH * TILE_HEIGHT * 2);
-
+template <typename T> // T: type of data being stored
 struct CompressedBlockSequence {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> _compressedBlocks;
+    static std::vector<T> globalScratchCompression;
 
-    std::vector<int32_t> _scratchDecompression;
+    std::vector<std::unique_ptr<StatefulIntegerCodec<T>>> _compressedBlocks;
+
+    std::vector<T> _scratchDecompression;
 
     size_t _size_bytes;
     int _sw;
@@ -338,14 +353,14 @@ struct CompressedBlockSequence {
     uint8_t _morton_mode;
     
     CompressedBlockSequence(int sw, int sh, uint8_t kind, uint8_t morton_mode) : _size_bytes{0}, _sw{sw}, _sh{sh}, _codec_kind{kind}, _morton_mode{morton_mode}, 
-        _scratchDecompression(TILE_WIDTH * TILE_HEIGHT + make_int32_codec(kind)->getOverflowSize(TILE_WIDTH * TILE_HEIGHT))
+        _scratchDecompression(TILE_WIDTH * TILE_HEIGHT + make_codec<T>(kind)->getOverflowSize(TILE_WIDTH * TILE_HEIGHT))
     {}
 
     bool HasBlock(int id) {
         return id >= 0 && id < _compressedBlocks.size();
     }
 
-    void WriteBlocks(py::array_t<int32_t> arr, int bw, int bh) {
+    void WriteBlocks(py::array_t<T> arr, int bw, int bh) {
         int tiles_x = (bw + _sw - 1) / _sw;
         int tiles_y = (bh + _sh - 1) / _sh;
         int numTiles = tiles_x * tiles_y;
@@ -355,9 +370,9 @@ struct CompressedBlockSequence {
         if (info.ndim != 2)
             throw std::runtime_error("Input array must be 2D");
 
-        auto *ptr = static_cast<int32_t*>(info.ptr);
-        int stride_x = info.strides[1] / sizeof(int32_t); // 1
-        int stride_y = info.strides[0] / sizeof(int32_t); // bw
+        auto *ptr = static_cast<T*>(info.ptr);
+        int stride_x = info.strides[1] / sizeof(T); // 1
+        int stride_y = info.strides[0] / sizeof(T); // bw
 
         for (int ty = 0; ty < tiles_y; ++ty) {
             for (int tx = 0; tx < tiles_x; ++tx) {
@@ -368,18 +383,18 @@ struct CompressedBlockSequence {
                 int w = x1 - x0;
                 int h = y1 - y0; 
 
-                auto codec = make_int32_codec(_codec_kind);
+                auto codec = make_codec<T>(_codec_kind);
 
                 // --- All other codecs (existing logic) ---
                 if (h == 1) {
-                    int32_t* tile_ptr = ptr + y0 * stride_y + x0;
+                    T* tile_ptr = ptr + y0 * stride_y + x0;
                     codec->encodeArray(tile_ptr, w * h);
                 } else {
                     for (int yy = 0; yy < h; ++yy) {
-                        int32_t* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                        int32_t* dst_row = globalScratchCompression.data() + yy * w;
+                        T* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
+                        T* dst_row = globalScratchCompression.data() + yy * w;
                         if (stride_x == 1) {
-                            std::memcpy(dst_row, src_row, w * sizeof(int32_t));
+                            std::memcpy(dst_row, src_row, w * sizeof(T));
                         } else {
                             for (int xx = 0; xx < w; ++xx) {
                                 dst_row[xx] = src_row[xx * stride_x];
@@ -388,7 +403,7 @@ struct CompressedBlockSequence {
                     }
                     if (_morton_mode > 0) {
                         if (w == h && w > 1) {
-                            int32_t* mortonBuf = globalScratchCompression.data() + (w * h);
+                            T* mortonBuf = globalScratchCompression.data() + (w * h);
                             if (_morton_mode == 1) {
                                 MortonCache& mortonCodes = getMortonCache(w);
                                 for (int i = 0; i < w * h; i++) {
@@ -423,27 +438,21 @@ struct CompressedBlockSequence {
         }
     }
 
-    py::array_t<int32_t> ReadBlock(int id, int sw, int sh) {
+    py::array_t<T> ReadBlock(int id, int sw, int sh) {
         if (!HasBlock(id))
             throw std::out_of_range("Block out of range");
 
         auto* codec = _compressedBlocks[id].get();
 
-        // useScratch1 = !useScratch1; // toggle scratch to allow 2 decoded blocks in use at once
-
-        // auto& globalScratch = useScratch1 ? globalScratch1 : globalScratch2;
-
         py::capsule owner(_scratchDecompression.data(), [](void *) {});
-        // py::capsule owner(this, [](void *) {});
 
-        // Normal path: decode into scratchTile
         size_t n = sw * sh;
         codec->decodeArray(_scratchDecompression.data(), n);
 
         if (_morton_mode > 0) {
             if (sw == sh && sw > 1) {
                 // Undo Morton order
-                int32_t* mortonBuf = _scratchDecompression.data() + (sw * sh);
+                T* mortonBuf = _scratchDecompression.data() + (sw * sh);
                 if (_morton_mode == 1) {
                     MortonCache& mortonCodes = getMortonCache(sw);
                     for (int i = 0; i < sw * sh; i++) {
@@ -462,18 +471,18 @@ struct CompressedBlockSequence {
                         }
                     }
                 }
-                return py::array_t<int32_t>(
+                return py::array_t<T>(
                     {sh, sw},
-                    {sizeof(int32_t) * sw, sizeof(int32_t)},
+                    {sizeof(T) * sw, sizeof(T)},
                     mortonBuf,
                     // py::cast(static_cast<CompressedBlockSequence*>(this))
                     owner
                 );
             }
         }
-        return py::array_t<int32_t>(
+        return py::array_t<T>(
             {sh, sw},
-            {sizeof(int32_t) * sw, sizeof(int32_t)},
+            {sizeof(T) * sw, sizeof(T)},
             _scratchDecompression.data(),
             // py::cast(static_cast<CompressedBlockSequence*>(this))
             owner
@@ -485,7 +494,10 @@ struct CompressedBlockSequence {
     }
 };
 
-
+template <typename T>
+std::vector<T> CompressedBlockSequence<T>::globalScratchCompression(
+    TILE_WIDTH * TILE_HEIGHT * 2
+);
 
 
 // TODO: kill if Memcpy/NoCopy are better.
@@ -658,26 +670,48 @@ PYBIND11_MODULE(codec, m) {
     
     // CompressedBlockSequence
 
-    py::class_<CompressedBlockSequence>(m, "CompressedBlockSequence")
+    py::class_<CompressedBlockSequence<int32_t>>(m, "CompressedBlockSequenceInt32")
         .def(py::init<int,int,uint8_t,uint8_t>(),
              py::arg("sw"),
              py::arg("sh"),
              py::arg("codec_kind"),
              py::arg("morton_mode"))
-        .def("write_blocks", &CompressedBlockSequence::WriteBlocks,
+        .def("write_blocks", &CompressedBlockSequence<int32_t>::WriteBlocks,
              py::arg("array"),
              py::arg("bw"),
              py::arg("bh"),
              "")
-        .def("read_block", &CompressedBlockSequence::ReadBlock,
+        .def("read_block", &CompressedBlockSequence<int32_t>::ReadBlock,
              py::arg("id"),
              py::arg("sw"),
              py::arg("sh"),
              "")
-        .def("has_block", &CompressedBlockSequence::HasBlock,
+        .def("has_block", &CompressedBlockSequence<int32_t>::HasBlock,
              py::arg("id"),
              "")
-        .def("size_bytes", &CompressedBlockSequence::SizeBytes,
+        .def("size_bytes", &CompressedBlockSequence<int32_t>::SizeBytes,
+             "");
+
+    py::class_<CompressedBlockSequence<int16_t>>(m, "CompressedBlockSequenceInt16")
+        .def(py::init<int,int,uint8_t,uint8_t>(),
+             py::arg("sw"),
+             py::arg("sh"),
+             py::arg("codec_kind"),
+             py::arg("morton_mode"))
+        .def("write_blocks", &CompressedBlockSequence<int16_t>::WriteBlocks,
+             py::arg("array"),
+             py::arg("bw"),
+             py::arg("bh"),
+             "")
+        .def("read_block", &CompressedBlockSequence<int16_t>::ReadBlock,
+             py::arg("id"),
+             py::arg("sw"),
+             py::arg("sh"),
+             "")
+        .def("has_block", &CompressedBlockSequence<int16_t>::HasBlock,
+             py::arg("id"),
+             "")
+        .def("size_bytes", &CompressedBlockSequence<int16_t>::SizeBytes,
              "");
 
     // RawMemcpyBlockSequence

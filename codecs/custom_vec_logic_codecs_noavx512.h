@@ -522,3 +522,111 @@ public:
         return compressed_data;
     };
 };
+
+
+template <typename T> // T: type of data being stored
+class RLECodecAVX2 : public StatefulIntegerCodec<T> {
+private:
+    std::vector<T> compressed_data;
+
+    static inline std::vector<T> compressScratch = 
+        std::vector<T>(2 * ((TILE_WIDTH * TILE_HEIGHT) / (256 / (sizeof(T) * 8)) + 1));
+
+public:
+    RLECodecAVX2() {}
+
+    void encodeArray(const T *in, const size_t length) override {
+        if (length == 0) return;
+
+        size_t compressedSize = 0;
+        size_t i = 0;
+        while (i < length) {
+            T currentValue = in[i];
+            size_t runLength = 1;
+
+            for (; (i + runLength + 7) < length; runLength += 8) {
+                __m256i currentVec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i + runLength - 1));
+                __m256i nextVec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i + runLength));
+                __m256i cmpResult = _mm256_cmpeq_epi32(currentVec, nextVec);
+
+                int mask = _mm256_movemask_ps(_mm256_castsi256_ps(cmpResult));
+                if (mask != 0xFF) { // Not all equal
+                    // Find the first unequal element in this chunk
+                    runLength += __builtin_ctz(~mask);
+                    break;
+                }
+            }
+
+            if (i + runLength > length) {
+                runLength = length - i;
+            }
+
+            while (i + runLength < length && in[i + runLength] == currentValue) {
+                ++runLength;
+            }
+
+            compressScratch[compressedSize++] = currentValue;
+            compressScratch[compressedSize++] = runLength;
+            i += runLength;
+        }
+        compressed_data.assign(compressScratch.data(),
+                  compressScratch.data() + compressedSize);
+        // compressed_data.shrink_to_fit();
+    }
+
+    void decodeArray(T *out, const size_t length) override {
+        size_t outIndex = 0;
+        for (size_t i = 0; i < compressed_data.size(); i += 2) {
+            T value = compressed_data[i];
+            size_t runLength = compressed_data[i + 1];
+
+            // Vectorized filling of output array using AVX2
+            __m256i val_vec = _mm256_set1_epi32(value);
+            while (runLength >= 8) {
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(out + outIndex), val_vec);
+                outIndex += 8;
+                runLength -= 8;
+            }
+
+            // Handle remaining elements
+            for (size_t j = 0; j < runLength; ++j) {
+                out[outIndex++] = value;
+            }
+        }
+    }
+    
+    std::size_t encodedNumValues() override {
+      return compressed_data.size();
+    }
+
+    std::size_t encodedSizeValue() override {
+      return sizeof(T);
+    }
+
+    virtual ~RLECodecAVX2() {}
+
+    std::string name() const override {
+        return "custom_rle_vecavx";
+    }
+
+    std::size_t getOverflowSize(size_t) const override {
+      return 0;
+    }
+
+    StatefulIntegerCodec<T>* cloneFresh() const override {
+        return new RLECodecAVX2<T>();
+    }
+
+    void allocEncoded(const T* in, size_t length) override {
+        // compressed_data.resize(2 * (length / 8 + 1));
+    };
+
+    void clear() override {
+        compressed_data.clear();
+        // compressed_data.shrink_to_fit();
+    }
+
+    std::vector<T>& getEncoded() override {
+        return compressed_data;
+    };
+};

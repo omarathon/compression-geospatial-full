@@ -7,8 +7,10 @@
 
 #include "ic.h"
 
-#define CBUF4(_n_) (((size_t)(_n_))*5/3+1024*1024)
-#define CBUF1(_n_) (((size_t)(_n_))*sizeof(int32_t)*5/3+1024*1024)
+#define CBUFN(_n_) (((size_t)(_n_))*5/3+1024*1024)
+#define CBUF4(_n_) (((size_t)(_n_))*sizeof(int32_t)*5/3+1024*1024)
+
+#define CBUF2(_n_) (((size_t)(_n_))*sizeof(int16_t)*5/3+1024*1024)
 
 //------------------ TurboRLE (Run Length Encoding) + zigzag/xor -------------------------
 #define RLE8  0xdau
@@ -24,15 +26,21 @@ unsigned trlexd(unsigned char *in, unsigned inlen, uint8_t *out, unsigned n) { i
 unsigned char *vszenc32(uint32_t *in, unsigned n, unsigned char *out, uint32_t *tmp) { bitzenc32(in, n, tmp, 0, 0); return vsenc32(tmp, n, out); }
 unsigned char *vszdec32(unsigned char *in, unsigned n, uint32_t *out) { unsigned char *p = vsdec32(in,n,out); bitzdec32(out, n, 0); return p; }
 
-class TurboPForCodec : public StatefulIntegerCodec<int32_t> {
+template <typename T> // T: type of data being stored
+class TurboPForCodec : public StatefulIntegerCodec<T> {};
+
+/* specializations */
+
+template <>
+class TurboPForCodec<int32_t> : public StatefulIntegerCodec<int32_t> {
 protected:
     std::vector<uint8_t> compressed;
 
     static inline std::vector<uint8_t> compressScratch = 
-        std::vector<uint8_t>(CBUF1(TILE_WIDTH * TILE_HEIGHT));
+        std::vector<uint8_t>(CBUF4(TILE_WIDTH * TILE_HEIGHT));
 
-    static inline std::vector<uint8_t> tmp = std::vector<uint8_t>(CBUF1(TILE_WIDTH * TILE_HEIGHT));
-    static inline std::vector<uint32_t> tmp32 = std::vector<uint32_t>(CBUF4(TILE_WIDTH * TILE_HEIGHT));
+    static inline std::vector<uint8_t> tmp = std::vector<uint8_t>(CBUF4(TILE_WIDTH * TILE_HEIGHT));
+    static inline std::vector<uint32_t> tmp32 = std::vector<uint32_t>(CBUFN(TILE_WIDTH * TILE_HEIGHT));
     
     const size_t method;
 
@@ -283,7 +291,7 @@ public:
   }
 
   std::size_t getOverflowSize(size_t length) const override {
-    return CBUF4(length) - length;
+    return CBUFN(length) - length;
   }
 
   StatefulIntegerCodec<int32_t>* cloneFresh() const override {
@@ -292,12 +300,12 @@ public:
 
   
   void allocEncoded(const int32_t* in, size_t length) override {
-    // compressed.resize(CBUF1(length));
+    // compressed.resize(CBUF4(length));
     // if (method == 15) {
-    //     tmp32.resize(CBUF4(length));
+    //     tmp32.resize(CBUFN(length));
     // }
     // else if (method == 19 || method == 20) {
-    //     tmp.resize(CBUF1(length));
+    //     tmp.resize(CBUF4(length));
     // }
   };
 
@@ -309,6 +317,105 @@ public:
   std::vector<int32_t>& getEncoded() override {
       throw std::runtime_error("Encoded format does not match input. Cannot forward.");
       std::vector<int32_t> dummy{};
+      return dummy;
+  };
+};
+
+
+template <>
+class TurboPForCodec<int16_t> : public StatefulIntegerCodec<int16_t> {
+protected:
+    std::vector<uint8_t> compressed;
+
+    static inline std::vector<uint8_t> compressScratch = 
+        std::vector<uint8_t>(CBUF2(TILE_WIDTH * TILE_HEIGHT));
+
+    static inline std::vector<uint8_t> tmp = std::vector<uint8_t>(CBUF2(TILE_WIDTH * TILE_HEIGHT));
+    static inline std::vector<uint16_t> tmp32 = std::vector<uint16_t>(CBUFN(TILE_WIDTH * TILE_HEIGHT));
+    
+    const size_t method;
+
+public:
+
+  TurboPForCodec(const size_t method) : method{method} {}
+
+  void encodeArray(const int16_t *in, const size_t length) override {
+    int16_t *in_nconst = const_cast<int16_t *>(in); // Necessary as TurboPFor is a C library
+    uint16_t *in_tpf = reinterpret_cast<uint16_t *>(in_nconst);
+
+    size_t compsize;
+    switch (method) {
+        case 10:
+            compsize = bitnzpack128v16(in_tpf, length, compressScratch.data());
+            break;
+        default:
+            throw std::runtime_error("Unknown TurboPFor method used.");
+            return;
+    }
+    compressed.assign(compressScratch.data(), compressScratch.data() + compsize);
+  }
+
+  void decodeArray(int16_t *out, const std::size_t length) override {
+    uint16_t *out_tpf = reinterpret_cast<uint16_t *>(out);
+    switch (method) {
+        case 10:
+            bitnzunpack128v16(compressed.data(), length, out_tpf); // for some reason this doesnt support 256 bit register with 16 bits... no idea why. maybe use low-level funcitons to achieve it. just add a function here https://github.com/powturbo/TurboPFor-Integer-Compression/blob/06d6aad98b4be5471289f35d5d04fac4469cf6df/lib/bitunpack.c#L1394
+            break;
+        
+        default:
+            throw std::runtime_error("Unknown TurboPFor method used.");
+            return;
+    }
+  }
+
+  std::size_t encodedNumValues() override {
+    return compressed.size();
+  }
+
+  std::size_t encodedSizeValue() override {
+    return sizeof(unsigned char);
+  }
+
+  virtual ~TurboPForCodec() {}
+
+  std::string name() const override {
+    switch (method) {
+        case 10:
+            return "TurboPFor_Zigzag+TurboPack256";
+
+        default:
+            throw std::runtime_error("Unknown TurboPFor method used.");
+            return "ERROR";
+    }
+  }
+
+  std::size_t getOverflowSize(size_t length) const override {
+    return CBUFN(length) - length;
+  }
+
+  StatefulIntegerCodec<int16_t>* cloneFresh() const override {
+    return new TurboPForCodec(method);
+  }
+
+  
+  void allocEncoded(const int16_t* in, size_t length) override {
+    // compressed.resize(CBUF2(length));
+    // if (method == 15) {
+    //     tmp32.resize(CBUFN(length));
+    // }
+    // else if (method == 19 || method == 20) {
+    //     tmp.resize(CBUF2(length));
+    // }
+  };
+
+  void clear() override {
+      compressed.clear();
+      compressed.shrink_to_fit();
+  }
+
+  std::vector<int16_t>& getEncoded() override {
+      throw std::runtime_error("Encoded format does not match input. Cannot forward.");
+      std::vector<int16_t> dummy{};
       return dummy;
   };
 };
