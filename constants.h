@@ -2,8 +2,9 @@
 
 #include <cstddef>
 
-// constexpr size_t TILE_WIDTH = 256;
-// constexpr size_t TILE_HEIGHT = 256;
+// NB: only relevant to CompressedBlockSequence.
+constexpr size_t TILE_WIDTH = 256;
+constexpr size_t TILE_HEIGHT = 256;
 
-constexpr size_t TILE_WIDTH = 5300;
-constexpr size_t TILE_HEIGHT = 530;
+// constexpr size_t TILE_WIDTH = 5300;
+// constexpr size_t TILE_HEIGHT = 512;

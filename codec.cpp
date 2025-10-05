@@ -29,43 +29,174 @@
 
 #include "constants.h"
 
+#include <optional>
+
 namespace py = pybind11;
 
-struct MortonCache {
-    int N;
-    std::vector<size_t> to_morton;
-    std::vector<size_t> from_morton;
+template <typename T> // T: type of data being stored
+struct RawMemcpyBlockSequence {
+    std::vector<std::unique_ptr<T[]>> _blocks;
 
-    explicit MortonCache(int n) : N(n), to_morton(n*n), from_morton(n*n) {
-        for (int y = 0; y < N; ++y) {
-            for (int x = 0; x < N; ++x) {
-                size_t idx = y * N + x;
-                size_t m = libmorton::morton2D_32_encode(
-                    static_cast<uint_fast16_t>(x),
-                    static_cast<uint_fast16_t>(y)
-                );
-                to_morton[idx] = m;
-                from_morton[m] = idx;
+    size_t _size_bytes;
+    int _sw;
+    int _sh;
+
+    RawMemcpyBlockSequence(int sw, int sh) : _size_bytes{0}, _sw{sw}, _sh{sh}
+    {}
+
+    bool HasBlock(int id) {
+        return id >= 0 && id < _blocks.size();
+    }
+
+    void WriteBlocks(py::array_t<T> arr, int bw, int bh) {
+        int tiles_x = (bw + _sw - 1) / _sw;
+        int tiles_y = (bh + _sh - 1) / _sh;
+        int numTiles = tiles_x * tiles_y;
+        _blocks.reserve(_blocks.size() + numTiles);
+
+        py::buffer_info info = arr.request();
+        if (info.ndim != 2)
+            throw std::runtime_error("Input array must be 2D");
+
+        auto *ptr = static_cast<T*>(info.ptr);
+        int stride_x = info.strides[1] / sizeof(T); // 1
+        int stride_y = info.strides[0] / sizeof(T); // bw
+
+        assert(stride_x == 1 && stride_y == bw);
+
+        for (int ty = 0; ty < tiles_y; ++ty) {
+            for (int tx = 0; tx < tiles_x; ++tx) {
+                int x0 = tx * _sw;
+                int y0 = ty * _sh;
+                int x1 = std::min(x0 + _sw, bw);
+                int y1 = std::min(y0 + _sh, bh);
+                int w = x1 - x0;
+                int h = y1 - y0;
+
+                std::unique_ptr<T[]> block(new T[w * h]);
+
+                for (int yy = 0; yy < h; ++yy) {
+                    const T* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
+                    T* dst_row = block.get() + yy * w;
+                    std::memcpy(dst_row, src_row, w * sizeof(T));
+                }
+
+                _size_bytes += w * h * sizeof(T);
+                _blocks.push_back(std::move(block));
             }
         }
     }
+
+    py::array_t<T> ReadBlock(int id, int sw, int sh) {
+        if (!HasBlock(id))
+            throw std::out_of_range("Block out of range");
+
+        T* block = _blocks[id].get();
+
+        py::capsule owner(block, [](void *) {});
+
+        return py::array_t<T>(
+            {sh, sw},
+            {sizeof(T) * sw, sizeof(T)},
+            block,
+            owner    
+        );
+    }
+
+    size_t SizeBytes() {
+        return _size_bytes;
+    }
 };
 
-static std::unordered_map<int, MortonCache> morton_caches;
+template <typename T> // T: type of data being stored
+struct RawNoCopyBlockSequence {
+    std::vector<py::array_t<T>> _backing_arrays;
 
-MortonCache& getMortonCache(int N) {
-    auto it = morton_caches.find(N);
-    if (it == morton_caches.end()) {
-        it = morton_caches.emplace(N, MortonCache(N)).first;
+    size_t _size_bytes;
+    int _sw;
+    int _sh;
+
+    std::optional<int> _numTilesInStrip;
+
+    RawNoCopyBlockSequence(int sw, int sh) : _size_bytes{0}, _sw{sw}, _sh{sh}, _numTilesInStrip{std::nullopt}
+    {}
+
+    std::optional<int> StripIdFor(int globalTileId) {
+        if (!_numTilesInStrip) return std::nullopt;
+        return globalTileId / *_numTilesInStrip;
     }
-    return it->second;
-}
 
-static std::vector<int32_t> globalScratch(TILE_WIDTH * TILE_HEIGHT * 4);
+    std::optional<int> TileIdWithinStripFor(int globalTileId) {
+        if (!_numTilesInStrip) return std::nullopt;
+        return globalTileId % *_numTilesInStrip;
+    }
 
-// ================================================================
-// Factory for creating codec instances by kind
-// ================================================================
+    bool HasBlock(int id) {
+        if (id < 0) return false;
+        auto stripId = StripIdFor(id);
+        return stripId && (*stripId < _backing_arrays.size());
+    }
+
+    void WriteBlocks(py::array_t<T> arr, int bw, int bh) {
+        _backing_arrays.push_back(arr);
+        _size_bytes += bw * bh * sizeof(T); 
+        if (!_numTilesInStrip) {
+            int tiles_x = (bw + _sw - 1) / _sw;
+            int tiles_y = (bh + _sh - 1) / _sh;
+            _numTilesInStrip = tiles_x * tiles_y;
+        }
+    }
+
+    py::array_t<T> ReadBlock(int id, int sw, int sh) {
+        if (!HasBlock(id))
+            throw std::out_of_range("Block out of range");
+
+        auto stripId = StripIdFor(id);
+        auto tileIdWithinStrip = TileIdWithinStripFor(id);
+
+        assert(stripId && tileIdWithinStrip);
+
+        auto& arr = _backing_arrays[*stripId];
+
+        py::buffer_info info = arr.request();
+        if (info.ndim != 2)
+            throw std::runtime_error("Input array must be 2D");
+
+        auto *ptr = static_cast<T*>(info.ptr);
+        int bh = static_cast<int>(info.shape[0]);  // number of rows
+        int bw = static_cast<int>(info.shape[1]);  // number of columns
+
+        if (bw == sw && bh == sh) {
+            // No need to extract a tile. Return the whole stripe.
+            assert(*tileIdWithinStrip == 0);
+            return arr;
+        }
+
+        // return a view of the tile.
+        int tilesPerRow = (bw + _sw - 1) / _sw;
+        int rowId = *tileIdWithinStrip / tilesPerRow;
+        int colId = *tileIdWithinStrip % tilesPerRow;
+
+        int x0 = colId * _sw;
+        int y0 = rowId * _sh;
+
+        // Pointer to top-left of tile
+        T* tile_ptr = ptr + y0 * bw + x0;
+
+        // Construct a NumPy view (no copy)
+        return py::array_t<T>(
+            {sh, sw},                   // shape of subarray
+            {sizeof(T) * bw, sizeof(T)},// strides: row = full array width * sizeof(T), col = sizeof(T)
+            tile_ptr,                   // data pointer
+            arr                         // keep base alive
+        );
+    }
+
+    size_t SizeBytes() {
+        return _size_bytes;
+    }
+};
+
 
 // not benefit from morton: 0, 1
 
@@ -92,19 +223,6 @@ static std::vector<int32_t> globalScratch(TILE_WIDTH * TILE_HEIGHT * 4);
 
 // 201: delta(zigzag)+fastpfor_bitpack
 // 202: delta(zigzag)+simdcomp
-
-template <typename T> // T: type of data being compressed
-std::unique_ptr<StatefulIntegerCodec<T>> make_arbitrary_codec(uint8_t kind) {
-    switch (kind) {
-        case 98: {
-            return std::make_unique<PointerDirectAccessCodec<T>>();
-        }
-        case 99: {
-            return std::make_unique<DirectAccessCodec<T>>();
-        }
-        default: throw std::invalid_argument("Unknown codec kind");
-    }
-}
 
 std::unique_ptr<StatefulIntegerCodec<int32_t>> make_int32_codec(uint8_t kind) {
     switch (kind) {
@@ -176,10 +294,42 @@ std::unique_ptr<StatefulIntegerCodec<int32_t>> make_int32_codec(uint8_t kind) {
     }
 }
 
+struct MortonCache {
+    int N;
+    std::vector<size_t> to_morton;
+    std::vector<size_t> from_morton;
+
+    explicit MortonCache(int n) : N(n), to_morton(n*n), from_morton(n*n) {
+        for (int y = 0; y < N; ++y) {
+            for (int x = 0; x < N; ++x) {
+                size_t idx = y * N + x;
+                size_t m = libmorton::morton2D_32_encode(
+                    static_cast<uint_fast16_t>(x),
+                    static_cast<uint_fast16_t>(y)
+                );
+                to_morton[idx] = m;
+                from_morton[m] = idx;
+            }
+        }
+    }
+};
+
+static std::unordered_map<int, MortonCache> morton_caches;
+
+MortonCache& getMortonCache(int N) {
+    auto it = morton_caches.find(N);
+    if (it == morton_caches.end()) {
+        it = morton_caches.emplace(N, MortonCache(N)).first;
+    }
+    return it->second;
+}
+
+static std::vector<int32_t> globalScratchCompression(TILE_WIDTH * TILE_HEIGHT * 2);
 
 struct CompressedBlockSequence {
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> _compressedBlocks;
-    std::vector<int32_t> _scratchTile;
+
+    std::vector<int32_t> _scratchDecompression;
 
     size_t _size_bytes;
     int _sw;
@@ -187,15 +337,9 @@ struct CompressedBlockSequence {
     uint8_t _codec_kind;
     uint8_t _morton_mode;
     
-    CompressedBlockSequence(int sw, int sh, uint8_t kind, uint8_t morton_mode) : _size_bytes{0}, _sw{sw}, _sh{sh}, _codec_kind{kind}, _morton_mode{morton_mode}
-    {
-        if (_morton_mode > 0) {
-            _scratchTile.resize(2 * sw * sh + make_int32_codec(kind)->getOverflowSize(sw * sh));
-        }
-        else {
-            _scratchTile.resize(sw * sh + make_int32_codec(kind)->getOverflowSize(sw * sh));
-        }
-    }
+    CompressedBlockSequence(int sw, int sh, uint8_t kind, uint8_t morton_mode) : _size_bytes{0}, _sw{sw}, _sh{sh}, _codec_kind{kind}, _morton_mode{morton_mode}, 
+        _scratchDecompression(TILE_WIDTH * TILE_HEIGHT + make_int32_codec(kind)->getOverflowSize(TILE_WIDTH * TILE_HEIGHT))
+    {}
 
     bool HasBlock(int id) {
         return id >= 0 && id < _compressedBlocks.size();
@@ -222,19 +366,18 @@ struct CompressedBlockSequence {
                 int x1 = std::min(x0 + _sw, bw);
                 int y1 = std::min(y0 + _sh, bh);
                 int w = x1 - x0;
-                int h = y1 - y0;
+                int h = y1 - y0; 
 
                 auto codec = make_int32_codec(_codec_kind);
 
                 // --- All other codecs (existing logic) ---
                 if (h == 1) {
                     int32_t* tile_ptr = ptr + y0 * stride_y + x0;
-                    codec->allocEncoded(tile_ptr, w * h);
                     codec->encodeArray(tile_ptr, w * h);
                 } else {
                     for (int yy = 0; yy < h; ++yy) {
                         int32_t* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                        int32_t* dst_row = _scratchTile.data() + yy * w;
+                        int32_t* dst_row = globalScratchCompression.data() + yy * w;
                         if (stride_x == 1) {
                             std::memcpy(dst_row, src_row, w * sizeof(int32_t));
                         } else {
@@ -245,11 +388,11 @@ struct CompressedBlockSequence {
                     }
                     if (_morton_mode > 0) {
                         if (w == h && w > 1) {
-                            int32_t* mortonBuf = _scratchTile.data() + (w * h);
+                            int32_t* mortonBuf = globalScratchCompression.data() + (w * h);
                             if (_morton_mode == 1) {
                                 MortonCache& mortonCodes = getMortonCache(w);
                                 for (int i = 0; i < w * h; i++) {
-                                    mortonBuf[mortonCodes.to_morton[i]] = _scratchTile[i];
+                                    mortonBuf[mortonCodes.to_morton[i]] = globalScratchCompression[i];
                                 }
                             }
                             else {
@@ -260,21 +403,18 @@ struct CompressedBlockSequence {
                                             static_cast<uint_fast16_t>(x),
                                             static_cast<uint_fast16_t>(y)
                                         );
-                                        mortonBuf[m] = _scratchTile[idx];
+                                        mortonBuf[m] = globalScratchCompression[idx];
                                     }
                                 }
                             }
-                            codec->allocEncoded(mortonBuf, w * h);
                             codec->encodeArray(mortonBuf, w * h);
                         }
                         else {
-                            codec->allocEncoded(_scratchTile.data(), w * h);
-                            codec->encodeArray(_scratchTile.data(), w * h);
+                            codec->encodeArray(globalScratchCompression.data(), w * h);
                         }
                     }
                     else {
-                        codec->allocEncoded(_scratchTile.data(), w * h);
-                        codec->encodeArray(_scratchTile.data(), w * h);
+                        codec->encodeArray(globalScratchCompression.data(), w * h);
                     }
                 }
                 _size_bytes += codec->encodedNumValues() * codec->encodedSizeValue();
@@ -289,18 +429,25 @@ struct CompressedBlockSequence {
 
         auto* codec = _compressedBlocks[id].get();
 
+        // useScratch1 = !useScratch1; // toggle scratch to allow 2 decoded blocks in use at once
+
+        // auto& globalScratch = useScratch1 ? globalScratch1 : globalScratch2;
+
+        py::capsule owner(_scratchDecompression.data(), [](void *) {});
+        // py::capsule owner(this, [](void *) {});
+
         // Normal path: decode into scratchTile
         size_t n = sw * sh;
-        codec->decodeArray(_scratchTile.data(), n);
+        codec->decodeArray(_scratchDecompression.data(), n);
 
         if (_morton_mode > 0) {
             if (sw == sh && sw > 1) {
                 // Undo Morton order
-                int32_t* mortonBuf = _scratchTile.data() + (sw * sh);
+                int32_t* mortonBuf = _scratchDecompression.data() + (sw * sh);
                 if (_morton_mode == 1) {
                     MortonCache& mortonCodes = getMortonCache(sw);
                     for (int i = 0; i < sw * sh; i++) {
-                        mortonBuf[i] = _scratchTile[mortonCodes.from_morton[i]];
+                        mortonBuf[i] = _scratchDecompression[mortonCodes.from_morton[i]];
                     }
                 }
                 else {
@@ -311,22 +458,25 @@ struct CompressedBlockSequence {
                                 static_cast<uint_fast16_t>(x),
                                 static_cast<uint_fast16_t>(y)
                             );
-                            mortonBuf[idx] = _scratchTile[m];
+                            mortonBuf[idx] = _scratchDecompression[m];
                         }
                     }
                 }
                 return py::array_t<int32_t>(
                     {sh, sw},
                     {sizeof(int32_t) * sw, sizeof(int32_t)},
-                    mortonBuf
+                    mortonBuf,
+                    // py::cast(static_cast<CompressedBlockSequence*>(this))
+                    owner
                 );
             }
         }
-        
         return py::array_t<int32_t>(
             {sh, sw},
             {sizeof(int32_t) * sw, sizeof(int32_t)},
-            _scratchTile.data()
+            _scratchDecompression.data(),
+            // py::cast(static_cast<CompressedBlockSequence*>(this))
+            owner
         );
     }
 
@@ -334,6 +484,24 @@ struct CompressedBlockSequence {
         return _size_bytes;
     }
 };
+
+
+
+
+// TODO: kill if Memcpy/NoCopy are better.
+
+template <typename T> // T: type of data being compressed
+std::unique_ptr<StatefulIntegerCodec<T>> make_arbitrary_codec(uint8_t kind) {
+    switch (kind) {
+        case 98: {
+            return std::make_unique<PointerDirectAccessCodec<T>>();
+        }
+        case 99: {
+            return std::make_unique<DirectAccessCodec<T>>();
+        }
+        default: throw std::invalid_argument("Unknown codec kind");
+    }
+}
 
 template <typename T> // T: type of data being stored
 struct RawBlockSequence {
@@ -483,353 +651,12 @@ struct RawBlockSequence {
     }
 };
 
-static std::unique_ptr<Arena> globalArena = nullptr;
-
-struct RasterMetadata {
-    size_t w;
-    size_t h;
-    uint32_t bitMax;
-};
-void initArena(std::vector<RasterMetadata> metadatas, int sw, int sh) {
-    size_t max_tile_elems = sw * sh;
-    size_t maxSizeBytes = 0;
-    for (const auto& metadata : metadatas) {
-        int tiles_x = (metadata.w + sw - 1) / sw;
-        int tiles_y = (metadata.h + sh - 1) / sh;
-        int numTiles = tiles_x * tiles_y;
-        size_t max_tile_bytes = simdpack_compressedbytes(max_tile_elems, metadata.bitMax);
-        maxSizeBytes += numTiles * max_tile_bytes;
-    }
-    globalArena = std::make_unique<Arena>(/* size */ maxSizeBytes);
-}
-
-void finalizeArena() {
-    if (!globalArena) return;
-    globalArena->shrink_to_fit();
-}
-
-struct ArenaCompressedBlockSequence {
-    // Arena _arena;
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> _compressedBlocks;
-    // std::vector<int32_t> _scratchTile;
-
-    size_t _size_bytes;
-    int _sw;
-    int _sh;
-    uint8_t _codec_kind;
-    uint8_t _morton_mode;
-
-    ArenaCompressedBlockSequence(int sw, int sh, uint8_t kind, uint8_t morton_mode)
-        : _size_bytes{0}, _sw{sw}, _sh{sh},
-          _codec_kind{kind}, _morton_mode{morton_mode}
-    {
-        // scratch tile includes morton buffer + overflow
-        // if (_morton_mode > 0) {
-        //     _scratchTile.resize(2 * sw * sh + make_int32_codec(kind)->getOverflowSize(sw * sh));
-        // } else {
-        //     _scratchTile.resize(sw * sh + make_int32_codec(kind)->getOverflowSize(sw * sh));
-        // }
-    }
-
-    bool HasBlock(int id) {
-        return id >= 0 && id < (int)_compressedBlocks.size();
-    }
-
-    // void AllocArena(int w, int h, uint32_t bitsMax) {
-    //     int tiles_x = (w + _sw - 1) / _sw;
-    //     int tiles_y = (h + _sh - 1) / _sh;
-    //     int numTiles = tiles_x * tiles_y;
-
-    //     size_t max_tile_elems = _sw * _sh;
-    //     size_t max_tile_bytes = simdpack_compressedbytes(max_tile_elems, bitsMax);
-
-    //     _arena.reserve(numTiles * max_tile_bytes);
-    // }
-
-    void WriteBlocks(py::array_t<int32_t> arr, int bw, int bh) {
-        int tiles_x = (bw + _sw - 1) / _sw;
-        int tiles_y = (bh + _sh - 1) / _sh;
-        int numTiles = tiles_x * tiles_y;
-        _compressedBlocks.reserve(_compressedBlocks.size() + numTiles);
-
-        //  // --- NEW: pre-reserve arena capacity ---
-        // size_t max_tile_elems = _sw * _sh;
-        // // worst case: 32 bits per int32_t (uncompressed size)
-        // size_t max_tile_bytes = simdpack_compressedbytes(max_tile_elems, 16);
-        // _arena.reserve(numTiles * max_tile_bytes);
-
-        py::buffer_info info = arr.request();
-        if (info.ndim != 2)
-            throw std::runtime_error("Input array must be 2D");
-
-        auto *ptr = static_cast<int32_t*>(info.ptr);
-        int stride_x = info.strides[1] / sizeof(int32_t);
-        int stride_y = info.strides[0] / sizeof(int32_t);
-
-        for (int ty = 0; ty < tiles_y; ++ty) {
-            for (int tx = 0; tx < tiles_x; ++tx) {
-                int x0 = tx * _sw;
-                int y0 = ty * _sh;
-                int x1 = std::min(x0 + _sw, bw);
-                int y1 = std::min(y0 + _sh, bh);
-                int w = x1 - x0;
-                int h = y1 - y0;
-
-                auto codec = std::make_unique<ArenaSimdCompCodec>(globalArena.get());
-
-                if (h == 1) {
-                    int32_t* tile_ptr = ptr + y0 * stride_y + x0;
-                    codec->allocEncoded(tile_ptr, w * h);
-                    codec->encodeArray(tile_ptr, w * h);
-                } else {
-                    for (int yy = 0; yy < h; ++yy) {
-                        int32_t* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                        int32_t* dst_row = globalScratch.data() + yy * w;
-                        if (stride_x == 1) {
-                            std::memcpy(dst_row, src_row, w * sizeof(int32_t));
-                        } else {
-                            for (int xx = 0; xx < w; ++xx) {
-                                dst_row[xx] = src_row[xx * stride_x];
-                            }
-                        }
-                    }
-                    if (_morton_mode > 0) {
-                        if (w == h && w > 1) {
-                            int32_t* mortonBuf = globalScratch.data() + (w * h);
-                            if (_morton_mode == 1) {
-                                MortonCache& mortonCodes = getMortonCache(w);
-                                for (int i = 0; i < w * h; i++) {
-                                    mortonBuf[mortonCodes.to_morton[i]] = globalScratch[i];
-                                }
-                            } else {
-                                for (int y = 0; y < h; y++) {
-                                    for (int x = 0; x < w; x++) {
-                                        size_t idx = y * w + x;
-                                        uint32_t m = libmorton::morton2D_32_encode(
-                                            static_cast<uint_fast16_t>(x),
-                                            static_cast<uint_fast16_t>(y)
-                                        );
-                                        mortonBuf[m] = globalScratch[idx];
-                                    }
-                                }
-                            }
-                            codec->allocEncoded(mortonBuf, w * h);
-                            codec->encodeArray(mortonBuf, w * h);
-                        } else {
-                            codec->allocEncoded(globalScratch.data(), w * h);
-                            codec->encodeArray(globalScratch.data(), w * h);
-                        }
-                    } else {
-                        codec->allocEncoded(globalScratch.data(), w * h);
-                        codec->encodeArray(globalScratch.data(), w * h);
-                    }
-                }
-                _size_bytes += codec->encodedNumValues();
-                _compressedBlocks.push_back(std::move(codec));
-            }
-        }
-    }
-
-    py::array_t<int32_t> ReadBlock(int id, int sw, int sh) {
-        if (!HasBlock(id))
-            throw std::out_of_range("Block out of range");
-
-        auto* codec = _compressedBlocks[id].get();
-
-        size_t n = sw * sh;
-        codec->decodeArray(globalScratch.data(), n);
-
-        if (_morton_mode > 0 && sw == sh && sw > 1) {
-            int32_t* mortonBuf = globalScratch.data() + (sw * sh);
-            if (_morton_mode == 1) {
-                MortonCache& mortonCodes = getMortonCache(sw);
-                for (int i = 0; i < sw * sh; i++) {
-                    mortonBuf[i] = globalScratch[mortonCodes.from_morton[i]];
-                }
-            } else {
-                for (int y = 0; y < sh; y++) {
-                    for (int x = 0; x < sw; x++) {
-                        size_t idx = y * sw + x;
-                        uint32_t m = libmorton::morton2D_32_encode(
-                            static_cast<uint_fast16_t>(x),
-                            static_cast<uint_fast16_t>(y)
-                        );
-                        mortonBuf[idx] = globalScratch[m];
-                    }
-                }
-            }
-            return py::array_t<int32_t>(
-                {sh, sw},
-                {sizeof(int32_t) * sw, sizeof(int32_t)},
-                mortonBuf
-            );
-        }
-
-        return py::array_t<int32_t>(
-            {sh, sw},
-            {sizeof(int32_t) * sw, sizeof(int32_t)},
-            globalScratch.data()
-        );
-    }
-
-    size_t SizeBytes() {
-        return _size_bytes;
-    }
-
-    // void finalize() {
-    //     _arena.shrink_to_fit();
-    // }
-};
-
-struct ExpBlockSequence {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> _compressedBlocks;
-
-    size_t _size_bytes;
-    int _sw;
-    int _sh;
-    uint8_t _codec_kind;
-    uint8_t _morton_mode;
-    
-    ExpBlockSequence(int sw, int sh, uint8_t kind, uint8_t morton_mode) : _size_bytes{0}, _sw{sw}, _sh{sh}, _codec_kind{kind}, _morton_mode{morton_mode}
-    {}
-
-    bool HasBlock(int id) {
-        return id >= 0 && id < _compressedBlocks.size();
-    }
-
-    void WriteBlocks(py::array_t<int32_t> arr, int bw, int bh) {
-        int tiles_x = (bw + _sw - 1) / _sw;
-        int tiles_y = (bh + _sh - 1) / _sh;
-        int numTiles = tiles_x * tiles_y;
-        _compressedBlocks.reserve(_compressedBlocks.size() + numTiles);
-
-        py::buffer_info info = arr.request();
-        if (info.ndim != 2)
-            throw std::runtime_error("Input array must be 2D");
-
-        auto *ptr = static_cast<int32_t*>(info.ptr);
-        int stride_x = info.strides[1] / sizeof(int32_t); // 1
-        int stride_y = info.strides[0] / sizeof(int32_t); // bw
-
-        for (int ty = 0; ty < tiles_y; ++ty) {
-            for (int tx = 0; tx < tiles_x; ++tx) {
-                int x0 = tx * _sw;
-                int y0 = ty * _sh;
-                int x1 = std::min(x0 + _sw, bw);
-                int y1 = std::min(y0 + _sh, bh);
-                int w = x1 - x0;
-                int h = y1 - y0;
-
-                auto codec = make_int32_codec(_codec_kind);
-
-                // --- All other codecs (existing logic) ---
-                if (h == 1) {
-                    int32_t* tile_ptr = ptr + y0 * stride_y + x0;
-                    codec->encodeArray(tile_ptr, w * h);
-                } else {
-                    for (int yy = 0; yy < h; ++yy) {
-                        int32_t* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                        int32_t* dst_row = globalScratch.data() + yy * w;
-                        if (stride_x == 1) {
-                            std::memcpy(dst_row, src_row, w * sizeof(int32_t));
-                        } else {
-                            for (int xx = 0; xx < w; ++xx) {
-                                dst_row[xx] = src_row[xx * stride_x];
-                            }
-                        }
-                    }
-                    if (_morton_mode > 0) {
-                        if (w == h && w > 1) {
-                            int32_t* mortonBuf = globalScratch.data() + (w * h);
-                            if (_morton_mode == 1) {
-                                MortonCache& mortonCodes = getMortonCache(w);
-                                for (int i = 0; i < w * h; i++) {
-                                    mortonBuf[mortonCodes.to_morton[i]] = globalScratch[i];
-                                }
-                            }
-                            else {
-                                for (int y = 0; y < h; y++) {
-                                    for (int x = 0; x < w; x++) {
-                                        size_t idx = y * w + x;
-                                        uint32_t m = libmorton::morton2D_32_encode(
-                                            static_cast<uint_fast16_t>(x),
-                                            static_cast<uint_fast16_t>(y)
-                                        );
-                                        mortonBuf[m] = globalScratch[idx];
-                                    }
-                                }
-                            }
-                            codec->encodeArray(mortonBuf, w * h);
-                        }
-                        else {
-                            codec->encodeArray(globalScratch.data(), w * h);
-                        }
-                    }
-                    else {
-                        codec->encodeArray(globalScratch.data(), w * h);
-                    }
-                }
-                _size_bytes += codec->encodedNumValues() * codec->encodedSizeValue();
-                _compressedBlocks.push_back(std::move(codec));
-            }
-        }
-    }
-
-    py::array_t<int32_t> ReadBlock(int id, int sw, int sh) {
-        if (!HasBlock(id))
-            throw std::out_of_range("Block out of range");
-
-        auto* codec = _compressedBlocks[id].get();
-
-        // Normal path: decode into scratchTile
-        size_t n = sw * sh;
-        codec->decodeArray(globalScratch.data(), n);
-
-        if (_morton_mode > 0) {
-            if (sw == sh && sw > 1) {
-                // Undo Morton order
-                int32_t* mortonBuf = globalScratch.data() + (sw * sh);
-                if (_morton_mode == 1) {
-                    MortonCache& mortonCodes = getMortonCache(sw);
-                    for (int i = 0; i < sw * sh; i++) {
-                        mortonBuf[i] = globalScratch[mortonCodes.from_morton[i]];
-                    }
-                }
-                else {
-                    for (int y = 0; y < sh; y++) {
-                        for (int x = 0; x < sw; x++) {
-                            size_t idx = y * sw + x;
-                            uint32_t m = libmorton::morton2D_32_encode(
-                                static_cast<uint_fast16_t>(x),
-                                static_cast<uint_fast16_t>(y)
-                            );
-                            mortonBuf[idx] = globalScratch[m];
-                        }
-                    }
-                }
-                return py::array_t<int32_t>(
-                    {sh, sw},
-                    {sizeof(int32_t) * sw, sizeof(int32_t)},
-                    mortonBuf
-                );
-            }
-        }
-        
-        return py::array_t<int32_t>(
-            {sh, sw},
-            {sizeof(int32_t) * sw, sizeof(int32_t)},
-            globalScratch.data()
-        );
-    }
-
-    size_t SizeBytes() {
-        return _size_bytes;
-    }
-};
 
 
 PYBIND11_MODULE(codec, m) {
     m.doc() = "Codec bindings with block sequence support";
+    
+    // CompressedBlockSequence
 
     py::class_<CompressedBlockSequence>(m, "CompressedBlockSequence")
         .def(py::init<int,int,uint8_t,uint8_t>(),
@@ -841,63 +668,95 @@ PYBIND11_MODULE(codec, m) {
              py::arg("array"),
              py::arg("bw"),
              py::arg("bh"),
-             "Partition a 2D int32 numpy array into tiles and compress each block.")
+             "")
         .def("read_block", &CompressedBlockSequence::ReadBlock,
              py::arg("id"),
              py::arg("sw"),
              py::arg("sh"),
-             "Decode (or reference) a block by id into a numpy array view.")
+             "")
         .def("has_block", &CompressedBlockSequence::HasBlock,
              py::arg("id"),
-             "Check if a block exists at the given id.")
+             "")
         .def("size_bytes", &CompressedBlockSequence::SizeBytes,
-             "Obtain the number of bytes occupied by the stored data.");
+             "");
 
-     py::class_<ExpBlockSequence>(m, "ExpBlockSequence")
-        .def(py::init<int,int,uint8_t,uint8_t>(),
-             py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"),
-             py::arg("morton_mode"))
-        .def("write_blocks", &ExpBlockSequence::WriteBlocks,
-             py::arg("array"),
-             py::arg("bw"),
-             py::arg("bh"),
-             "Partition a 2D int32 numpy array into tiles and compress each block.")
-        .def("read_block", &ExpBlockSequence::ReadBlock,
-             py::arg("id"),
-             py::arg("sw"),
-             py::arg("sh"),
-             "Decode (or reference) a block by id into a numpy array view.")
-        .def("has_block", &ExpBlockSequence::HasBlock,
-             py::arg("id"),
-             "Check if a block exists at the given id.")
-        .def("size_bytes", &ExpBlockSequence::SizeBytes,
-             "Obtain the number of bytes occupied by the stored data.");
+    // RawMemcpyBlockSequence
 
-    py::class_<ArenaCompressedBlockSequence>(m, "ArenaCompressedBlockSequence")
-        .def(py::init<int,int,uint8_t,uint8_t>(),
+    py::class_<RawMemcpyBlockSequence<int32_t>>(m, "RawMemcpyBlockSequenceInt32")
+        .def(py::init<int,int>(),
              py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"),
-             py::arg("morton_mode"))
-        .def("write_blocks", &ArenaCompressedBlockSequence::WriteBlocks,
-             py::arg("array"),
-             py::arg("bw"),
-             py::arg("bh"),
-             "Partition a 2D int32 numpy array into tiles and compress each block.")
-        .def("read_block", &ArenaCompressedBlockSequence::ReadBlock,
-             py::arg("id"),
+             py::arg("sh"))
+        .def("write_blocks", &RawMemcpyBlockSequence<int32_t>::WriteBlocks)
+        .def("read_block", &RawMemcpyBlockSequence<int32_t>::ReadBlock)
+        .def("has_block", &RawMemcpyBlockSequence<int32_t>::HasBlock)
+        .def("size_bytes", &RawMemcpyBlockSequence<int32_t>::SizeBytes);
+
+    py::class_<RawMemcpyBlockSequence<int16_t>>(m, "RawMemcpyBlockSequenceInt16")
+        .def(py::init<int,int>(),
              py::arg("sw"),
-             py::arg("sh"),
-             "Decode (or reference) a block by id into a numpy array view.")
-        .def("has_block", &ArenaCompressedBlockSequence::HasBlock,
-             py::arg("id"),
-             "Check if a block exists at the given id.")
-        .def("size_bytes", &ArenaCompressedBlockSequence::SizeBytes,
-             "Obtain the number of bytes occupied by the stored data.");
-        // .def("finalize", &ArenaCompressedBlockSequence::finalize,
-        //      "Finalize.");
+             py::arg("sh"))
+        .def("write_blocks", &RawMemcpyBlockSequence<int16_t>::WriteBlocks)
+        .def("read_block", &RawMemcpyBlockSequence<int16_t>::ReadBlock)
+        .def("has_block", &RawMemcpyBlockSequence<int16_t>::HasBlock)
+        .def("size_bytes", &RawMemcpyBlockSequence<int16_t>::SizeBytes);
+
+    py::class_<RawMemcpyBlockSequence<uint8_t>>(m, "RawMemcpyBlockSequenceByte")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawMemcpyBlockSequence<uint8_t>::WriteBlocks)
+        .def("read_block", &RawMemcpyBlockSequence<uint8_t>::ReadBlock)
+        .def("has_block", &RawMemcpyBlockSequence<uint8_t>::HasBlock)
+        .def("size_bytes", &RawMemcpyBlockSequence<uint8_t>::SizeBytes);
+
+    py::class_<RawMemcpyBlockSequence<float>>(m, "RawMemcpyBlockSequenceFloat")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawMemcpyBlockSequence<float>::WriteBlocks)
+        .def("read_block", &RawMemcpyBlockSequence<float>::ReadBlock)
+        .def("has_block", &RawMemcpyBlockSequence<float>::HasBlock)
+        .def("size_bytes", &RawMemcpyBlockSequence<float>::SizeBytes);
+
+    // RawNoCopyBlockSequence
+
+    py::class_<RawNoCopyBlockSequence<int32_t>>(m, "RawNoCopyBlockSequenceInt32")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawNoCopyBlockSequence<int32_t>::WriteBlocks)
+        .def("read_block", &RawNoCopyBlockSequence<int32_t>::ReadBlock)
+        .def("has_block", &RawNoCopyBlockSequence<int32_t>::HasBlock)
+        .def("size_bytes", &RawNoCopyBlockSequence<int32_t>::SizeBytes);
+
+    py::class_<RawNoCopyBlockSequence<int16_t>>(m, "RawNoCopyBlockSequenceInt16")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawNoCopyBlockSequence<int16_t>::WriteBlocks)
+        .def("read_block", &RawNoCopyBlockSequence<int16_t>::ReadBlock)
+        .def("has_block", &RawNoCopyBlockSequence<int16_t>::HasBlock)
+        .def("size_bytes", &RawNoCopyBlockSequence<int16_t>::SizeBytes);
+
+    py::class_<RawNoCopyBlockSequence<uint8_t>>(m, "RawNoCopyBlockSequenceByte")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawNoCopyBlockSequence<uint8_t>::WriteBlocks)
+        .def("read_block", &RawNoCopyBlockSequence<uint8_t>::ReadBlock)
+        .def("has_block", &RawNoCopyBlockSequence<uint8_t>::HasBlock)
+        .def("size_bytes", &RawNoCopyBlockSequence<uint8_t>::SizeBytes);
+
+    py::class_<RawNoCopyBlockSequence<float>>(m, "RawNoCopyBlockSequenceFloat")
+        .def(py::init<int,int>(),
+             py::arg("sw"),
+             py::arg("sh"))
+        .def("write_blocks", &RawNoCopyBlockSequence<float>::WriteBlocks)
+        .def("read_block", &RawNoCopyBlockSequence<float>::ReadBlock)
+        .def("has_block", &RawNoCopyBlockSequence<float>::HasBlock)
+        .def("size_bytes", &RawNoCopyBlockSequence<float>::SizeBytes);
+
+    // RawBlockSequence - TODO delete
 
     py::class_<RawBlockSequence<int32_t>>(m, "RawBlockSequenceInt32")
         .def(py::init<int,int,uint8_t>(),
@@ -938,17 +797,4 @@ PYBIND11_MODULE(codec, m) {
         .def("read_block", &RawBlockSequence<float>::ReadBlock)
         .def("has_block", &RawBlockSequence<float>::HasBlock)
         .def("size_bytes", &RawBlockSequence<float>::SizeBytes);
-
-
-    // Bind RasterMetadata
-    py::class_<RasterMetadata>(m, "RasterMetadata")
-        .def(py::init<>())  // default constructor
-        .def_readwrite("w", &RasterMetadata::w)
-        .def_readwrite("h", &RasterMetadata::h)
-        .def_readwrite("bitMax", &RasterMetadata::bitMax);
-
-    // Bind functions
-    m.def("initArena", &initArena, "Initialize arena",
-          py::arg("metadatas"), py::arg("sw"), py::arg("sh"));
-    m.def("finalizeArena", &finalizeArena, "Finalize arena");
 }
