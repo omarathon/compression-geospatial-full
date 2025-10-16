@@ -29,7 +29,7 @@ unsigned char *vszdec32(unsigned char *in, unsigned n, uint32_t *out) { unsigned
 template <typename T> // T: type of data being stored
 class TurboPForCodec : public StatefulIntegerCodec<T> {};
 
-/* specializations */
+/* Specializations */
 
 template <>
 class TurboPForCodec<int32_t> : public StatefulIntegerCodec<int32_t> {
@@ -84,9 +84,6 @@ public:
         case 10:
             compsize = bitnzpack256v32(in_tpf, length, compressScratch.data());
             break;
-        // case 11:
-        //     compsize = bitnfpack256v32(in_tpf, length, compressed.data());
-        //     break;
         case 12:
             compsize = bitnxpack256v32(in_tpf, length, compressScratch.data());
             break;
@@ -109,8 +106,6 @@ public:
                 return;
             }
             compsize = compend2 - compressScratch.data();
-            // tmp32.clear();
-            // tmp32.shrink_to_fit();
             break;
         }
         case 16:
@@ -124,22 +119,10 @@ public:
             break;
         case 19:
             compsize = trlexc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressScratch.data(), tmp.data());
-            // tmp.clear();
-            // tmp.shrink_to_fit();
             break;
         case 20:
             compsize = trlezc(reinterpret_cast<uint8_t *>(in_nconst), length * 4, compressScratch.data(), tmp.data());
-            // tmp.clear();
-            // tmp.shrink_to_fit();
             break;
-        // case 21:
-        //     compsize = srlec32(reinterpret_cast<const uint8_t *>(in), length, compressed.data(), RLE32);
-        //     break;
-        // case 22:
-        //     compsize = srlezc32(in_tpf, length, compressed.data(), tmp.data(), RLE32);
-        //     tmp.clear();
-        //     tmp.shrink_to_fit();
-        //     break;
 
         default:
             throw std::runtime_error("Unknown TurboPFor method used.");
@@ -181,9 +164,6 @@ public:
         case 10:
             bitnzunpack256v32(compressed.data(), length, out_tpf);
             break;
-        // case 11:
-        //     bitnfunpack256v32(compressed.data(), length, out_tpf);
-        //     break;
         case 12:
             bitnxunpack256v32(compressed.data(), length, out_tpf);
             break;
@@ -211,12 +191,6 @@ public:
         case 20:
             trlezd(compressed.data(), compressed.size(), reinterpret_cast<uint8_t *>(out_tpf), length * 4);
             break;
-        // case 21:
-        //     srled32(compressed.data(), compressed.size(), out_tpf, length, RLE32);
-        //     break;
-        // case 22:
-        //     srlezd32(compressed.data(), compressed.size(), out_tpf, length, RLE32);
-        //     break;
         
         default:
             throw std::runtime_error("Unknown TurboPFor method used.");
@@ -256,9 +230,6 @@ public:
             return "TurboPFor_Delta1+TurboPack256";
         case 10:
             return "TurboPFor_Zigzag+TurboPack256";
-        // TODO: FIX
-        // case 11:
-        //     return "TurboPFor_FOR+TurboPack256";
         case 12:
             return "TurboPFor_xor+TurboPack256";
         case 13:
@@ -277,12 +248,6 @@ public:
             return "TurboPFor_Xor+TurboRLE"; // Req tmp
         case 20:
             return "TurboPFor_Zigzag+TurboRLE"; // Req tmp
-        // TODO: Fix below.
-        // case 21:
-        //     return "TurboPFor_ESC+TurboRLE"; // Req RLE32
-        // case 22:
-        //     return "TurboPFor_ESC+zigzag+TurboRLE"; // Req tmp, RLE32
-
 
         default:
             throw std::runtime_error("Unknown TurboPFor method used.");
@@ -300,13 +265,7 @@ public:
 
   
   void allocEncoded(const int32_t* in, size_t length) override {
-    // compressed.resize(CBUF4(length));
-    // if (method == 15) {
-    //     tmp32.resize(CBUFN(length));
-    // }
-    // else if (method == 19 || method == 20) {
-    //     tmp.resize(CBUF4(length));
-    // }
+    (void)in; (void)length;
   };
 
   void clear() override {
@@ -348,6 +307,9 @@ public:
         case 10:
             compsize = bitnzpack128v16(in_tpf, length, compressScratch.data());
             break;
+        case 12:
+            compsize = bitnxpack128v16(in_tpf, length, compressScratch.data());
+            break;
         default:
             throw std::runtime_error("Unknown TurboPFor method used.");
             return;
@@ -360,6 +322,9 @@ public:
     switch (method) {
         case 10:
             bitnzunpack128v16(compressed.data(), length, out_tpf); // for some reason this doesnt support 256 bit register with 16 bits... no idea why. maybe use low-level funcitons to achieve it. just add a function here https://github.com/powturbo/TurboPFor-Integer-Compression/blob/06d6aad98b4be5471289f35d5d04fac4469cf6df/lib/bitunpack.c#L1394
+            break;
+        case 12:
+            bitnxunpack128v16(compressed.data(), length, out_tpf);
             break;
         
         default:
@@ -382,6 +347,8 @@ public:
     switch (method) {
         case 10:
             return "TurboPFor_Zigzag+TurboPack256";
+        case 12:
+            return "TurboPFor_xor+TurboPack256";
 
         default:
             throw std::runtime_error("Unknown TurboPFor method used.");
@@ -399,13 +366,7 @@ public:
 
   
   void allocEncoded(const int16_t* in, size_t length) override {
-    // compressed.resize(CBUF2(length));
-    // if (method == 15) {
-    //     tmp32.resize(CBUFN(length));
-    // }
-    // else if (method == 19 || method == 20) {
-    //     tmp.resize(CBUF2(length));
-    // }
+    (void)in; (void)length;
   };
 
   void clear() override {

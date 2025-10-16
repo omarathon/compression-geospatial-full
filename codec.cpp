@@ -180,15 +180,14 @@ struct RawNoCopyBlockSequence {
         int x0 = colId * _sw;
         int y0 = rowId * _sh;
 
-        // Pointer to top-left of tile
         T* tile_ptr = ptr + y0 * bw + x0;
 
-        // Construct a NumPy view (no copy)
+        // No-copy
         return py::array_t<T>(
-            {sh, sw},                   // shape of subarray
-            {sizeof(T) * bw, sizeof(T)},// strides: row = full array width * sizeof(T), col = sizeof(T)
-            tile_ptr,                   // data pointer
-            arr                         // keep base alive
+            {sh, sw},
+            {sizeof(T) * bw, sizeof(T)},
+            tile_ptr,
+            arr
         );
     }
 
@@ -196,33 +195,6 @@ struct RawNoCopyBlockSequence {
         return _size_bytes;
     }
 };
-
-
-// not benefit from morton: 0, 1
-
-// 0: simdcomp
-// 1: fastpfor_simdbinarypacking
-
-// benefit from morton: 2-15, 100-103, 200, 201
-
-// 2: fastpfor_simdpfor
-// 3: rle
-// 4: rle + simdcomp
-// 5: rle + fastpfor_bitpack
-// 6: TurboPFor256
-// 7: TurboPFor_Delta+TurboPFor256
-// 8: TurboPFor_Zigzag+TurboPFor256
-// 9: TurboPFor_Zigzag+TurboPack256
-// 10: TurboPFor_xor+TurboPack256
-// 11: TurboPFor_zzag/delta+TurboPFor128
-// 12: TurboPFor_Zigzag+TurboVSimple
-// 13: TurboPFor_Zigzag/delta_bitio
-// 14: TurboPFor_Zigzag_bitio
-
-// 100-103: bads (entropy)
-
-// 201: delta(zigzag)+fastpfor_bitpack
-// 202: delta(zigzag)+simdcomp
 
 template <typename T> // T: type of data being stored
 std::unique_ptr<StatefulIntegerCodec<T>> make_codec(uint8_t kind) {
@@ -475,7 +447,6 @@ struct CompressedBlockSequence {
                     {sh, sw},
                     {sizeof(T) * sw, sizeof(T)},
                     mortonBuf,
-                    // py::cast(static_cast<CompressedBlockSequence*>(this))
                     owner
                 );
             }
@@ -484,7 +455,6 @@ struct CompressedBlockSequence {
             {sh, sw},
             {sizeof(T) * sw, sizeof(T)},
             _scratchDecompression.data(),
-            // py::cast(static_cast<CompressedBlockSequence*>(this))
             owner
         );
     }
@@ -498,171 +468,6 @@ template <typename T>
 std::vector<T> CompressedBlockSequence<T>::globalScratchCompression(
     TILE_WIDTH * TILE_HEIGHT * 2
 );
-
-
-// TODO: kill if Memcpy/NoCopy are better.
-
-template <typename T> // T: type of data being compressed
-std::unique_ptr<StatefulIntegerCodec<T>> make_arbitrary_codec(uint8_t kind) {
-    switch (kind) {
-        case 98: {
-            return std::make_unique<PointerDirectAccessCodec<T>>();
-        }
-        case 99: {
-            return std::make_unique<DirectAccessCodec<T>>();
-        }
-        default: throw std::invalid_argument("Unknown codec kind");
-    }
-}
-
-template <typename T> // T: type of data being stored
-struct RawBlockSequence {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<T>>> _blocks;
-    std::vector<py::array_t<T>> _backing_arrays;
-    std::vector<T> _scratchTile;
-
-    size_t _size_bytes;
-    int _sw;
-    int _sh;
-    uint8_t _codec_kind;
-
-    RawBlockSequence(int sw, int sh, uint8_t kind) : _size_bytes{0}, _sw{sw}, _sh{sh}, _codec_kind{kind}
-    {
-        if (_codec_kind != 98) { // Pointer codec doesn't use the scratch tile
-            _scratchTile.resize(sw * sh + make_arbitrary_codec<T>(kind)->getOverflowSize(sw * sh));
-        }
-    }
-
-    bool HasBlock(int id) {
-        return id >= 0 && id < _blocks.size();
-    }
-
-    void WriteBlocks(py::array_t<T> arr, int bw, int bh) {
-        int tiles_x = (bw + _sw - 1) / _sw;
-        int tiles_y = (bh + _sh - 1) / _sh;
-        int numTiles = tiles_x * tiles_y;
-        _blocks.reserve(_blocks.size() + numTiles);
-
-        py::buffer_info info = arr.request();
-        if (info.ndim != 2)
-            throw std::runtime_error("Input array must be 2D");
-
-        auto *ptr = static_cast<T*>(info.ptr);
-        int stride_x = info.strides[1] / sizeof(T); // 1
-        int stride_y = info.strides[0] / sizeof(T); // bw
-
-        // keep Python array alive if PointerDirectAccessCodec is used
-        if (_codec_kind == 98) {
-            _backing_arrays.push_back(arr);
-        }
-
-        for (int ty = 0; ty < tiles_y; ++ty) {
-            for (int tx = 0; tx < tiles_x; ++tx) {
-                int x0 = tx * _sw;
-                int y0 = ty * _sh;
-                int x1 = std::min(x0 + _sw, bw);
-                int y1 = std::min(y0 + _sh, bh);
-                int w = x1 - x0;
-                int h = y1 - y0;
-
-                auto codec = make_arbitrary_codec<T>(_codec_kind);
-
-                if (_codec_kind == 98) {
-                    // --- PointerDirectAccessCodec path ---
-                    auto* pcodec = dynamic_cast<PointerDirectAccessCodec<T>*>(codec.get());
-                    if (!pcodec) throw std::runtime_error("Codec kind 98 must be PointerDirectAccessCodec");
-
-                    if (h == 1) {
-                        // contiguous full tile → zero copy
-                        T* tile_ptr = ptr + y0 * stride_y + x0;
-                        auto buf = std::shared_ptr<T[]>(tile_ptr, [](T*){}); // no-op deleter
-                        pcodec->setOwnedBuffer(buf, w * h);
-                    } else {
-                        // non-contiguous → allocate new buffer, copy once
-                        std::shared_ptr<T[]> buf(new T[w * h], std::default_delete<T[]>());
-                        for (int yy = 0; yy < h; ++yy) {
-                            T* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                            T* dst_row = buf.get() + yy * w;
-                            if (stride_x == 1) {
-                                std::memcpy(dst_row, src_row, w * sizeof(T));
-                            } else {
-                                for (int xx = 0; xx < w; ++xx) {
-                                    dst_row[xx] = src_row[xx * stride_x];
-                                }
-                            }
-                        }
-                        pcodec->setOwnedBuffer(std::move(buf), w * h);
-                    }
-                } else {
-                    // --- All other codecs (existing logic) ---
-                    if (h == 1) {
-                        T* tile_ptr = ptr + y0 * stride_y + x0;
-                        codec->allocEncoded(tile_ptr, w * h);
-                        codec->encodeArray(tile_ptr, w * h);
-                    } else {
-                        for (int yy = 0; yy < h; ++yy) {
-                            T* src_row = ptr + (y0 + yy) * stride_y + x0 * stride_x;
-                            T* dst_row = _scratchTile.data() + yy * w;
-                            if (stride_x == 1) {
-                                std::memcpy(dst_row, src_row, w * sizeof(T));
-                            } else {
-                                for (int xx = 0; xx < w; ++xx) {
-                                    dst_row[xx] = src_row[xx * stride_x];
-                                }
-                            }
-                        }
-                        codec->allocEncoded(_scratchTile.data(), w * h);
-                        codec->encodeArray(_scratchTile.data(), w * h);
-                    }
-                }
-                _size_bytes += codec->encodedNumValues() * codec->encodedSizeValue();
-                _blocks.push_back(std::move(codec));
-            }
-        }
-    }
-
-    py::array_t<T> ReadBlock(int id, int sw, int sh) {
-        if (!HasBlock(id))
-            throw std::out_of_range("Block out of range");
-
-        auto* codec = _blocks[id].get();
-
-        if (_codec_kind == 99) {
-            // Special case: codec already owns the decoded/encoded data
-            std::vector<T>& encoded = codec->getEncoded();
-
-            if (encoded.size() < sw * sh) {
-                throw std::runtime_error("Encoded block smaller than requested shape");
-            }
-
-            return py::array_t<T>(
-                {sh, sw},
-                {sizeof(T) * sw, sizeof(T)},
-                encoded.data()
-            );
-        } else { // 98
-             // PointerDirectAccessCodec
-            auto* pcodec = dynamic_cast<PointerDirectAccessCodec<T>*>(codec);
-            if (!pcodec || !pcodec->getPointer())
-                throw std::runtime_error("PointerDirectAccessCodec has no data");
-
-            if (pcodec->encodedNumValues() < (size_t)(sw * sh))
-                throw std::runtime_error("Encoded block smaller than requested shape");
-
-            return py::array_t<T>(
-                {sh, sw},
-                {sizeof(T) * sw, sizeof(T)},
-                pcodec->getPointer(),
-                _backing_arrays.back()
-            );
-        }
-    }
-
-    size_t SizeBytes() {
-        return _size_bytes;
-    }
-};
-
 
 
 PYBIND11_MODULE(codec, m) {
@@ -789,46 +594,4 @@ PYBIND11_MODULE(codec, m) {
         .def("read_block", &RawNoCopyBlockSequence<float>::ReadBlock)
         .def("has_block", &RawNoCopyBlockSequence<float>::HasBlock)
         .def("size_bytes", &RawNoCopyBlockSequence<float>::SizeBytes);
-
-    // RawBlockSequence - TODO delete
-
-    py::class_<RawBlockSequence<int32_t>>(m, "RawBlockSequenceInt32")
-        .def(py::init<int,int,uint8_t>(),
-             py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"))
-        .def("write_blocks", &RawBlockSequence<int32_t>::WriteBlocks)
-        .def("read_block", &RawBlockSequence<int32_t>::ReadBlock)
-        .def("has_block", &RawBlockSequence<int32_t>::HasBlock)
-        .def("size_bytes", &RawBlockSequence<int32_t>::SizeBytes);
-
-    py::class_<RawBlockSequence<int16_t>>(m, "RawBlockSequenceInt16")
-        .def(py::init<int,int,uint8_t>(),
-             py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"))
-        .def("write_blocks", &RawBlockSequence<int16_t>::WriteBlocks)
-        .def("read_block", &RawBlockSequence<int16_t>::ReadBlock)
-        .def("has_block", &RawBlockSequence<int16_t>::HasBlock)
-        .def("size_bytes", &RawBlockSequence<int16_t>::SizeBytes);
-
-    py::class_<RawBlockSequence<uint8_t>>(m, "RawBlockSequenceByte")
-        .def(py::init<int,int,uint8_t>(),
-             py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"))
-        .def("write_blocks", &RawBlockSequence<uint8_t>::WriteBlocks)
-        .def("read_block", &RawBlockSequence<uint8_t>::ReadBlock)
-        .def("has_block", &RawBlockSequence<uint8_t>::HasBlock)
-        .def("size_bytes", &RawBlockSequence<uint8_t>::SizeBytes);
-
-    py::class_<RawBlockSequence<float>>(m, "RawBlockSequenceFloat")
-        .def(py::init<int,int,uint8_t>(),
-             py::arg("sw"),
-             py::arg("sh"),
-             py::arg("codec_kind"))
-        .def("write_blocks", &RawBlockSequence<float>::WriteBlocks)
-        .def("read_block", &RawBlockSequence<float>::ReadBlock)
-        .def("has_block", &RawBlockSequence<float>::HasBlock)
-        .def("size_bytes", &RawBlockSequence<float>::SizeBytes);
 }
