@@ -530,70 +530,99 @@ private:
     std::vector<T> compressed_data;
 
     static inline std::vector<T> compressScratch = 
-        std::vector<T>(2 * ((TILE_WIDTH * TILE_HEIGHT) / (256 / (sizeof(T) * 8)) + 1));
+        std::vector<T>(10 * ((TILE_WIDTH * TILE_HEIGHT) / (256 / (sizeof(T) * 8)) + 1));
 
 public:
     RLECodecAVX2() {}
 
-    void encodeArray(const T *in, const size_t length) override {
-        if (length == 0) return;
+    void encodeArray(const T* in, const size_t length) override {
+    if (length == 0) return;
 
-        size_t compressedSize = 0;
-        size_t i = 0;
-        while (i < length) {
-            T currentValue = in[i];
-            size_t runLength = 1;
+    size_t compressedSize = 0;
+    size_t i = 0;
+    const size_t vecWidth = 32 / sizeof(T);  // 8 for int32, 16 for int16
 
-            for (; (i + runLength + 7) < length; runLength += 8) {
-                __m256i currentVec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i + runLength - 1));
-                __m256i nextVec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in + i + runLength));
-                __m256i cmpResult = _mm256_cmpeq_epi32(currentVec, nextVec);
+    while (i < length) {
+        T currentValue = in[i];
+        size_t runLength = 1;
 
-                int mask = _mm256_movemask_ps(_mm256_castsi256_ps(cmpResult));
-                if (mask != 0xFF) { // Not all equal
-                    // Find the first unequal element in this chunk
+        // --- vectorized comparison loop ---
+        for (;; runLength += vecWidth) {
+            // check bounds for both loads
+            if (i + runLength + vecWidth >= length)
+                break;
+
+            const T* curPtr  = in + i + runLength - 1;
+            const T* nextPtr = in + i + runLength;
+
+            __m256i currentVec = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(curPtr));
+            __m256i nextVec    = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(nextPtr));
+
+            __m256i cmp;
+            int mask;
+
+            if constexpr (sizeof(T) == 4) {
+                cmp  = _mm256_cmpeq_epi32(currentVec, nextVec);
+                mask = _mm256_movemask_ps(_mm256_castsi256_ps(cmp));  // 8 bits
+                if (mask != 0xFF) {
                     runLength += __builtin_ctz(~mask);
                     break;
                 }
+            } else if constexpr (sizeof(T) == 2) {
+                cmp  = _mm256_cmpeq_epi16(currentVec, nextVec);
+                mask = _mm256_movemask_epi8(cmp);                     // 16 bits
+                if (mask != 0xFFFF) {
+                    runLength += (__builtin_ctz(~mask) / 2);          // 2 bytes per element
+                    break;
+                }
             }
-
-            if (i + runLength > length) {
-                runLength = length - i;
-            }
-
-            while (i + runLength < length && in[i + runLength] == currentValue) {
-                ++runLength;
-            }
-
-            compressScratch[compressedSize++] = currentValue;
-            compressScratch[compressedSize++] = runLength;
-            i += runLength;
         }
-        compressed_data.assign(compressScratch.data(),
-                  compressScratch.data() + compressedSize);
-        // compressed_data.shrink_to_fit();
+
+        if (i + runLength > length)
+            runLength = length - i;
+
+        // scalar tail for leftover equal values
+        while (i + runLength < length && in[i + runLength] == currentValue)
+            ++runLength;
+
+        // store the pair (value, runLength)
+        compressScratch[compressedSize++] = currentValue;
+        compressScratch[compressedSize++] = runLength;
+        i += runLength;
     }
 
-    void decodeArray(T *out, const size_t length) override {
-        size_t outIndex = 0;
-        for (size_t i = 0; i < compressed_data.size(); i += 2) {
-            T value = compressed_data[i];
-            size_t runLength = compressed_data[i + 1];
+    compressed_data.assign(compressScratch.data(),
+                           compressScratch.data() + compressedSize);
+}
 
-            // Vectorized filling of output array using AVX2
+    void decodeArray(T* out, const size_t length) override {
+    size_t outIndex = 0;
+
+    for (size_t i = 0; i + 1 < compressed_data.size(); i += 2) {
+        T value = compressed_data[i];
+        size_t runLength = compressed_data[i + 1];
+
+        if constexpr (sizeof(T) == 4) {
             __m256i val_vec = _mm256_set1_epi32(value);
             while (runLength >= 8) {
                 _mm256_storeu_si256(reinterpret_cast<__m256i*>(out + outIndex), val_vec);
                 outIndex += 8;
                 runLength -= 8;
             }
-
-            // Handle remaining elements
-            for (size_t j = 0; j < runLength; ++j) {
-                out[outIndex++] = value;
+        } else if constexpr (sizeof(T) == 2) {
+            __m256i val_vec = _mm256_set1_epi16(value);
+            while (runLength >= 16) {
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(out + outIndex), val_vec);
+                outIndex += 16;
+                runLength -= 16;
             }
         }
+
+        // scalar remainder
+        for (size_t j = 0; j < runLength; ++j)
+            out[outIndex++] = value;
     }
+}
     
     std::size_t encodedNumValues() override {
       return compressed_data.size();
