@@ -19,11 +19,13 @@
 #include "util.h"
 #include "transformations.h"
 #include "codecs/direct_codec.h"
+#include <nmmintrin.h>  // SSE4.2
 
 #define GDAL_DTYPE GDT_Int32
 
+static int dummySum;
+
 void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& ordering, const std::string& transformation, const int blockSize) {
-    // blockData is currently in row-major order. remap according to desired ordering
     if (ordering == "zigzag") {
         auto remappedBlockData = remapToZigzagOrder(blockData, blockSize);
         std::copy(remappedBlockData.begin(), remappedBlockData.end(), blockData.begin());
@@ -52,7 +54,8 @@ void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& o
 }
 
 // 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum'
-std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std::string& transformation, std::size_t blockSize) {
+std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std::string& transformation, std::size_t blockSize, bool isSumOptimised) {
+    dummySum = 0;
     auto startRead = std::chrono::high_resolution_clock::now();
     if (transformation == "threshold") {
         threshold(blockData, /* threshold_value */ avg(blockData));
@@ -70,10 +73,31 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         valueShift(blockData, /* delta */ pow(2,23));
     }
     else if (transformation == "linearSum") {
-        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
-        for (int bi = 0; bi < blockSize*blockSize; bi++) {
-            dummy += blockData[bi];
+        if (isSumOptimised) {
+            dummySum = (static_cast<uint64_t>(blockData[blockSize*blockSize + 1]) << 32) | blockData[blockSize*blockSize];
+            
         }
+        else {
+            int total = blockSize * blockSize;
+            int i = 0;
+
+            __m128i vsum = _mm_setzero_si128();
+
+            for (; i + 4 <= total; i += 4) {
+                __m128i v = _mm_loadu_si128((const __m128i*)&blockData[i]);
+                vsum = _mm_add_epi32(vsum, v);
+            }
+
+            // horizontal reduce
+            vsum = _mm_hadd_epi32(vsum, vsum);
+            vsum = _mm_hadd_epi32(vsum, vsum);
+            dummySum += _mm_cvtsi128_si32(vsum);
+
+            // tail
+            for (; i < total; ++i)
+                dummySum += blockData[i];
+        }
+        // std::cout << "sum: " << dummySum << std::endl;
     }
     else if (transformation == "randomXOR") {
         volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
@@ -89,16 +113,22 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         }
     }
     else if (transformation == "randomSum") {
-        volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
-        std::vector<int> bis(blockSize*blockSize,0);
-        for (int iti = 0; iti < blockSize*blockSize; iti++) {
-            int bi = rand() % (blockSize*blockSize);
-            bis[iti] = bi;
+        if (isSumOptimised) {
+            volatile uint64_t sum = 0;
+            sum = (static_cast<uint64_t>(blockData[blockSize*blockSize + 1]) << 32) | blockData[blockSize*blockSize];
         }
-        startRead = std::chrono::high_resolution_clock::now();
-        for (int iti = 0; iti < blockSize*blockSize; iti++) {
-            int bi = bis[iti];
-            dummy += blockData[bi];
+        else {
+            volatile int64_t dummy = 0; // Ensures reads aren't optimised away.
+            std::vector<int> bis(blockSize*blockSize,0);
+            for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                int bi = rand() % (blockSize*blockSize);
+                bis[iti] = bi;
+            }
+            startRead = std::chrono::high_resolution_clock::now();
+            for (int iti = 0; iti < blockSize*blockSize; iti++) {
+                int bi = bis[iti];
+                dummy += blockData[bi];
+            }
         }
     }
     else { // includes linearXOR
@@ -123,12 +153,10 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
     
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs(numBlocks);
 
-    // Calculate full blocks that fit in the raster dimensions
     int blocksInWidth = rasterWidth / blockSize;
     int blocksInHeight = rasterHeight / blockSize;
     int totalFullBlocks = blocksInWidth * blocksInHeight;
 
-    // Calculate interval to sample blocks evenly
     int sampleInterval = std::max(1, totalFullBlocks / numBlocks);
 
     for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks; blockNum += sampleInterval, sampledBlocks++) {
@@ -162,17 +190,31 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
     return codecs;
 }
 
+bool isCodecSumOptimised(const std::string& str) {
+    if (str == "simdcomp") {
+        return true;
+    }
+    else if (str == "FastPFor_SIMDPFor+VariableByte") {
+        return true;
+    }
+    else if (str.substr(0, 24) == "[+]_custom_rle_vecavx512") {
+        return true;
+    }
+    return false;
+}
+
 // access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}
 void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, std::unique_ptr<StatefulIntegerCodec<int32_t>> accessCodec, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
-                     std::vector<std::size_t>& timesDec, std::vector<std::size_t>& timesAccessTransformation, std::vector<std::size_t>& timesEnc) {
-    srand(1);
+                     std::size_t& nDec, double& meanTDec, std::size_t& nTrans, double& meanTTrans) {
+    srand(1);  // Seed the random number generator with 1
 
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
     bool isDirectReenc = (accessCodec->name() == "custom_direct_access");
 
+    bool isSumOptimised = isCodecSumOptimised(codecs[0]->name());
+
     std::vector<int32_t> decbuf;
     decbuf.resize(blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize));
-
 
     bool dataChange = 
            accessTransformation == "threshold" 
@@ -206,11 +248,15 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
                 decodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count();
             }
 
-            timesDec.push_back(decodeTime);
+            ++nDec; 
+            meanTDec += (decodeTime - meanTDec) / nDec;
 
             /* perform transformation */
-            std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize);
-            timesAccessTransformation.push_back(accessTransformationTime);
+            std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize, isSumOptimised);
+            // timesAccessTransformation.push_back(accessTransformationTime);
+
+            ++nTrans; 
+            meanTTrans += (accessTransformationTime - meanTTrans) / nTrans;
 
             if (dataChange) {
                 /* re-encode with new codec */
@@ -218,7 +264,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
                 std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = clonedAccessCodec;
 
                 if (isDirectReenc) {
-                    timesEnc.push_back(0);
+                    // timesEnc.push_back(0);
                     reencCodec->allocEncoded(decbuf.data(), blockSize*blockSize);
                     reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
                 }
@@ -228,7 +274,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
                     reencCodec->encodeArray(decbuf.data(), blockSize*blockSize);
                     auto endEncode = std::chrono::high_resolution_clock::now();
                     auto encodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count();
-                    timesEnc.push_back(encodeTime);
+                    // timesEnc.push_back(encodeTime);
                 }
 
                 codecs[blockIndex] = std::move(clonedAccessCodec);
@@ -274,7 +320,7 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
         || accessTransformation == "valueShift";
 
     if (dataChange) {
-        applyAccessTransformation(blockData, accessTransformation, blockSize);
+        applyAccessTransformation(blockData, accessTransformation, blockSize, false);
     }
     
     for (auto& value : blockData) {
@@ -326,7 +372,9 @@ int main(int argc, char* argv[]) {
                 std::unordered_set<int32_t> unique_values_set_initial;
                 std::unordered_set<int32_t> unique_values_set_access;
 
+                // Calculate full blocks that fit in the raster dimensions
                 int totalFullBlocks = blocksInWidth * blocksInHeight;
+                // Calculate interval to sample blocks evenly
                 int sampleInterval = std::max(1, totalFullBlocks / numBlocks);
 
                 for (int blockNum = 0, sampledBlocks = 0; sampledBlocks < numBlocks; blockNum += sampleInterval, sampledBlocks++) {
@@ -336,6 +384,7 @@ int main(int argc, char* argv[]) {
                     computeMinAndUniqueValuesForBlock(band, ordering, initialTransformation, accessTransformation, xOff, yOff, blockSize, min, unique_values_set_initial, unique_values_set_access);
                 }
 
+                // Convert unordered_set to vector for unique values
                 std::vector<int32_t> unique_values_initial(unique_values_set_initial.begin(), unique_values_set_initial.end());
                 std::vector<int32_t> unique_values_access(unique_values_set_access.begin(), unique_values_set_access.end());
 
@@ -445,9 +494,11 @@ int main(int argc, char* argv[]) {
                                 std::cout << "**BENCHMARK ACCESS**" << std::endl;
                                 std::cout << "file=" << filePath << ",blocksize=" << blockSize << ",numblocks=" << numBlocks << ",numreps=" << numReps << ",basecodec=" << baseCodecName << ",accesscodec=" << accessCodecName << ",ordering=" << ordering << ",initialtransformation=" << initialTransformation << ",sampleaccesspattern=" << sampleAccessPattern << ",accesstransformation=" << accessTransformation <<  std::endl;
 
-                                std::vector<std::size_t> timesDec;
-                                std::vector<std::size_t> timesAccessTransformation;
-                                std::vector<std::size_t> timesEnc;
+                                std::size_t nDec = 0;
+                                double meanTDec = 0.0;
+
+                                std::size_t nTrans = 0;
+                                double meanTTrans = 0.0;
 
                                 for (int rep = 0; rep < numReps; rep++) {
                                     std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
@@ -463,27 +514,16 @@ int main(int argc, char* argv[]) {
                                     }
                                         
                                     // Perform accesses - part to be measured
-                                    benchmarkAccess(codecGrid, std::move(experimentAccessCodec), blockSize, sampleAccessPattern, accessTransformation, timesDec, timesAccessTransformation, timesEnc);
+                                    benchmarkAccess(codecGrid, std::move(experimentAccessCodec), blockSize, sampleAccessPattern, accessTransformation, nDec, meanTDec, nTrans, meanTTrans);
                                 }
 
-                                std::cout << "tottimedec:" << sum(timesDec);
-                                std::cout << ",meantimedec:" << mean(timesDec);
-                                std::cout << ",vartimedec:" << variance(timesDec, mean(timesDec));
-
-                                std::cout << ",tottimetrans:" << sum(timesAccessTransformation);
-                                std::cout << ",meantimetrans:" << mean(timesAccessTransformation);
-                                std::cout << ",vartimetrans:" << variance(timesAccessTransformation, mean(timesAccessTransformation));
-
-                                std::cout << ",tottimeenc:" << sum(timesEnc);
-                                std::cout << ",meantimeenc:" << mean(timesEnc);
-                                std::cout << ",vartimeenc:" << variance(timesEnc, mean(timesEnc)) << std::endl;
+                                std::cout << "meanTDec:" << meanTDec << ",meanTTrans:" << meanTTrans << std::endl;
                         }
                     }
                 }
             }
         }
     }
-
     GDALClose(dataset);
     return 0;
 }
