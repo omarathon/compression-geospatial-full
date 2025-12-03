@@ -410,27 +410,27 @@ int main(int argc, char* argv[]) {
                     auto base_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
                                                     /* nonCascaded */ true, /* cascadeCodec */ nullptr);
 
-                    auto cascadeDictCodec = std::make_unique<DictCodecAVX2<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
-                    auto cascadeDeltaCodec = std::make_unique<DeltaCodecAVX512>();
-                    auto cascadeRleCodec = std::make_unique<RLECodecAVX512>();
-                    auto cascadeForCodec = std::make_unique<FORCodecAVX512>();
+                    // auto cascadeDictCodec = std::make_unique<DictCodecAVX2<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
+                    // auto cascadeDeltaCodec = std::make_unique<DeltaCodecAVX512>();
+                    // auto cascadeRleCodec = std::make_unique<RLECodecAVX512>();
+                    // auto cascadeForCodec = std::make_unique<FORCodecAVX512>();
 
-                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDictCodec))) {
-                        base_codecs.push_back(std::move(cascade));
-                    }
-                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDeltaCodec))) {
-                        base_codecs.push_back(std::move(cascade));
-                    }
-                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeRleCodec))) {
-                        base_codecs.push_back(std::move(cascade));
-                    }
-                    for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                    /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
-                        base_codecs.push_back(std::move(cascade));
-                    }
+                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDictCodec))) {
+                    //     base_codecs.push_back(std::move(cascade));
+                    // }
+                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDeltaCodec))) {
+                    //     base_codecs.push_back(std::move(cascade));
+                    // }
+                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeRleCodec))) {
+                    //     base_codecs.push_back(std::move(cascade));
+                    // }
+                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
+                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
+                    //     base_codecs.push_back(std::move(cascade));
+                    // }
 
                     auto directAccessCodec = std::make_unique<DirectAccessCodec>();
                     base_codecs.push_back(std::move(directAccessCodec));
