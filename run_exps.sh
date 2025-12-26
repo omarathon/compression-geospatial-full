@@ -2,13 +2,13 @@
 set -euo pipefail
 
 bench() {
-    # ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 256000 3 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
-    # ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 64000 3 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
+    ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 256000 6 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
+    ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 64000 6 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
 
-    # ./bench_pipeline /maps/omsst2/diss/slope-srtm_35_11.tif 256 16000 3 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
-    # ./bench_pipeline /maps/omsst2/diss/slope-srtm_35_11.tif 256 4000 3 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
+    ./bench_pipeline /maps/omsst2/diss/slope-srtm_35_11.tif 256 16000 6 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
+    ./bench_pipeline /maps/omsst2/diss/slope-srtm_35_11.tif 256 4000 6 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
 
-    ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 100 1 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
+    # ./bench_pipeline /maps/omsst2/diss/accessibility.tif 64 100 1 "FastPFor_SIMDPFor+VariableByte" "FastPFor_SIMDPFor+VariableByte" "morton" "none" "linear" "linearSum"
 }
 
 rebuild_fastpfor() {
