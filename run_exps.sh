@@ -89,14 +89,26 @@ log_header() {
 #   * patch SIMD vector with the extract and replace method 074ef97a717e8b34f55136eac1a76cbd5932c7ec
 #   * patch SIMD vector by spilling to extract, then replace 5565359d9fae4e9cba59a3a7d98194fdf328b806
 
+# * don't store, unpack individual exception gaps in extra pass (no prefetch) ba78217df1fd55432ae4e1ca8958980e1bf13181
+# * don't store, unpack individual exception gaps in extra pass (1 locality prefetch) a4865b0cb2bf74bd7e75b25cefd63d7f58978ca4
+# * try: don't store, unpack individual exception gaps in extra pass (0 locality prefetch) 60b821f071e5de126127727f5a6b982b1336b8c1
+
 for hash in \
-  c8faa7ad6c56bc3dfe7d339d2e21dd2f89e80dc0 \
-  6cf18972edaec7905e99889db886618a8dea88ab \
-  5d7faa9b882948b45e377dd6e91e3cdea990ae89 \
-  83e4ba743767bc1182f7429c2f6c40a6d1a04bc0 \
-  074ef97a717e8b34f55136eac1a76cbd5932c7ec \
-  5565359d9fae4e9cba59a3a7d98194fdf328b806
+  ba78217df1fd55432ae4e1ca8958980e1bf13181 \
+  a4865b0cb2bf74bd7e75b25cefd63d7f58978ca4 \
+  60b821f071e5de126127727f5a6b982b1336b8c1
 do
   benchmark_fastpfor_commit "$hash"
 done
+
+# for hash in \
+#   c8faa7ad6c56bc3dfe7d339d2e21dd2f89e80dc0 \
+#   6cf18972edaec7905e99889db886618a8dea88ab \
+#   5d7faa9b882948b45e377dd6e91e3cdea990ae89 \
+#   83e4ba743767bc1182f7429c2f6c40a6d1a04bc0 \
+#   074ef97a717e8b34f55136eac1a76cbd5932c7ec \
+#   5565359d9fae4e9cba59a3a7d98194fdf328b806
+# do
+#   benchmark_fastpfor_commit "$hash"
+# done
 
