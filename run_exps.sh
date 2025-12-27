@@ -93,13 +93,21 @@ log_header() {
 # * don't store, unpack individual exception gaps in extra pass (1 locality prefetch) a4865b0cb2bf74bd7e75b25cefd63d7f58978ca4
 # * try: don't store, unpack individual exception gaps in extra pass (0 locality prefetch) 60b821f071e5de126127727f5a6b982b1336b8c1
 
+# precompute exceptions for branchless correction 53ddc96fd61d9ed09bc5846f104f8146a0e92f2b
+
 for hash in \
-  ba78217df1fd55432ae4e1ca8958980e1bf13181 \
-  a4865b0cb2bf74bd7e75b25cefd63d7f58978ca4 \
-  60b821f071e5de126127727f5a6b982b1336b8c1
+  53ddc96fd61d9ed09bc5846f104f8146a0e92f2b
 do
   benchmark_fastpfor_commit "$hash"
 done
+
+# for hash in \
+#   ba78217df1fd55432ae4e1ca8958980e1bf13181 \
+#   a4865b0cb2bf74bd7e75b25cefd63d7f58978ca4 \
+#   60b821f071e5de126127727f5a6b982b1336b8c1
+# do
+#   benchmark_fastpfor_commit "$hash"
+# done
 
 # for hash in \
 #   c8faa7ad6c56bc3dfe7d339d2e21dd2f89e80dc0 \
