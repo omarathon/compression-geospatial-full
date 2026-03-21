@@ -61,9 +61,8 @@ set_target_properties(SimdComp PROPERTIES
 
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${EXT}
-  ${EXT}/2i_bench/external
-  ${EXT}/2i_bench/include
   ${EXT}/libmorton/include/libmorton
   ${EXT}/dictionary/src
 )
@@ -104,12 +103,12 @@ function(configure_bench TARGET)
 endfunction()
 
 # ── Test executables ──────────────────────────────────────────────────────────
-add_executable(test_comp test_comp.cpp)
+add_executable(test_comp tests/test_comp.cpp)
 target_include_directories(test_comp PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_comp PRIVATE ${CODEC_LIBS} GTest::gtest_main)
 target_link_options(test_comp PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
 
-add_executable(test_remappings test_remappings.cpp)
+add_executable(test_remappings tests/test_remappings.cpp)
 target_include_directories(test_remappings PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_remappings PRIVATE GTest::gtest_main)
 
@@ -118,8 +117,8 @@ gtest_discover_tests(test_comp)
 gtest_discover_tests(test_remappings)
 
 # ── Benchmark executables ─────────────────────────────────────────────────────
-add_executable(bench_comp bench_comp.cpp)
+add_executable(bench_comp bench/bench_comp.cpp)
 configure_bench(bench_comp)
 
-add_executable(bench_pipeline bench_pipeline.cpp)
+add_executable(bench_pipeline bench/bench_pipeline.cpp)
 configure_bench(bench_pipeline)
