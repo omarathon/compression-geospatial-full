@@ -62,6 +62,8 @@ set_target_properties(SimdComp PROPERTIES
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/generic
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/int32
   ${EXT}
   ${EXT}/libmorton/include/libmorton
   ${EXT}/dictionary/src
@@ -103,7 +105,7 @@ function(configure_bench TARGET)
 endfunction()
 
 # ── Test executables ──────────────────────────────────────────────────────────
-add_executable(test_comp tests/test_comp.cpp)
+add_executable(test_comp tests/test_int32_codecs.cpp)
 target_include_directories(test_comp PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_comp PRIVATE ${CODEC_LIBS} GTest::gtest_main)
 target_link_options(test_comp PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)

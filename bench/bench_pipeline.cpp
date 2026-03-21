@@ -13,7 +13,7 @@
 #include <string>
 
 #include "codec_collection.h"
-#include "codecs/direct_codec.h"
+#include "direct_codec.h"
 #include "gdal_priv.h"
 #include "remappings.h"
 #include "transformations.h"

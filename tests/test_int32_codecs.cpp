@@ -6,20 +6,20 @@
 
 #include <gtest/gtest.h>
 
-#include "codecs/composite_codec.h"
-#include "codecs/custom_unvec_logic_codecs.h"
-#include "codecs/custom_vec_logic_codecs.h"
-#include "codecs/deflate_codecs.h"
-#include "codecs/fastpfor_codecs.h"
-#include "codecs/frameofreference_codecs.h"
-#include "codecs/generic_codecs.h"
-#include "codecs/lz4_codecs.h"
-#include "codecs/lzma_codecs.h"
-#include "codecs/maskedvbyte_codecs.h"
-#include "codecs/simdcomp_codecs.h"
-#include "codecs/streamvbyte_codecs.h"
-#include "codecs/turbopfor_codecs.h"
-#include "codecs/zstd_codecs.h"
+#include "composite_codec.h"
+#include "custom_unvec_logic_codecs.h"
+#include "custom_vec_logic_codecs.h"
+#include "deflate_codecs.h"
+#include "fastpfor_codecs.h"
+#include "frameofreference_codecs.h"
+#include "generic_codecs.h"
+#include "lz4_codecs.h"
+#include "lzma_codecs.h"
+#include "maskedvbyte_codecs.h"
+#include "simdcomp_codecs.h"
+#include "streamvbyte_codecs.h"
+#include "turbopfor_codecs.h"
+#include "zstd_codecs.h"
 
 // Returns true if codec correctly round-trips `data`.
 static bool TestCodec(std::vector<int32_t>& data,
