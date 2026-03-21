@@ -25,36 +25,36 @@
 
 static int dummySum;
 
-void remapAndTransformData(std::vector<int32_t>& blockData, const std::string& ordering, const std::string& transformation, const int blockSize) {
-    if (ordering == "zigzag") {
-        auto remappedBlockData = remapToZigzagOrder(blockData, blockSize);
-        std::copy(remappedBlockData.begin(), remappedBlockData.end(), blockData.begin());
-    }
-    else if (ordering == "morton") {
-        auto remappedBlockData = remapToMortonOrder(blockData, blockSize);
+void remapAndTransformData(std::vector<uint16_t>& blockData, const std::string& ordering, const std::string& transformation, const int blockSize) {
+    // if (ordering == "zigzag") {
+    //     auto remappedBlockData = remapToZigzagOrder(blockData, blockSize);
+    //     std::copy(remappedBlockData.begin(), remappedBlockData.end(), blockData.begin());
+    // }
+    if (ordering == "morton") {
+        auto remappedBlockData = remapToMortonOrder<uint16_t>(blockData, blockSize);
         std::copy(remappedBlockData.begin(), remappedBlockData.end(), blockData.begin());
     }
 
     // apply transformation if desired
-    if (transformation == "threshold") {
-        threshold(blockData, /* threshold_value */ avg(blockData));
-    }
-    else if (transformation == "smoothAndShift") {
-        smoothAndShift(blockData);
-    }
-    else if (transformation == "indexBasedClassification") {
-        indexBasedClassification(blockData, /* max_classes */ 8);
-    }
-    else if (transformation == "valueBasedClassification") {
-        valueBasedClassification(blockData, /* num_classes */ 8);
-    }
-    else if (transformation == "valueShift") {
-        valueShift(blockData, /* delta */ pow(2,23));
-    }
+    // if (transformation == "threshold") {
+    //     threshold(blockData, /* threshold_value */ avg(blockData));
+    // }
+    // else if (transformation == "smoothAndShift") {
+    //     smoothAndShift(blockData);
+    // }
+    // else if (transformation == "indexBasedClassification") {
+    //     indexBasedClassification(blockData, /* max_classes */ 8);
+    // }
+    // else if (transformation == "valueBasedClassification") {
+    //     valueBasedClassification(blockData, /* num_classes */ 8);
+    // }
+    // else if (transformation == "valueShift") {
+    //     valueShift(blockData, /* delta */ pow(2,23));
+    // }
 }
 
 // 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum'
-std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std::string& transformation, std::size_t blockSize, bool isSumOptimised) {
+std::size_t applyAccessTransformation(std::vector<uint16_t>& blockData, const std::string& transformation, std::size_t blockSize, bool isSumOptimised) {
     dummySum = 0;
     auto startRead = std::chrono::high_resolution_clock::now();
     if (transformation == "threshold") {
@@ -97,10 +97,10 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
             for (; i < total; ++i)
                 dummySum += blockData[i];
         }
-        // std::cout << "sum: " << dummySum << std::endl;
+        std::cout << "sum: " << dummySum << std::endl;
     }
     else if (transformation == "randomXOR") {
-        volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+        volatile uint16_t dummy = 0; // Ensures reads aren't optimised away.
         std::vector<int> bis(blockSize*blockSize,0);
         for (int iti = 0; iti < blockSize*blockSize; iti++) {
             int bi = rand() % (blockSize*blockSize);
@@ -132,7 +132,7 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
         }
     }
     else { // includes linearXOR
-        volatile int32_t dummy = 0; // Ensures reads aren't optimised away.
+        volatile uint16_t dummy = 0; // Ensures reads aren't optimised away.
         for (int bi = 0; bi < blockSize*blockSize; bi++) {
             dummy ^= blockData[bi];
         }
@@ -141,17 +141,11 @@ std::size_t applyAccessTransformation(std::vector<int32_t>& blockData, const std
     return std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead).count();
 }
 
-
-/*
-usage
-std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
-    band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, transformation, ordering)
-*/
-std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
+std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> splitIntoFullBlocks(
     GDALRasterBand* band, int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
-    std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec, const int32_t min, const std::string transformation, const std::string ordering) {
+    std::unique_ptr<StatefulIntegerCodec<uint16_t>> baseCodec, const int32_t min, const std::string& transformation, const std::string& ordering) {
     
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs(numBlocks);
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs(numBlocks);
 
     int blocksInWidth = rasterWidth / blockSize;
     int blocksInHeight = rasterHeight / blockSize;
@@ -172,18 +166,17 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> splitIntoFullBlocks(
         }
 
         // Normalise block data
-        if (min < 0) {
-            for (int i = 0; i < blockData.size(); i++) {
-                blockData[i] += (-min);
-            }
+        std::vector<uint16_t> blockDataNorm(blockSize * blockSize);
+        for (int i = 0; i < blockData.size(); i++) {
+            blockDataNorm[i] = blockData[i] - std::min(min, 0);
         }
 
-        remapAndTransformData(blockData, ordering, transformation, blockSize);
+        remapAndTransformData(blockDataNorm, ordering, transformation, blockSize);
 
         // Compress block data and store
-        std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedCodec(baseCodec->cloneFresh());
-        clonedCodec->allocEncoded(blockData.data(), blockData.size());
-        clonedCodec->encodeArray(blockData.data(), blockData.size());
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>> clonedCodec(baseCodec->cloneFresh());
+        clonedCodec->allocEncoded(blockDataNorm.data(), blockDataNorm.size());
+        clonedCodec->encodeArray(blockDataNorm.data(), blockDataNorm.size());
         codecs[sampledBlocks] = std::move(clonedCodec);
     }
 
@@ -204,16 +197,16 @@ bool isCodecSumOptimised(const std::string& str) {
 }
 
 // access transformation {default: 'linearXOR' | 'linearSum' | 'randomXOR' | 'randomSum' | 'threshold' | 'smoothAndShift' | 'indexBasedClassification' | 'valueBasedClassification' | 'valueShift'}
-void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs, std::unique_ptr<StatefulIntegerCodec<int32_t>> accessCodec, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
+void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& codecs, std::unique_ptr<StatefulIntegerCodec<uint16_t>> accessCodec, int blockSize, const std::string& sampleAccessPattern, const std::string& accessTransformation, 
                      std::size_t& nDec, double& meanTDec, std::size_t& nTrans, double& meanTTrans) {
-    srand(1);  // Seed the random number generator with 1
+    srand(1);  // Seed the random number generator
 
     bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
     bool isDirectReenc = (accessCodec->name() == "custom_direct_access");
 
     bool isSumOptimised = isCodecSumOptimised(codecs[0]->name());
 
-    std::vector<int32_t> decbuf;
+    std::vector<uint16_t> decbuf;
     decbuf.resize(blockSize*blockSize + codecs[0]->getOverflowSize(blockSize*blockSize));
 
     bool dataChange = 
@@ -238,7 +231,7 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
         int blockIndex = accessIndexes[i];
         auto& codec = codecs[blockIndex];
 
-        auto benchblock = [&](std::vector<int32_t>& decbuf) {
+        auto benchblock = [&](std::vector<uint16_t>& decbuf) {
             /* decode */
             std::size_t decodeTime = 0;
             if (!isDirectAccess) {
@@ -253,15 +246,14 @@ void benchmarkAccess(std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 
             /* perform transformation */
             std::size_t accessTransformationTime = applyAccessTransformation(decbuf, accessTransformation, blockSize, isSumOptimised);
-            // timesAccessTransformation.push_back(accessTransformationTime);
 
             ++nTrans; 
             meanTTrans += (accessTransformationTime - meanTTrans) / nTrans;
 
             if (dataChange) {
                 /* re-encode with new codec */
-                std::unique_ptr<StatefulIntegerCodec<int32_t>> clonedAccessCodec(accessCodec->cloneFresh());
-                std::unique_ptr<StatefulIntegerCodec<int32_t>>& reencCodec = clonedAccessCodec;
+                std::unique_ptr<StatefulIntegerCodec<uint16_t>> clonedAccessCodec(accessCodec->cloneFresh());
+                std::unique_ptr<StatefulIntegerCodec<uint16_t>>& reencCodec = clonedAccessCodec;
 
                 if (isDirectReenc) {
                     // timesEnc.push_back(0);
@@ -306,21 +298,8 @@ void computeMinAndUniqueValuesForBlock(GDALRasterBand* band, std::string& orderi
         }
     }
 
-    remapAndTransformData(blockData, ordering, initialTransformation, blockSize);
-
     for (auto& value : blockData) {
         unique_values_set_initial.insert(value);
-    }
-    
-    bool dataChange = 
-           accessTransformation == "threshold" 
-        || accessTransformation == "smoothAndShift" 
-        || accessTransformation == "indexBasedClassification" 
-        || accessTransformation == "valueBasedClassification" 
-        || accessTransformation == "valueShift";
-
-    if (dataChange) {
-        applyAccessTransformation(blockData, accessTransformation, blockSize, false);
     }
     
     for (auto& value : blockData) {
@@ -384,80 +363,28 @@ int main(int argc, char* argv[]) {
                     computeMinAndUniqueValuesForBlock(band, ordering, initialTransformation, accessTransformation, xOff, yOff, blockSize, min, unique_values_set_initial, unique_values_set_access);
                 }
 
-                // Convert unordered_set to vector for unique values
-                std::vector<int32_t> unique_values_initial(unique_values_set_initial.begin(), unique_values_set_initial.end());
-                std::vector<int32_t> unique_values_access(unique_values_set_access.begin(), unique_values_set_access.end());
-
-                std::any dict_initial;
-                std::vector<int32_t> reverseDict_initial;
-                std::any dict_access;
-                std::vector<int32_t> reverseDict_access;
-
-                auto createAndAddCodecs = [&](auto dummy, const std::vector<int32_t>& unique_values, std::any& dict, std::vector<int32_t>& reverseDict) {
-                    using dict_type = decltype(dummy);
-                    std::unordered_map<int32_t, dict_type> localDict;
-                    reverseDict.resize(unique_values.size());
-
-                    dict_type index = 0;
-                    for (int32_t value : unique_values) {
-                        localDict[value] = index;
-                        reverseDict[index] = value;
-                        ++index;
-                    }
-
-                    dict = std::move(localDict); // Store the dictionary in std::any
-
-                    auto base_codecs = initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                                                    /* nonCascaded */ true, /* cascadeCodec */ nullptr);
-
-                    // auto cascadeDictCodec = std::make_unique<DictCodecAVX2<dict_type>>(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict);
-                    // auto cascadeDeltaCodec = std::make_unique<DeltaCodecAVX512>();
-                    // auto cascadeRleCodec = std::make_unique<RLECodecAVX512>();
-                    // auto cascadeForCodec = std::make_unique<FORCodecAVX512>();
-
-                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDictCodec))) {
-                    //     base_codecs.push_back(std::move(cascade));
-                    // }
-                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeDeltaCodec))) {
-                    //     base_codecs.push_back(std::move(cascade));
-                    // }
-                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeRleCodec))) {
-                    //     base_codecs.push_back(std::move(cascade));
-                    // }
-                    // for (auto& cascade : initCodecs(std::any_cast<std::unordered_map<int32_t, dict_type>&>(dict), reverseDict, 
-                    //                                 /* nonCascaded */ false, /* cascadeCodec */ std::move(cascadeForCodec))) {
-                    //     base_codecs.push_back(std::move(cascade));
-                    // }
-
+                auto createAndAddCodecs = [&]{
+                    auto base_codecs = initCodecs(/* nonCascaded */ true, /* cascadeCodec */ nullptr);
                     auto directAccessCodec = std::make_unique<DirectAccessCodec>();
                     base_codecs.push_back(std::move(directAccessCodec));
-
                     return base_codecs;
                 };
 
-                std::cout << "num_unique_values_initial = " << unique_values_initial.size() << std::endl;
-                std::cout << "num_unique_values_access = " << unique_values_access.size() << std::endl;
-
-                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> allCodecs_initial;
-                allCodecs_initial = createAndAddCodecs(uint32_t{}, unique_values_initial, dict_initial, reverseDict_initial);
-                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> allCodecs_access;
-                allCodecs_access = createAndAddCodecs(uint32_t{}, unique_values_access, dict_access, reverseDict_access);
+                std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> allCodecs_initial = createAndAddCodecs();
+                std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> allCodecs_access = createAndAddCodecs();
 
                 // Select the codecs with the specified names
-                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> baseCodecs;
-                std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> accessCodecs;
+                std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> baseCodecs;
+                std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> accessCodecs;
                 for (auto& codec : allCodecs_initial) {
                     if (initialCodecNames.size() == 1 && (initialCodecNames[0] == "all" || initialCodecNames[0] == "*")) {
-                        std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                        std::unique_ptr<StatefulIntegerCodec<uint16_t>> newCodec(codec->cloneFresh());
                         baseCodecs.push_back(std::move(newCodec));
                         continue;
                     }
                     for (auto& codecName : initialCodecNames) {
                         if (codecName == codec->name()) {
-                            std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                            std::unique_ptr<StatefulIntegerCodec<uint16_t>> newCodec(codec->cloneFresh());
                             baseCodecs.push_back(std::move(newCodec));
                             break;
                         }
@@ -465,13 +392,13 @@ int main(int argc, char* argv[]) {
                 }
                 for (auto& codec : allCodecs_access) {
                     if (accessCodecNames.size() == 1 && (accessCodecNames[0] == "all" || accessCodecNames[0] == "*")) {
-                        std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                        std::unique_ptr<StatefulIntegerCodec<uint16_t>> newCodec(codec->cloneFresh());
                         accessCodecs.push_back(std::move(newCodec));
                         continue;
                     }
                     for (auto& codecName : accessCodecNames) {
                         if (codecName == codec->name()) {
-                            std::unique_ptr<StatefulIntegerCodec<int32_t>> newCodec(codec->cloneFresh());
+                            std::unique_ptr<StatefulIntegerCodec<uint16_t>> newCodec(codec->cloneFresh());
                             accessCodecs.push_back(std::move(newCodec));
                             break;
                         }
@@ -501,10 +428,10 @@ int main(int argc, char* argv[]) {
                                 double meanTTrans = 0.0;
 
                                 for (int rep = 0; rep < numReps; rep++) {
-                                    std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentBaseCodec(baseCodec->cloneFresh());
-                                    std::unique_ptr<StatefulIntegerCodec<int32_t>> experimentAccessCodec(accessCodec->cloneFresh());
+                                    std::unique_ptr<StatefulIntegerCodec<uint16_t>> experimentBaseCodec(baseCodec->cloneFresh());
+                                    std::unique_ptr<StatefulIntegerCodec<uint16_t>> experimentAccessCodec(accessCodec->cloneFresh());
 
-                                    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecGrid = splitIntoFullBlocks(
+                                    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecGrid = splitIntoFullBlocks(
                                         band, nXSize, nYSize, blockSize, numBlocks, std::move(experimentBaseCodec), min, initialTransformation, ordering);
 
                                     if (codecGrid.size() == 0) {

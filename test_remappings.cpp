@@ -7,7 +7,7 @@ void test(const int N, bool output) {
         block.push_back(i);
     }
 
-    auto mortonOrderedBlock = remapToMortonOrder(block, N);
+    auto mortonOrderedBlock = remapToMortonOrder<int32_t>(block, N);
     auto zigzagOrderedBlock = remapToZigzagOrder(block, N);
 
     auto print = [&](std::vector<int32_t> &data) {

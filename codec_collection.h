@@ -15,11 +15,9 @@
 #include <vector>
 #include <unordered_map>
 
-template <typename T> // T : dictionary type
-std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initLogicalCodecs
-    (std::unordered_map<int32_t, T>& dict, std::vector<int32_t>& reverseDict) 
+std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> initLogicalCodecs() 
 {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
 
     // codecs.push_back(std::make_unique<DictCodec<T>>(dict, reverseDict));
     // codecs.push_back(std::make_unique<DictCodecAVX2<T>>(dict, reverseDict));
@@ -42,11 +40,9 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initLogicalCodecs
     return codecs;
 }
 
-template <typename T> // T : dictionary type
-std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
-    (std::unordered_map<int32_t, T>& dict, std::vector<int32_t>& reverseDict) 
+std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> initPhysicalCodecs() 
 {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
 
     // codecs.push_back(std::make_unique<DeflateCodec>());
     // codecs.push_back(std::make_unique<MaskedVByteCodec>());
@@ -85,30 +81,28 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initPhysicalCodecs
 }
 
 
-template <typename T> // T : dictionary type
-std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> initCodecs
-    (std::unordered_map<int32_t, T>& dict, std::vector<int32_t>& reverseDict, 
-    bool nonCascaded, std::unique_ptr<StatefulIntegerCodec<int32_t>> cascadeCodec) 
+std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> initCodecs
+    bool nonCascaded, std::unique_ptr<StatefulIntegerCodec<uint16_t>> cascadeCodec) 
 {
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
 
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> lCodecs = initLogicalCodecs(dict, reverseDict);
-    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> pCodecs = initPhysicalCodecs(dict, reverseDict);
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> lCodecs = initLogicalCodecs();
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> pCodecs = initPhysicalCodecs();
 
     if (nonCascaded) {
         for (auto& codec : lCodecs) {
-            codecs.push_back(std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->cloneFresh()));
+            codecs.push_back(std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->cloneFresh()));
         }
         for (auto& codec : pCodecs) {
-            codecs.push_back(std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->cloneFresh()));
+            codecs.push_back(std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->cloneFresh()));
         }
     }
 
     if (cascadeCodec) {
         for (auto& pCodec : pCodecs) {
-            auto cascadeCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(cascadeCodec->cloneFresh());
-            auto pCodecFresh = std::unique_ptr<StatefulIntegerCodec<int32_t>>(pCodec->cloneFresh());
-            auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<int32_t>>(
+            auto cascadeCodecFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(cascadeCodec->cloneFresh());
+            auto pCodecFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(pCodec->cloneFresh());
+            auto compositeCodec = std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
                 std::move(cascadeCodecFresh), std::move(pCodecFresh)
             );
             codecs.push_back(std::move(compositeCodec));

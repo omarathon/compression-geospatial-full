@@ -11,16 +11,16 @@
 // direct access codec //
 /////////////////////////
 
-class DirectAccessCodec : public StatefulIntegerCodec<int32_t> {
+class DirectAccessCodec : public StatefulIntegerCodec<uint16_t> {
 public:
 
-  std::vector<int32_t> compressed;
+  std::vector<uint16_t> compressed;
 
-  void encodeArray(const int32_t *in, const size_t length) override {
-    std::memcpy(compressed.data(), in, length * sizeof(int32_t));
+  void encodeArray(const uint16_t *in, const size_t length) override {
+    std::memcpy(compressed.data(), in, length * sizeof(uint16_t));
   }
 
-  void decodeArray(int32_t *out, const std::size_t length) override {
+  void decodeArray(uint16_t *out, const std::size_t length) override {
   }
 
   std::size_t encodedNumValues() override {
@@ -28,7 +28,7 @@ public:
   }
 
   std::size_t encodedSizeValue() override {
-    return sizeof(int32_t);
+    return sizeof(uint16_t);
   }
 
   virtual ~DirectAccessCodec() {}
@@ -41,11 +41,11 @@ public:
     return 0;
   }
 
-  StatefulIntegerCodec<int32_t>* cloneFresh() const override {
+  StatefulIntegerCodec<uint16_t>* cloneFresh() const override {
     return new DirectAccessCodec();
   }
 
-  void allocEncoded(const int32_t* in, size_t length) override {
+  void allocEncoded(const uint16_t* in, size_t length) override {
     compressed.resize(length);
   };
 
@@ -54,7 +54,7 @@ public:
       compressed.shrink_to_fit();
   }
 
-  std::vector<int32_t>& getEncoded() override {
+  std::vector<uint16_t>& getEncoded() override {
       return compressed;
   };
 };
