@@ -5,12 +5,14 @@
 #include "custom_vec_logic_codecs.h"
 #include "deflate_codecs.h"
 #include "fastpfor_codecs.h"
+#include "fastpfor_fused_codecs.h"
 #include "frameofreference_codecs.h"
 #include "generic_codecs.h"
 #include "lz4_codecs.h"
 #include "lzma_codecs.h"
 #include "maskedvbyte_codecs.h"
 #include "simdcomp_codecs.h"
+#include "simdcomp_fused_codecs.h"
 #include "streamvbyte_codecs.h"
 #include "turbopfor_codecs.h"
 #include "zstd_codecs.h"
@@ -47,6 +49,7 @@ InitPhysicalCodecs() {
   codecs.push_back(std::make_unique<StreamVByteCodec>());
   codecs.push_back(std::make_unique<FrameOfReferenceTurboCodec>());
   codecs.push_back(std::make_unique<SimdCompCodec>());
+  codecs.push_back(std::make_unique<SimdCompFusedCodec>());
   codecs.push_back(std::make_unique<LZ4Codec>());
   codecs.push_back(std::make_unique<ZstdCodec>(1));
   codecs.push_back(std::make_unique<ZstdCodec>(3));
@@ -71,6 +74,7 @@ InitPhysicalCodecs() {
       continue;
     }
     codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
+    codecs.push_back(std::make_unique<FastPForFusedCodec>(fastpfor_codec));
   }
 
   return codecs;

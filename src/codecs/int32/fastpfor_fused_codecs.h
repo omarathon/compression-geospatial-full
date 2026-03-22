@@ -1,8 +1,7 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
-#include <cstring>
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -12,24 +11,26 @@
 
 using namespace FastPForLib;
 
-class FastPForCodec : public StatefulIntegerCodec<int32_t> {
+// FastPFor variant that explicitly models the decode-time sum written to the
+// two overflow slots by the fused CompositeCodec::_decodeArray.
+// Used with AccessTransformation::LinearSumFused.
+class FastPForFusedCodec : public StatefulIntegerCodec<int32_t> {
  private:
   std::shared_ptr<IntegerCODEC> codec;
 
  public:
   std::vector<uint32_t> compressed;
 
-  FastPForCodec(std::shared_ptr<IntegerCODEC> in_codec)
+  FastPForFusedCodec(std::shared_ptr<IntegerCODEC> in_codec)
       : codec{std::move(in_codec)} {}
 
-  FastPForCodec(CODECFactory& codec_factory, std::string codec_name)
-      : FastPForCodec(codec_factory.getFromName(codec_name)) {}
+  FastPForFusedCodec(CODECFactory& codec_factory, std::string codec_name)
+      : FastPForFusedCodec(codec_factory.getFromName(codec_name)) {}
 
   void EncodeArray(const int32_t* in, const size_t length) override {
     size_t compressed_size = compressed.size();
     codec->encodeArray(reinterpret_cast<const uint32_t*>(in), length,
                        compressed.data(), compressed_size);
-    // Optional shrinking - NOTE: need to store the size if not shrinking
     compressed.resize(compressed_size);
     compressed.shrink_to_fit();
   }
@@ -45,9 +46,11 @@ class FastPForCodec : public StatefulIntegerCodec<int32_t> {
 
   std::size_t EncodedSizeValue() override { return sizeof(uint32_t); }
 
-  virtual ~FastPForCodec() {}
+  virtual ~FastPForFusedCodec() {}
 
-  std::string name() const override { return "FastPFor_" + codec->name(); }
+  std::string name() const override {
+    return "FastPFor_fused_" + codec->name();
+  }
 
   std::size_t GetOverflowSize(size_t) const override {
     return 32;  // Resources fail to be freed without `8`. `32` is required for
@@ -55,13 +58,11 @@ class FastPForCodec : public StatefulIntegerCodec<int32_t> {
   }
 
   StatefulIntegerCodec<int32_t>* CloneFresh() const override {
-    return new FastPForCodec(codec);
+    return new FastPForFusedCodec(codec);
   }
 
   void AllocEncoded(const int32_t* in, size_t length) override {
-    compressed.resize(
-        length *
-        2);  // Emirically found that this works. NOTE: reserve doesn't work.
+    compressed.resize(length * 2);
   };
 
   void clear() override {
