@@ -1,348 +1,170 @@
 #include <algorithm>
-#include <chrono>
-#include <cmath>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <vector>
 
+#include <CLI/CLI.hpp>
+
+#include "bench_gdal_utils.h"
+#include "bench_utils.h"
 #include "codec_collection.h"
 #include "gdal_priv.h"
-#include "remappings.h"
-#include "transformations.h"
-#include "util.h"
 
-struct CodecStats {
-  float cf = 0;
-  float bpi = 0;
-  float tenc = 0;
-  float tdec = 0;
-};
+// ─── Codec helpers ────────────────────────────────────────────────────────────
 
-void remapAndTransformData(std::vector<int32_t>& blockData,
-                           const std::string& ordering,
-                           const std::string& transformation,
-                           const int blockSize) {
-  // blockData is currently in row-major order. remap according to desired
-  // ordering
-  if (ordering == "zigzag") {
-    auto remappedBlockData = RemapToZigzagOrder(blockData, blockSize);
-    std::copy(remappedBlockData.begin(), remappedBlockData.end(),
-              blockData.begin());
-  } else if (ordering == "morton") {
-    auto remappedBlockData = RemapToMortonOrder(blockData, blockSize);
-    std::copy(remappedBlockData.begin(), remappedBlockData.end(),
-              blockData.begin());
+// If `compositeName` matches a codec in the non-cascaded pool, returns that
+// codec cascaded with all physical codecs.  Otherwise returns the full
+// non-cascaded pool (the "none" / default case).
+static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
+BuildCodecsForComposite(const std::string& compositeName) {
+  auto pool = InitCodecs(/* nonCascaded */ true, nullptr);
+  for (auto& codec : pool) {
+    if (codec->name() == compositeName) {
+      return InitCodecs(/* nonCascaded */ false,
+                        std::unique_ptr<StatefulIntegerCodec<int32_t>>(
+                            codec->CloneFresh()));
+    }
   }
-
-  // apply transformation if desired
-  if (transformation == "Threshold") {
-    Threshold(blockData, /* threshold_value */ Avg(blockData));
-  } else if (transformation == "SmoothAndShift") {
-    SmoothAndShift(blockData);
-  } else if (transformation == "IndexBasedClassification") {
-    IndexBasedClassification(blockData, /* max_classes */ 8);
-  } else if (transformation == "ValueBasedClassification") {
-    ValueBasedClassification(blockData, /* num_classes */ 8);
-  } else if (transformation == "ValueShift") {
-    ValueShift(blockData, /* delta */ pow(2, 23));
-  }
+  return pool;
 }
 
-// Function to benchmark a window of data
-std::vector<CodecStats> benchmarkWindow(
+static std::vector<CodecStats> BenchmarkWindow(
     std::vector<int32_t>& windowData,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
-  std::vector<CodecStats> allCodecStats(codecs.size());
+  std::vector<CodecStats> stats(codecs.size());
+  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
+    stats[ci] = BenchmarkOneCodec(windowData, codecs[ci]);
+  }
+  return stats;
+}
 
-  for (int ci = 0; ci < codecs.size(); ci++) {
-    auto& codec = codecs[ci];
+// ─── Per-configuration benchmark ─────────────────────────────────────────────
 
-    CodecStats stats;
+static void RunBenchConfig(
+    GDALRasterBand* band, int rasterWidth, int rasterHeight,
+    const std::string& filePath, int blockSize, int nBlocks, int32_t globalMin,
+    const std::string& compositeName, Ordering orderingEnum,
+    const std::string& ordering, Transformation transEnum,
+    const std::string& transformation,
+    std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
+  std::cout << "**BENCHMARK**\nfile=" << filePath
+            << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks
+            << ",composite=" << compositeName << ",ordering=" << ordering
+            << ",transformation=" << transformation << std::endl;
 
-    codec->AllocEncoded(windowData.data(), windowData.size());
+  std::cout << "*CODECS:*" << std::endl;
+  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
+    std::cout << ci << "=" << codecs[ci]->name() << std::endl;
+  }
+  std::cout << "*ENDCODECS*" << std::endl;
 
-    auto startEncode = std::chrono::high_resolution_clock::now();
-    try {
-      codec->EncodeArray(windowData.data(), windowData.size());
-    } catch (const std::exception& error) {
-      std::cout << " ERROR see cerr " << std::endl;
-      std::cerr << "error encoding " << codec->name() << ": " << error.what()
-                << std::endl;
-      continue;
+  int blocksInWidth = rasterWidth / blockSize;
+  int blocksInHeight = rasterHeight / blockSize;
+
+  std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
+
+  for (auto& offset :
+       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks)) {
+    auto blockData = ReadGeoTiffBlock(band, offset.x, offset.y, blockSize,
+                                      rasterWidth, rasterHeight);
+    if (static_cast<int>(blockData.size()) != blockSize * blockSize) continue;
+    if (globalMin < 0) {
+      for (auto& v : blockData) v += (-globalMin);
     }
-    auto endEncode = std::chrono::high_resolution_clock::now();
-
-    size_t numCodedValues = codec->EncodedNumValues();
-    size_t sizeCodedValue = codec->EncodedSizeValue();
-
-    std::vector<int32_t> windowDataBack(
-        windowData.size() + codec->GetOverflowSize(windowData.size()));
-    auto startDecode = std::chrono::high_resolution_clock::now();
-    try {
-      codec->DecodeArray(windowDataBack.data(), windowData.size());
-    } catch (const std::exception& error) {
-      std::cout << " ERROR see cerr " << std::endl;
-      std::cerr << "error decoding " << codec->name() << ": " << error.what()
-                << std::endl;
-      continue;
+    RemapAndTransform(blockData, orderingEnum, transEnum, blockSize);
+    auto blockStats = BenchmarkWindow(blockData, codecs);
+    for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
+      codecWindowStats[ci].push_back(blockStats[ci]);
     }
-    auto endDecode = std::chrono::high_resolution_clock::now();
-
-    // Verify
-    bool good = true;
-    for (int i = 0; i < windowData.size(); i++) {
-      if (windowData[i] != windowDataBack[i]) {
-        std::cout << " ERROR see cerr " << std::endl;
-        std::cerr << "in!=out " << codec->name() << "(" << "i=" << i << ":o"
-                  << windowData[i] << "b" << windowDataBack[i] << ","
-                  << "len=" << windowData.size() << ")" << std::endl;
-        good = false;
-        break;
-      }
-    }
-
-    if (!good) {
-      continue;
-    }
-
-    // Calculate compression factor
-    auto compressionFactor = (float)(numCodedValues * sizeCodedValue) /
-                             (float)(windowData.size() * sizeof(int32_t));
-    auto bitsPerInt =
-        (float)(numCodedValues * sizeCodedValue) / (float)windowData.size();
-    // std::cout << ",cf:" << compressionFactor << ",bpi:" << bitsPerInt;
-    stats.cf = compressionFactor;
-    stats.bpi = bitsPerInt;
-
-    // Calculate time taken
-    auto compressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                            endEncode - startEncode)
-                            .count();
-    auto decompressTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                              endDecode - startDecode)
-                              .count();
-    // std::cout << ",tenc:" << compressTime << ",tdec:" << decompressTime <<
-    // std::endl;
-    stats.tenc = compressTime;
-    stats.tdec = decompressTime;
-
-    // Reset codec.
-    codecs[ci] =
-        std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->CloneFresh());
-
-    allCodecStats[ci] = stats;
   }
 
-  return allCodecStats;
-}
-
-std::vector<int32_t> readGeoTiffBlock(GDALRasterBand* band, int xOff, int yOff,
-                                      int blockSize, int rasterWidth,
-                                      int rasterHeight) {
-  int blockWidth = std::min(blockSize, rasterWidth - xOff);
-  int blockHeight = std::min(blockSize, rasterHeight - yOff);
-
-  std::vector<int32_t> blockData(blockWidth * blockHeight);
-  band->RasterIO(GF_Read, xOff, yOff, blockWidth, blockHeight, blockData.data(),
-                 blockWidth, blockHeight, GDT_Int32, 0, 0);
-
-  return blockData;
-}
-
-// Function to process a single block for min value
-void computeMinForBlock(GDALRasterBand* band, int xOff, int yOff,
-                        int blockSize, int32_t& min) {
-  std::vector<int32_t> blockData(blockSize * blockSize);
-  band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(),
-                 blockSize, blockSize, GDT_Int32, 0, 0);
-
-  for (auto& value : blockData) {
-    min = std::min(min, value);
+  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
+    std::cout << "c:" << ci;
+    auto& sv = codecWindowStats[ci];
+    std::vector<float> cfs, bpis, tencs, tdecs;
+    for (auto& s : sv) {
+      cfs.push_back(s.cf);
+      bpis.push_back(s.bpi);
+      tencs.push_back(s.tenc);
+      tdecs.push_back(s.tdec);
+    }
+    float cfm = Mean(cfs), cfv = Variance(cfs, cfm);
+    float bpim = Mean(bpis), bpiv = Variance(bpis, bpim);
+    float tem = Mean(tencs), tev = Variance(tencs, tem);
+    float tdm = Mean(tdecs), tdv = Variance(tdecs, tdm);
+    std::cout << ",cfmean:" << cfm << ",cfvar:" << cfv
+              << ",bpimean:" << bpim << ",bpivar:" << bpiv
+              << ",tencmean:" << tem << ",tencvar:" << tev
+              << ",tdecmean:" << tdm << ",tdecvar:" << tdv << std::endl;
   }
 }
 
-// BEHAVIOUR: if composite codec matches the name of a codec, then we will only
-// benchmark composites of that codec + physical codecs. if composite codec does
-// not match, then we benchmark all non-cascades (both logical & physical
-// algorithms)
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 int main(int argc, char** argv) {
-  if (argc != 7) {
-    std::cerr << "usage: " << argv[0]
-              << " <GeoTIFF file path> <block size> <num blocks> <block "
-                 "ordering {default: row-major | 'zigzag' | 'morton'}>[] "
-                 "<composite codec>[] <transformation {default: none | "
-                 "'Threshold' | 'SmoothAndShift' | 'IndexBasedClassification' "
-                 "| 'ValueBasedClassification' | 'ValueShift'}>[]"
-              << std::endl;
-    return 1;
-  }
+  CLI::App app{
+      "Benchmark codec compression ratio and speed on a GeoTIFF raster"};
+
+  std::string filePath;
+  int blockSize{}, nBlocks{};
+  std::vector<std::string> orderings = {"default"};
+  std::vector<std::string> compositeNames = {"none"};
+  std::vector<std::string> transformations = {"none"};
+
+  app.add_option("file", filePath, "GeoTIFF file path")->required();
+  app.add_option("--blocksize,-b", blockSize, "Block side length in pixels")
+      ->required();
+  app.add_option("--numblocks,-n", nBlocks, "Number of blocks to sample")
+      ->required();
+  app.add_option("--ordering", orderings,
+                 "Block ordering(s): default|zigzag|morton");
+  app.add_option(
+      "--composite", compositeNames,
+      "Cascade codec name(s), or 'none' for all non-cascaded codecs");
+  app.add_option("--trans", transformations,
+                 "Transformation(s): none|Threshold|SmoothAndShift|"
+                 "IndexBasedClassification|ValueBasedClassification|ValueShift");
+
+  CLI11_PARSE(app, argc, argv);
 
   GDALAllRegister();
-  const char* filename = argv[1];
-  int blockSize = std::stoi(argv[2]);
-  int nBlocks = std::stoi(argv[3]);
-  std::vector<std::string> orderings =
-      ParseCommaDelimited(std::string(argv[4]));
-  std::vector<std::string> composite_codec_names =
-      ParseCommaDelimited(std::string(argv[5]));
-  std::vector<std::string> transformations =
-      ParseCommaDelimited(std::string(argv[6]));
-
-  GDALDataset* dataset = (GDALDataset*)GDALOpen(filename, GA_ReadOnly);
+  GDALDataset* dataset =
+      (GDALDataset*)GDALOpen(filePath.c_str(), GA_ReadOnly);
   if (!dataset) {
-    std::cerr << "Failed to open file: " << filename << std::endl;
+    std::cerr << "Failed to open file: " << filePath << std::endl;
     return 1;
   }
 
   GDALRasterBand* band = dataset->GetRasterBand(1);
   int rasterWidth = band->GetXSize();
   int rasterHeight = band->GetYSize();
-  int totalPixels = rasterWidth * rasterHeight;
 
-  /*
-   * DONE PREPROCESSING
-   */
+  // Compute the global minimum across the entire raster (all full blocks).
+  int32_t globalMin = std::numeric_limits<int32_t>::max();
+  for (int y = 0; y < rasterHeight / blockSize; ++y) {
+    for (int x = 0; x < rasterWidth / blockSize; ++x) {
+      ComputeMinForBlock(band, x * blockSize, y * blockSize, blockSize,
+                         globalMin);
+    }
+  }
 
-  for (auto& composite_codec_name : composite_codec_names) {
+  for (auto& compositeName : compositeNames) {
+    auto codecs = BuildCodecsForComposite(compositeName);
     for (auto& ordering : orderings) {
+      Ordering orderingEnum = ParseOrdering(ordering);
       for (auto& transformation : transformations) {
-        /* BEGIN SEARCH */
-
+        Transformation transEnum = ParseTransformation(transformation);
         try {
-          std::cout << "**BENCHMARK**\nfile=" << argv[1]
-                    << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks
-                    << ",composite=" << composite_codec_name
-                    << ",ordering=" << ordering
-                    << ",transformation=" << transformation << std::endl;
-
-          int blocksInWidth = rasterWidth / blockSize;
-          int blocksInHeight = rasterHeight / blockSize;
-
-          int32_t min = std::numeric_limits<int32_t>::max();
-
-          for (int y = 0; y < blocksInHeight; ++y) {
-            for (int x = 0; x < blocksInWidth; ++x) {
-              int xOff = x * blockSize;
-              int yOff = y * blockSize;
-              computeMinForBlock(band, xOff, yOff, blockSize, min);
-            }
-          }
-
-          // Initialize codecs, optionally with a cascade.
-          auto all_codecs = InitCodecs(/* nonCascaded */ true, nullptr);
-
-          std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec;
-          for (auto& codec : all_codecs) {
-            if (codec->name() == composite_codec_name) {
-              baseCodec = std::move(codec);
-              break;
-            }
-          }
-
-          std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> codecs;
-          if (baseCodec) {
-            codecs = InitCodecs(/* nonCascaded */ false, std::move(baseCodec));
-          } else {
-            codecs = std::move(all_codecs);
-          }
-
-          std::cout << "*CODECS:*" << std::endl;
-          for (int ci = 0; ci < codecs.size(); ci++) {
-            std::cout << ci << "=" << codecs[ci]->name() << std::endl;
-          }
-          std::cout << "*ENDCODECS*" << std::endl;
-
-          // Calculate the total number of blocks that fit in the raster
-          int totalBlocks = blocksInWidth * blocksInHeight;
-
-          // Calculate spacing between blocks to process
-          int blockSpacing =
-              nBlocks == 0 ? 0 : std::max(1, totalBlocks / nBlocks);
-
-          // Counter for processed blocks
-          int processedBlocks = 0;
-          int windowIndex = 0;
-
-          // Benchmark each window
-          std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
-          for (int by = 0; by < blocksInHeight && processedBlocks < nBlocks;
-               by++) {
-            for (int bx = 0; bx < blocksInWidth && processedBlocks < nBlocks;
-                 bx++) {
-              // Check if the current block index matches the spacing criteria
-              if ((by * blocksInWidth + bx) % blockSpacing != 0) continue;
-
-              int xOff = bx * blockSize;
-              int yOff = by * blockSize;
-
-              std::vector<int32_t> blockData = readGeoTiffBlock(
-                  band, xOff, yOff, blockSize, rasterWidth, rasterHeight);
-              if (blockData.size() != blockSize * blockSize) {
-                continue;
-              }
-
-              // Normalise window to all positive
-              if (min < 0) {
-                for (int i = 0; i < blockData.size(); i++) {
-                  blockData[i] += (-min);
-                }
-              }
-
-              remapAndTransformData(blockData, ordering, transformation,
-                                    blockSize);
-
-              std::vector<CodecStats> allCodecStats =
-                  benchmarkWindow(blockData, codecs);
-              for (int ci = 0; ci < codecs.size(); ci++) {
-                codecWindowStats[ci].push_back(allCodecStats[ci]);
-              }
-
-              processedBlocks++;  // Increment the count of processed blocks
-            }
-          }
-
-          for (int ci = 0; ci < codecs.size(); ci++) {
-            std::cout << "c:" << ci;
-
-            std::vector<CodecStats>& codecStatsAcrossWindows =
-                codecWindowStats[ci];
-            std::vector<float> cfs;
-            std::vector<float> bpis;
-            std::vector<float> tencs;
-            std::vector<float> tdecs;
-            for (CodecStats& stats : codecStatsAcrossWindows) {
-              cfs.push_back(stats.cf);
-              bpis.push_back(stats.bpi);
-              tencs.push_back(stats.tenc);
-              tdecs.push_back(stats.tdec);
-            }
-            float cfmean = Mean(cfs);
-            float cfvar = Variance(cfs, cfmean);
-            float bpimean = Mean(bpis);
-            float bpivar = Variance(bpis, bpimean);
-            float tencmean = Mean(tencs);
-            float tencvar = Variance(tencs, tencmean);
-            float tdecmean = Mean(tdecs);
-            float tdecvar = Variance(tdecs, tdecmean);
-            std::cout << ",cfmean:" << cfmean << ",cfvar:" << cfvar
-                      << ",bpimean:" << bpimean << ",bpivar:" << bpivar
-                      << ",tencmean:" << tencmean << ",tencvar:" << tencvar
-                      << ",tdecmean:" << tdecmean << ",tdecvar:" << tdecvar
-                      << std::endl;
-          }
+          RunBenchConfig(band, rasterWidth, rasterHeight, filePath, blockSize,
+                         nBlocks, globalMin, compositeName, orderingEnum,
+                         ordering, transEnum, transformation, codecs);
         } catch (const std::exception& e) {
           std::cout << " ERROR see cerr " << std::endl;
-          std::cerr << "Error for bench search: " << e.what() << std::endl;
-          continue;
+          std::cerr << "Error: " << e.what() << std::endl;
         }
-
-        /* END SEARCH */
       }
-
-      /* END SEARCH */
     }
-
-    /* END SEARCH */
   }
 
   GDALClose(dataset);

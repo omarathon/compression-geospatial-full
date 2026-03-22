@@ -1,0 +1,423 @@
+#pragma once
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "generic_codecs.h"
+#include "remappings.h"
+#include "transformations.h"
+#include "util.h"
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum class Ordering { RowMajor, Zigzag, Morton };
+
+enum class Transformation {
+  None,
+  Threshold,
+  SmoothAndShift,
+  IndexBasedClassification,
+  ValueBasedClassification,
+  ValueShift
+};
+
+enum class AccessPattern { Linear, Random };
+
+enum class AccessTransformation {
+  LinearXOR,
+  LinearSum,
+  RandomXOR,
+  RandomSum,
+  Threshold,
+  SmoothAndShift,
+  IndexBasedClassification,
+  ValueBasedClassification,
+  ValueShift
+};
+
+// ─── Parse ───────────────────────────────────────────────────────────────────
+
+inline Ordering ParseOrdering(const std::string& s) {
+  if (s == "zigzag") return Ordering::Zigzag;
+  if (s == "morton") return Ordering::Morton;
+  if (s.empty() || s == "default") return Ordering::RowMajor;
+  throw std::invalid_argument("Unknown ordering: " + s);
+}
+
+inline Transformation ParseTransformation(const std::string& s) {
+  if (s.empty() || s == "none" || s == "default") return Transformation::None;
+  if (s == "Threshold") return Transformation::Threshold;
+  if (s == "SmoothAndShift") return Transformation::SmoothAndShift;
+  if (s == "IndexBasedClassification")
+    return Transformation::IndexBasedClassification;
+  if (s == "ValueBasedClassification")
+    return Transformation::ValueBasedClassification;
+  if (s == "ValueShift") return Transformation::ValueShift;
+  throw std::invalid_argument("Unknown transformation: " + s);
+}
+
+inline AccessPattern ParseAccessPattern(const std::string& s) {
+  if (s == "random") return AccessPattern::Random;
+  if (s.empty() || s == "default" || s == "linear") return AccessPattern::Linear;
+  throw std::invalid_argument("Unknown access pattern: " + s);
+}
+
+inline AccessTransformation ParseAccessTransformation(const std::string& s) {
+  if (s.empty() || s == "default" || s == "linearXOR")
+    return AccessTransformation::LinearXOR;
+  if (s == "linearSum") return AccessTransformation::LinearSum;
+  if (s == "randomXOR") return AccessTransformation::RandomXOR;
+  if (s == "randomSum") return AccessTransformation::RandomSum;
+  if (s == "Threshold") return AccessTransformation::Threshold;
+  if (s == "SmoothAndShift") return AccessTransformation::SmoothAndShift;
+  if (s == "IndexBasedClassification")
+    return AccessTransformation::IndexBasedClassification;
+  if (s == "ValueBasedClassification")
+    return AccessTransformation::ValueBasedClassification;
+  if (s == "ValueShift") return AccessTransformation::ValueShift;
+  throw std::invalid_argument("Unknown access transformation: " + s);
+}
+
+// ─── ToString ────────────────────────────────────────────────────────────────
+
+inline std::string ToString(Ordering o) {
+  switch (o) {
+    case Ordering::RowMajor:
+      return "default";
+    case Ordering::Zigzag:
+      return "zigzag";
+    case Ordering::Morton:
+      return "morton";
+  }
+  return "";
+}
+
+inline std::string ToString(Transformation t) {
+  switch (t) {
+    case Transformation::None:
+      return "none";
+    case Transformation::Threshold:
+      return "Threshold";
+    case Transformation::SmoothAndShift:
+      return "SmoothAndShift";
+    case Transformation::IndexBasedClassification:
+      return "IndexBasedClassification";
+    case Transformation::ValueBasedClassification:
+      return "ValueBasedClassification";
+    case Transformation::ValueShift:
+      return "ValueShift";
+  }
+  return "";
+}
+
+inline std::string ToString(AccessPattern p) {
+  switch (p) {
+    case AccessPattern::Linear:
+      return "linear";
+    case AccessPattern::Random:
+      return "random";
+  }
+  return "";
+}
+
+inline std::string ToString(AccessTransformation t) {
+  switch (t) {
+    case AccessTransformation::LinearXOR:
+      return "linearXOR";
+    case AccessTransformation::LinearSum:
+      return "linearSum";
+    case AccessTransformation::RandomXOR:
+      return "randomXOR";
+    case AccessTransformation::RandomSum:
+      return "randomSum";
+    case AccessTransformation::Threshold:
+      return "Threshold";
+    case AccessTransformation::SmoothAndShift:
+      return "SmoothAndShift";
+    case AccessTransformation::IndexBasedClassification:
+      return "IndexBasedClassification";
+    case AccessTransformation::ValueBasedClassification:
+      return "ValueBasedClassification";
+    case AccessTransformation::ValueShift:
+      return "ValueShift";
+  }
+  return "";
+}
+
+// ─── Block ordering ───────────────────────────────────────────────────────────
+
+// Primary template: no-op for unsupported element types.
+template <typename T>
+void ApplyOrdering(std::vector<T>& /*data*/, Ordering /*o*/,
+                   int /*blockSize*/) {}
+
+template <>
+inline void ApplyOrdering<int32_t>(std::vector<int32_t>& data, Ordering o,
+                                    int blockSize) {
+  if (o == Ordering::Zigzag) {
+    auto remapped = RemapToZigzagOrder(data, blockSize);
+    std::copy(remapped.begin(), remapped.end(), data.begin());
+  } else if (o == Ordering::Morton) {
+    auto remapped = RemapToMortonOrder(data, blockSize);
+    std::copy(remapped.begin(), remapped.end(), data.begin());
+  }
+}
+
+// ─── Data transformation ──────────────────────────────────────────────────────
+
+// Primary template: no-op for unsupported element types.
+template <typename T>
+void ApplyTransformation(std::vector<T>& /*data*/, Transformation /*t*/) {}
+
+template <>
+inline void ApplyTransformation<int32_t>(std::vector<int32_t>& data,
+                                          Transformation t) {
+  switch (t) {
+    case Transformation::Threshold:
+      Threshold(data, Avg(data));
+      break;
+    case Transformation::SmoothAndShift:
+      SmoothAndShift(data);
+      break;
+    case Transformation::IndexBasedClassification:
+      IndexBasedClassification(data, /* max_classes */ 8);
+      break;
+    case Transformation::ValueBasedClassification:
+      ValueBasedClassification(data, /* num_classes */ 8);
+      break;
+    case Transformation::ValueShift:
+      ValueShift(data, static_cast<int32_t>(std::pow(2, 23)));
+      break;
+    case Transformation::None:
+      break;
+  }
+}
+
+// Convenience: apply ordering then transformation in-place.
+template <typename T>
+void RemapAndTransform(std::vector<T>& data, Ordering o, Transformation t,
+                       int blockSize) {
+  ApplyOrdering(data, o, blockSize);
+  ApplyTransformation(data, t);
+}
+
+// ─── Access transformation ────────────────────────────────────────────────────
+
+// Returns true for variants that mutate the block data (requiring re-encoding).
+inline bool AccessTransformationMutatesData(AccessTransformation t) {
+  switch (t) {
+    case AccessTransformation::Threshold:
+    case AccessTransformation::SmoothAndShift:
+    case AccessTransformation::IndexBasedClassification:
+    case AccessTransformation::ValueBasedClassification:
+    case AccessTransformation::ValueShift:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// Primary template: no-op for unsupported element types; returns 0 ns.
+template <typename T>
+std::size_t ApplyAccessTransformation(std::vector<T>& /*data*/,
+                                       AccessTransformation /*t*/,
+                                       std::size_t /*blockSize*/) {
+  return 0;
+}
+
+template <>
+inline std::size_t ApplyAccessTransformation<int32_t>(
+    std::vector<int32_t>& data, AccessTransformation t,
+    std::size_t blockSize) {
+  auto startRead = std::chrono::high_resolution_clock::now();
+  switch (t) {
+    case AccessTransformation::Threshold:
+      Threshold(data, Avg(data));
+      break;
+    case AccessTransformation::SmoothAndShift:
+      SmoothAndShift(data);
+      break;
+    case AccessTransformation::IndexBasedClassification:
+      IndexBasedClassification(data, /* max_classes */ 8);
+      break;
+    case AccessTransformation::ValueBasedClassification:
+      ValueBasedClassification(data, /* num_classes */ 8);
+      break;
+    case AccessTransformation::ValueShift:
+      ValueShift(data, static_cast<int32_t>(std::pow(2, 23)));
+      break;
+    case AccessTransformation::LinearSum: {
+      volatile int64_t dummy = 0;
+      for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
+        dummy += data[bi];
+      }
+      break;
+    }
+    case AccessTransformation::RandomXOR: {
+      volatile int32_t dummy = 0;
+      std::vector<int> bis(blockSize * blockSize);
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
+      }
+      startRead = std::chrono::high_resolution_clock::now();
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        dummy ^= data[bis[iti]];
+      }
+      break;
+    }
+    case AccessTransformation::RandomSum: {
+      volatile int64_t dummy = 0;
+      std::vector<int> bis(blockSize * blockSize);
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
+      }
+      startRead = std::chrono::high_resolution_clock::now();
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        dummy += data[bis[iti]];
+      }
+      break;
+    }
+    default:  // LinearXOR
+    {
+      volatile int32_t dummy = 0;
+      for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
+        dummy ^= data[bi];
+      }
+      break;
+    }
+  }
+  auto endRead = std::chrono::high_resolution_clock::now();
+  return static_cast<std::size_t>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead)
+          .count());
+}
+
+// ─── Codec statistics ─────────────────────────────────────────────────────────
+
+struct CodecStats {
+  float cf = 0;    // compression factor (encoded bytes / original bytes)
+  float bpi = 0;   // encoded bytes per element
+  float tenc = 0;  // encode time (ns)
+  float tdec = 0;  // decode time (ns)
+};
+
+// ─── Single-codec benchmark ───────────────────────────────────────────────────
+
+// Encodes, decodes, and verifies round-trip correctness. Returns zeroed stats
+// on error (details printed to cerr/cout). Resets codec via CloneFresh.
+template <typename T>
+CodecStats BenchmarkOneCodec(std::vector<T>& data,
+                              std::unique_ptr<StatefulIntegerCodec<T>>& codec) {
+  CodecStats stats;
+  codec->AllocEncoded(data.data(), data.size());
+  auto startEncode = std::chrono::high_resolution_clock::now();
+  try {
+    codec->EncodeArray(data.data(), data.size());
+  } catch (const std::exception& e) {
+    std::cout << " ERROR see cerr " << std::endl;
+    std::cerr << "error encoding " << codec->name() << ": " << e.what()
+              << std::endl;
+    return stats;
+  }
+  auto endEncode = std::chrono::high_resolution_clock::now();
+
+  std::size_t numCodedValues = codec->EncodedNumValues();
+  std::size_t sizeCodedValue = codec->EncodedSizeValue();
+
+  std::vector<T> dataBack(data.size() + codec->GetOverflowSize(data.size()));
+  auto startDecode = std::chrono::high_resolution_clock::now();
+  try {
+    codec->DecodeArray(dataBack.data(), data.size());
+  } catch (const std::exception& e) {
+    std::cout << " ERROR see cerr " << std::endl;
+    std::cerr << "error decoding " << codec->name() << ": " << e.what()
+              << std::endl;
+    return stats;
+  }
+  auto endDecode = std::chrono::high_resolution_clock::now();
+
+  for (std::size_t i = 0; i < data.size(); i++) {
+    if (data[i] != dataBack[i]) {
+      std::cout << " ERROR see cerr " << std::endl;
+      std::cerr << "in!=out " << codec->name() << "(i=" << i << ":o"
+                << data[i] << "b" << dataBack[i]
+                << ",len=" << data.size() << ")" << std::endl;
+      return stats;
+    }
+  }
+
+  stats.cf = static_cast<float>(numCodedValues * sizeCodedValue) /
+             static_cast<float>(data.size() * sizeof(T));
+  stats.bpi = static_cast<float>(numCodedValues * sizeCodedValue) /
+              static_cast<float>(data.size());
+  stats.tenc = static_cast<float>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode -
+                                                           startEncode)
+          .count());
+  stats.tdec = static_cast<float>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode -
+                                                           startDecode)
+          .count());
+
+  codec = std::unique_ptr<StatefulIntegerCodec<T>>(codec->CloneFresh());
+  return stats;
+}
+
+// ─── Codec selection ──────────────────────────────────────────────────────────
+
+// Returns clones of codecs in `pool` whose name is in `names`.
+// If names == {"all"} or {"*"}, all codecs are cloned.
+template <typename T>
+std::vector<std::unique_ptr<StatefulIntegerCodec<T>>> SelectCodecsByName(
+    std::vector<std::unique_ptr<StatefulIntegerCodec<T>>>& pool,
+    const std::vector<std::string>& names) {
+  std::vector<std::unique_ptr<StatefulIntegerCodec<T>>> selected;
+  bool selectAll =
+      names.size() == 1 && (names[0] == "all" || names[0] == "*");
+  for (auto& codec : pool) {
+    if (selectAll) {
+      selected.emplace_back(codec->CloneFresh());
+      continue;
+    }
+    for (const auto& name : names) {
+      if (name == codec->name()) {
+        selected.emplace_back(codec->CloneFresh());
+        break;
+      }
+    }
+  }
+  return selected;
+}
+
+// ─── Block sampling ───────────────────────────────────────────────────────────
+
+struct BlockOffset {
+  int x;  // pixel x offset (block column * blockSize)
+  int y;  // pixel y offset (block row * blockSize)
+};
+
+// Returns numBlocks evenly-spaced block pixel offsets across the raster grid.
+inline std::vector<BlockOffset> SampleBlockOffsets(int blocksInWidth,
+                                                    int blocksInHeight,
+                                                    int blockSize,
+                                                    int numBlocks) {
+  std::vector<BlockOffset> offsets;
+  offsets.reserve(numBlocks);
+  int totalBlocks = blocksInWidth * blocksInHeight;
+  int sampleInterval = std::max(1, totalBlocks / numBlocks);
+  for (int blockNum = 0, sampled = 0; sampled < numBlocks;
+       blockNum += sampleInterval, sampled++) {
+    int blockIndex = blockNum % totalBlocks;
+    offsets.push_back({(blockIndex % blocksInWidth) * blockSize,
+                       (blockIndex / blocksInWidth) * blockSize});
+  }
+  return offsets;
+}

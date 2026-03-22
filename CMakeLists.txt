@@ -95,12 +95,19 @@ FetchContent_Declare(googletest
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# ── CLI11 (fetched at configure time) ─────────────────────────────────────────
+FetchContent_Declare(CLI11
+  GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+  GIT_TAG        v2.4.2
+)
+FetchContent_MakeAvailable(CLI11)
+
 enable_testing()
 
 # ── Helper to configure each benchmark target ─────────────────────────────────
 function(configure_bench TARGET)
   target_include_directories(${TARGET} PRIVATE ${EXTRA_INCLUDES} ${GDAL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET} PRIVATE ${CODEC_LIBS} ${GDAL_LIBRARIES})
+  target_link_libraries(${TARGET} PRIVATE ${CODEC_LIBS} ${GDAL_LIBRARIES} CLI11::CLI11)
   target_link_options(${TARGET} PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
 endfunction()
 
@@ -114,9 +121,15 @@ add_executable(test_remappings tests/test_remappings.cpp)
 target_include_directories(test_remappings PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_remappings PRIVATE GTest::gtest_main)
 
+add_executable(test_bench_utils tests/test_bench_utils.cpp)
+target_include_directories(test_bench_utils PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_bench_utils PRIVATE ${CODEC_LIBS} GTest::gtest_main)
+target_link_options(test_bench_utils PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
+
 include(GoogleTest)
 gtest_discover_tests(test_comp)
 gtest_discover_tests(test_remappings)
+gtest_discover_tests(test_bench_utils)
 
 # ── Benchmark executables ─────────────────────────────────────────────────────
 add_executable(bench_comp bench/bench_comp.cpp)
