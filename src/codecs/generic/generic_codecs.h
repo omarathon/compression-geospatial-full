@@ -19,9 +19,9 @@ class StatefulIntegerCodec {
   // it. Returns the duration in **nanoseconds**.
   virtual size_t BenchEncode(const T *in, const size_t length) {
     AllocEncoded(in, length);
-    auto tencStart = std::chrono::high_resolution_clock::now();
+    auto tencStart = std::chrono::steady_clock::now();
     EncodeArray(in, length);
-    auto tencEnd = std::chrono::high_resolution_clock::now();
+    auto tencEnd = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(tencEnd -
                                                                 tencStart)
         .count();
@@ -30,9 +30,9 @@ class StatefulIntegerCodec {
   virtual void DecodeArray(T *out, const size_t length) = 0;
 
   virtual size_t BenchDecode(T *out, const size_t length) {
-    auto tdecStart = std::chrono::high_resolution_clock::now();
+    auto tdecStart = std::chrono::steady_clock::now();
     DecodeArray(out, length);
-    auto tdecEnd = std::chrono::high_resolution_clock::now();
+    auto tdecEnd = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::nanoseconds>(tdecEnd -
                                                                 tdecStart)
         .count();

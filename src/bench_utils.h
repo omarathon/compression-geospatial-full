@@ -5,9 +5,9 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
 #include <nmmintrin.h>  // SSE4.2 (includes SSSE3 for _mm_hadd_epi32)
+#include <print>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -17,7 +17,6 @@
 #include "transformations.h"
 #include "util.h"
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum class Ordering { RowMajor, Zigzag, Morton };
 
@@ -46,7 +45,6 @@ enum class AccessTransformation {
   ValueShift
 };
 
-// ─── Parse ───────────────────────────────────────────────────────────────────
 
 inline Ordering ParseOrdering(const std::string& s) {
   if (s == "zigzag") return Ordering::Zigzag;
@@ -91,7 +89,6 @@ inline AccessTransformation ParseAccessTransformation(const std::string& s) {
   throw std::invalid_argument("Unknown access transformation: " + s);
 }
 
-// ─── ToString ────────────────────────────────────────────────────────────────
 
 inline std::string ToString(Ordering o) {
   switch (o) {
@@ -161,7 +158,6 @@ inline std::string ToString(AccessTransformation t) {
   return "";
 }
 
-// ─── Block ordering ───────────────────────────────────────────────────────────
 
 // Primary template: no-op for unsupported element types.
 template <typename T>
@@ -180,7 +176,6 @@ inline void ApplyOrdering<int32_t>(std::vector<int32_t>& data, Ordering o,
   }
 }
 
-// ─── Data transformation ──────────────────────────────────────────────────────
 
 // Primary template: no-op for unsupported element types.
 template <typename T>
@@ -218,7 +213,6 @@ void RemapAndTransform(std::vector<T>& data, Ordering o, Transformation t,
   ApplyTransformation(data, t);
 }
 
-// ─── Access transformation ────────────────────────────────────────────────────
 
 // Sink for SIMD/fused sum results — file-scope prevents dead-code elimination.
 inline int32_t kLinearSumSink = 0;
@@ -333,7 +327,6 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
           .count());
 }
 
-// ─── Running statistics (Welford's online algorithm) ─────────────────────────
 
 struct RunningStats {
   std::size_t n = 0;
@@ -350,7 +343,6 @@ struct RunningStats {
   double Total()    const { return mean * static_cast<double>(n); }
 };
 
-// ─── Codec statistics ─────────────────────────────────────────────────────────
 
 struct CodecStats {
   float cf = 0;    // compression factor (encoded bytes / original bytes)
@@ -359,7 +351,6 @@ struct CodecStats {
   float tdec = 0;  // decode time (ns)
 };
 
-// ─── Single-codec benchmark ───────────────────────────────────────────────────
 
 // Encodes, decodes, and verifies round-trip correctness. Returns zeroed stats
 // on error (details printed to cerr/cout). Resets codec via CloneFresh.
@@ -372,9 +363,8 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
   try {
     codec->EncodeArray(data.data(), data.size());
   } catch (const std::exception& e) {
-    std::cout << " ERROR see cerr " << std::endl;
-    std::cerr << "error encoding " << codec->name() << ": " << e.what()
-              << std::endl;
+    std::println(" ERROR see cerr");
+    std::println(stderr, "error encoding {}: {}", codec->name(), e.what());
     return stats;
   }
   auto endEncode = std::chrono::steady_clock::now();
@@ -387,19 +377,17 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
   try {
     codec->DecodeArray(dataBack.data(), data.size());
   } catch (const std::exception& e) {
-    std::cout << " ERROR see cerr " << std::endl;
-    std::cerr << "error decoding " << codec->name() << ": " << e.what()
-              << std::endl;
+    std::println(" ERROR see cerr");
+    std::println(stderr, "error decoding {}: {}", codec->name(), e.what());
     return stats;
   }
   auto endDecode = std::chrono::steady_clock::now();
 
   for (std::size_t i = 0; i < data.size(); i++) {
     if (data[i] != dataBack[i]) {
-      std::cout << " ERROR see cerr " << std::endl;
-      std::cerr << "in!=out " << codec->name() << "(i=" << i << ":o"
-                << data[i] << "b" << dataBack[i]
-                << ",len=" << data.size() << ")" << std::endl;
+      std::println(" ERROR see cerr");
+      std::println(stderr, "in!=out {}(i={}:o{}b{},len={})",
+                   codec->name(), i, data[i], dataBack[i], data.size());
       return stats;
     }
   }
@@ -421,7 +409,6 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
   return stats;
 }
 
-// ─── Codec selection ──────────────────────────────────────────────────────────
 
 // Returns clones of codecs in `pool` whose name is in `names`.
 // If names == {"all"} or {"*"}, all codecs are cloned.
@@ -447,7 +434,6 @@ std::vector<std::unique_ptr<StatefulIntegerCodec<T>>> SelectCodecsByName(
   return selected;
 }
 
-// ─── Block sampling ───────────────────────────────────────────────────────────
 
 struct BlockOffset {
   int x;  // pixel x offset (block column * blockSize)

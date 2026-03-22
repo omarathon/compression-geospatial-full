@@ -349,7 +349,5 @@ class TurboPForCodec : public StatefulIntegerCodec<int32_t> {
   std::vector<int32_t> &GetEncoded() override {
     throw std::runtime_error(
         "Encoded format does not match input. Cannot forward.");
-    std::vector<int32_t> dummy{};
-    return dummy;
   };
 };

@@ -1,7 +1,8 @@
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <memory>
+#include <print>
+#include <ranges>
 #include <vector>
 
 #include <CLI/CLI.hpp>
@@ -11,10 +12,8 @@
 #include "codec_collection.h"
 #include "gdal_priv.h"
 
-// ─── Codec helpers ────────────────────────────────────────────────────────────
-
 // If `compositeName` matches a codec in the non-cascaded pool, returns that
-// codec cascaded with all physical codecs.  Otherwise returns the full
+// codec cascaded with all physical codecs. Otherwise returns the full
 // non-cascaded pool (the "none" / default case).
 static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 BuildCodecsForComposite(const std::string& compositeName) {
@@ -33,31 +32,26 @@ static std::vector<CodecStats> BenchmarkWindow(
     std::vector<int32_t>& windowData,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
   std::vector<CodecStats> stats(codecs.size());
-  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
-    stats[ci] = BenchmarkOneCodec(windowData, codecs[ci]);
-  }
+  std::ranges::transform(codecs, stats.begin(), [&](auto& codec) {
+    return BenchmarkOneCodec(windowData, codec);
+  });
   return stats;
 }
-
-// ─── Per-configuration benchmark ─────────────────────────────────────────────
 
 static void RunBenchConfig(
     GDALRasterBand* band, int rasterWidth, int rasterHeight,
     const std::string& filePath, int blockSize, int nBlocks, int32_t globalMin,
-    const std::string& compositeName, Ordering orderingEnum,
-    const std::string& ordering, Transformation transEnum,
-    const std::string& transformation,
+    const std::string& compositeName, Ordering ordering, Transformation trans,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
-  std::cout << "**BENCHMARK**\nfile=" << filePath
-            << ",blockSize=" << blockSize << ",nBlocks=" << nBlocks
-            << ",composite=" << compositeName << ",ordering=" << ordering
-            << ",transformation=" << transformation << std::endl;
+  std::println("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite={},"
+               "ordering={},transformation={}",
+               filePath, blockSize, nBlocks, compositeName,
+               ToString(ordering), ToString(trans));
 
-  std::cout << "*CODECS:*" << std::endl;
-  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
-    std::cout << ci << "=" << codecs[ci]->name() << std::endl;
-  }
-  std::cout << "*ENDCODECS*" << std::endl;
+  std::println("*CODECS:*");
+  for (std::size_t ci = 0; ci < codecs.size(); ++ci)
+    std::println("{}={}", ci, codecs[ci]->name());
+  std::println("*ENDCODECS*");
 
   int blocksInWidth = rasterWidth / blockSize;
   int blocksInHeight = rasterHeight / blockSize;
@@ -69,38 +63,34 @@ static void RunBenchConfig(
     auto blockData = ReadGeoTiffBlock(band, offset.x, offset.y, blockSize,
                                       rasterWidth, rasterHeight);
     if (static_cast<int>(blockData.size()) != blockSize * blockSize) continue;
-    if (globalMin < 0) {
+    if (globalMin < 0)
       for (auto& v : blockData) v += (-globalMin);
-    }
-    RemapAndTransform(blockData, orderingEnum, transEnum, blockSize);
+    RemapAndTransform(blockData, ordering, trans, blockSize);
     auto blockStats = BenchmarkWindow(blockData, codecs);
-    for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
+    for (std::size_t ci = 0; ci < codecs.size(); ++ci)
       codecWindowStats[ci].push_back(blockStats[ci]);
-    }
   }
 
-  for (int ci = 0; ci < static_cast<int>(codecs.size()); ci++) {
-    std::cout << "c:" << ci;
+  for (std::size_t ci = 0; ci < codecs.size(); ++ci) {
     auto& sv = codecWindowStats[ci];
     std::vector<float> cfs, bpis, tencs, tdecs;
-    for (auto& s : sv) {
-      cfs.push_back(s.cf);
-      bpis.push_back(s.bpi);
-      tencs.push_back(s.tenc);
-      tdecs.push_back(s.tdec);
-    }
-    float cfm = Mean(cfs), cfv = Variance(cfs, cfm);
-    float bpim = Mean(bpis), bpiv = Variance(bpis, bpim);
-    float tem = Mean(tencs), tev = Variance(tencs, tem);
-    float tdm = Mean(tdecs), tdv = Variance(tdecs, tdm);
-    std::cout << ",cfmean:" << cfm << ",cfvar:" << cfv
-              << ",bpimean:" << bpim << ",bpivar:" << bpiv
-              << ",tencmean:" << tem << ",tencvar:" << tev
-              << ",tdecmean:" << tdm << ",tdecvar:" << tdv << std::endl;
+    cfs.reserve(sv.size());
+    bpis.reserve(sv.size());
+    tencs.reserve(sv.size());
+    tdecs.reserve(sv.size());
+    std::ranges::transform(sv, std::back_inserter(cfs),   &CodecStats::cf);
+    std::ranges::transform(sv, std::back_inserter(bpis),  &CodecStats::bpi);
+    std::ranges::transform(sv, std::back_inserter(tencs), &CodecStats::tenc);
+    std::ranges::transform(sv, std::back_inserter(tdecs), &CodecStats::tdec);
+    float cfm = Mean(cfs),   cfv  = Variance(cfs,   cfm);
+    float bpim = Mean(bpis), bpiv = Variance(bpis,  bpim);
+    float tem  = Mean(tencs), tev = Variance(tencs,  tem);
+    float tdm  = Mean(tdecs), tdv = Variance(tdecs,  tdm);
+    std::println("c:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
+                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{}",
+                 ci, cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv);
   }
 }
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 
 int main(int argc, char** argv) {
   CLI::App app{
@@ -130,9 +120,9 @@ int main(int argc, char** argv) {
 
   GDALAllRegister();
   GDALDataset* dataset =
-      (GDALDataset*)GDALOpen(filePath.c_str(), GA_ReadOnly);
+      static_cast<GDALDataset*>(GDALOpen(filePath.c_str(), GA_ReadOnly));
   if (!dataset) {
-    std::cerr << "Failed to open file: " << filePath << std::endl;
+    std::println(stderr, "Failed to open file: {}", filePath);
     return 1;
   }
 
@@ -140,14 +130,12 @@ int main(int argc, char** argv) {
   int rasterWidth = band->GetXSize();
   int rasterHeight = band->GetYSize();
 
-  // Compute the global minimum across the entire raster (all full blocks).
+  // Compute global minimum once; used to shift all values non-negative.
   int32_t globalMin = std::numeric_limits<int32_t>::max();
-  for (int y = 0; y < rasterHeight / blockSize; ++y) {
-    for (int x = 0; x < rasterWidth / blockSize; ++x) {
+  for (int y = 0; y < rasterHeight / blockSize; ++y)
+    for (int x = 0; x < rasterWidth / blockSize; ++x)
       ComputeMinForBlock(band, x * blockSize, y * blockSize, blockSize,
                          globalMin);
-    }
-  }
 
   for (auto& compositeName : compositeNames) {
     auto codecs = BuildCodecsForComposite(compositeName);
@@ -158,10 +146,10 @@ int main(int argc, char** argv) {
         try {
           RunBenchConfig(band, rasterWidth, rasterHeight, filePath, blockSize,
                          nBlocks, globalMin, compositeName, orderingEnum,
-                         ordering, transEnum, transformation, codecs);
+                         transEnum, codecs);
         } catch (const std::exception& e) {
-          std::cout << " ERROR see cerr " << std::endl;
-          std::cerr << "Error: " << e.what() << std::endl;
+          std::println(" ERROR see cerr");
+          std::println(stderr, "Error: {}", e.what());
         }
       }
     }

@@ -131,8 +131,8 @@ TEST(RemapAndTransform, ZigzagPermutesElements) {
   EXPECT_NE(data, original);
   auto sorted_result = data;
   auto sorted_orig = original;
-  std::sort(sorted_result.begin(), sorted_result.end());
-  std::sort(sorted_orig.begin(), sorted_orig.end());
+  std::ranges::sort(sorted_result);
+  std::ranges::sort(sorted_orig);
   EXPECT_EQ(sorted_result, sorted_orig);
 }
 

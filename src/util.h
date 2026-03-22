@@ -2,73 +2,45 @@
 
 #include <cmath>
 #include <numeric>
-#include <sstream>
 #include <string>
 #include <vector>
 
-std::vector<std::string> ParseCommaDelimited(std::string str) {
-  std::stringstream ss(str);
-  std::vector<std::string> result;
-  while (ss.good()) {
-    std::string substr;
-    std::getline(ss, substr, ',');
-    result.push_back(substr);
-  }
-  return result;
+inline int32_t Avg(const std::vector<int32_t>& data) {
+  if (data.empty()) return 0;
+  int64_t total = std::reduce(data.begin(), data.end(), int64_t{0});
+  return static_cast<int32_t>(total / static_cast<int64_t>(data.size()));
 }
 
-std::vector<std::string> ParseBarDelimited(std::string str) {
-  std::stringstream ss(str);
-  std::vector<std::string> result;
-  while (ss.good()) {
-    std::string substr;
-    std::getline(ss, substr, '|');
-    result.push_back(substr);
-  }
-  return result;
-}
-
-int32_t Avg(const std::vector<int32_t>& data) {
-  if (data.empty()) return 0;  // Avoid division by zero
-
-  int64_t total = std::accumulate(data.begin(), data.end(), int64_t(0));
-  return static_cast<int32_t>(total / data.size());
-}
-
-float Mean(const std::vector<float>& values) {
+inline float Mean(const std::vector<float>& values) {
   if (values.empty()) return 0;
-  return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+  return std::reduce(values.begin(), values.end(), 0.0f) /
+         static_cast<float>(values.size());
 }
 
-float Variance(const std::vector<float>& values, float meanValue) {
+inline float Variance(const std::vector<float>& values, float meanValue) {
   if (values.empty()) return 0;
-  float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
-                                 [meanValue](double a, double b) {
-                                   return a + (b - meanValue) * (b - meanValue);
-                                 });
-  return sq_sum / values.size();
+  float sq_sum = std::accumulate(
+      values.begin(), values.end(), 0.0f,
+      [meanValue](float a, float b) { return a + (b - meanValue) * (b - meanValue); });
+  return sq_sum / static_cast<float>(values.size());
 }
 
-std::size_t Sum(const std::vector<std::size_t>& values) {
-  if (values.empty()) return 0;
-  std::size_t result = 0;
-  for (auto& value : values) {
-    result += value;
-  }
-  return result;
+inline std::size_t Sum(const std::vector<std::size_t>& values) {
+  return std::reduce(values.begin(), values.end(), std::size_t{0});
 }
 
-float Mean(const std::vector<std::size_t>& values) {
+inline float Mean(const std::vector<std::size_t>& values) {
   if (values.empty()) return 0;
-  return ((float)Sum(values)) / ((float)values.size());
+  return static_cast<float>(Sum(values)) / static_cast<float>(values.size());
 }
 
-float Variance(const std::vector<std::size_t>& values, float meanValue) {
+inline float Variance(const std::vector<std::size_t>& values, float meanValue) {
   if (values.empty()) return 0;
-  float sq_sum = std::accumulate(values.begin(), values.end(), 0.0,
-                                 [meanValue](std::size_t a, std::size_t b) {
-                                   return (float)a + ((float)b - meanValue) *
-                                                         ((float)b - meanValue);
-                                 });
-  return sq_sum / values.size();
+  float sq_sum = std::accumulate(
+      values.begin(), values.end(), 0.0f,
+      [meanValue](float acc, std::size_t b) {
+        float diff = static_cast<float>(b) - meanValue;
+        return acc + diff * diff;
+      });
+  return sq_sum / static_cast<float>(values.size());
 }

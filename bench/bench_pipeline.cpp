@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
 #include <limits>
 #include <memory>
+#include <print>
 #include <random>
 #include <string>
 #include <vector>
@@ -15,8 +15,6 @@
 #include "codec_collection.h"
 #include "direct_codec.h"
 #include "gdal_priv.h"
-
-// ─── Codec pool ───────────────────────────────────────────────────────────────
 
 static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 BuildAllCodecs() {
@@ -33,8 +31,6 @@ BuildAllCodecs() {
   pool.push_back(std::make_unique<DirectAccessCodec>());
   return pool;
 }
-
-// ─── Block encoding ───────────────────────────────────────────────────────────
 
 static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
@@ -54,12 +50,10 @@ SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
     CPLErr err =
         band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
                        blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
-    if (err != CE_None) {
+    if (err != CE_None)
       throw std::runtime_error("Error reading raster block data");
-    }
-    if (min < 0) {
+    if (min < 0)
       for (auto& v : blockData) v += (-min);
-    }
     RemapAndTransform(blockData, ordering, transformation, blockSize);
 
     std::unique_ptr<StatefulIntegerCodec<int32_t>> cloned(
@@ -71,8 +65,6 @@ SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
 
   return codecs;
 }
-
-// ─── Access benchmark ────────────────────────────────────────────────────────
 
 static void BenchmarkAccess(
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs,
@@ -133,17 +125,14 @@ static void BenchmarkAccess(
       }
     };
 
-    if (!isDirectAccess) {
+    if (!isDirectAccess)
       benchblock(decbuf);
-    } else {
+    else
       benchblock(codec->GetEncoded());
-    }
   }
 }
 
-// ─── Single combination ───────────────────────────────────────────────────────
-
-// Parameter bundle for one (ordering × initTrans × accessTrans) combination.
+// One (ordering × initTrans × accessTrans) combination.
 struct BenchCombo {
   Ordering ordering;
   Transformation initTrans;
@@ -156,16 +145,14 @@ static void RunOneCombination(
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<int32_t>& baseCodec,
     StatefulIntegerCodec<int32_t>& accessCodec) {
-  std::cout << "**BENCHMARK ACCESS**" << std::endl;
-  std::cout << "file=" << filePath << ",blocksize=" << blockSize
-            << ",numblocks=" << numBlocks << ",numreps=" << numReps
-            << ",basecodec=" << baseCodec.name()
-            << ",accesscodec=" << accessCodec.name()
-            << ",ordering=" << ToString(combo.ordering)
-            << ",initialtransformation=" << ToString(combo.initTrans)
-            << ",sampleaccesspattern=" << ToString(accessPattern)
-            << ",accesstransformation=" << ToString(combo.accessTrans)
-            << std::endl;
+  std::println("**BENCHMARK ACCESS**");
+  std::println("file={},blocksize={},numblocks={},numreps={},basecodec={},"
+               "accesscodec={},ordering={},initialtransformation={},"
+               "sampleaccesspattern={},accesstransformation={}",
+               filePath, blockSize, numBlocks, numReps,
+               baseCodec.name(), accessCodec.name(),
+               ToString(combo.ordering), ToString(combo.initTrans),
+               ToString(accessPattern), ToString(combo.accessTrans));
 
   RunningStats statsDec, statsTrans, statsEnc;
 
@@ -180,7 +167,7 @@ static void RunOneCombination(
                              std::move(expBase), min, combo.initTrans,
                              combo.ordering);
     if (codecGrid.empty()) {
-      std::cerr << "NO CODECS FORMING GRID." << std::endl;
+      std::println(stderr, "NO CODECS FORMING GRID.");
       return;
     }
 
@@ -188,18 +175,13 @@ static void RunOneCombination(
                     combo.accessTrans, statsDec, statsTrans, statsEnc);
   }
 
-  std::cout << "tottimedec:" << statsDec.Total();
-  std::cout << ",meantimedec:" << statsDec.mean;
-  std::cout << ",vartimedec:" << statsDec.Variance();
-  std::cout << ",tottimetrans:" << statsTrans.Total();
-  std::cout << ",meantimetrans:" << statsTrans.mean;
-  std::cout << ",vartimetrans:" << statsTrans.Variance();
-  std::cout << ",tottimeenc:" << statsEnc.Total();
-  std::cout << ",meantimeenc:" << statsEnc.mean;
-  std::cout << ",vartimeenc:" << statsEnc.Variance() << std::endl;
+  std::println("tottimedec:{},meantimedec:{},vartimedec:{},"
+               "tottimetrans:{},meantimetrans:{},vartimetrans:{},"
+               "tottimeenc:{},meantimeenc:{},vartimeenc:{}",
+               statsDec.Total(),  statsDec.mean,  statsDec.Variance(),
+               statsTrans.Total(), statsTrans.mean, statsTrans.Variance(),
+               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance());
 }
-
-// ─── Combination sweep ────────────────────────────────────────────────────────
 
 static void RunAllBenchmarks(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
@@ -210,8 +192,7 @@ static void RunAllBenchmarks(
     const std::vector<std::string>& initialTransformations,
     const std::vector<std::string>& accessTransformations,
     const std::vector<std::string>& sampleAccessPatterns) {
-  // Build flat list of (ordering × initTrans × accessTrans) combinations so
-  // that strings are parsed once and the inner loops stay shallow.
+  // Build flat combo list so strings are parsed once, not per-iteration.
   std::vector<BenchCombo> combos;
   for (auto& o : orderings)
     for (auto& it : initialTransformations)
@@ -219,21 +200,15 @@ static void RunAllBenchmarks(
         combos.push_back({ParseOrdering(o), ParseTransformation(it),
                            ParseAccessTransformation(at)});
 
-  for (auto& combo : combos) {
-    for (auto& baseCodec : baseCodecs) {
-      for (auto& accessCodec : accessCodecs) {
-        for (auto& pattern : sampleAccessPatterns) {
+  for (auto& combo : combos)
+    for (auto& baseCodec : baseCodecs)
+      for (auto& accessCodec : accessCodecs)
+        for (auto& pattern : sampleAccessPatterns)
           RunOneCombination(band, nXSize, nYSize, filePath, blockSize,
                             numBlocks, numReps, min, combo,
                             ParseAccessPattern(pattern), *baseCodec,
                             *accessCodec);
-        }
-      }
-    }
-  }
 }
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 
 int main(int argc, char* argv[]) {
   CLI::App app{"Benchmark codec access-pattern performance on a GeoTIFF raster"};
@@ -272,13 +247,13 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
-  srand(1);  // Seed before any benchmarking (rand() used in random access patterns).
+  srand(1);  // rand() is used in random access patterns; seed before benchmarking.
 
   GDALAllRegister();
   GDALDataset* dataset =
-      (GDALDataset*)GDALOpen(filePath.c_str(), GA_ReadOnly);
+      static_cast<GDALDataset*>(GDALOpen(filePath.c_str(), GA_ReadOnly));
   if (dataset == nullptr) {
-    std::cerr << "Failed to open file: " << filePath << std::endl;
+    std::println(stderr, "Failed to open file: {}", filePath);
     return 1;
   }
 
@@ -286,14 +261,11 @@ int main(int argc, char* argv[]) {
   int nXSize = band->GetXSize();
   int nYSize = band->GetYSize();
 
-  // Compute minimum across sampled blocks (used for normalisation).
   int32_t min = std::numeric_limits<int32_t>::max();
   for (auto& offset : SampleBlockOffsets(nXSize / blockSize, nYSize / blockSize,
-                                          blockSize, numBlocks)) {
+                                          blockSize, numBlocks))
     ComputeMinForBlock(band, offset.x, offset.y, blockSize, min);
-  }
 
-  // Build codec pools and select the requested subsets.
   auto allCodecs_initial = BuildAllCodecs();
   auto allCodecs_access = BuildAllCodecs();
   auto baseCodecs = SelectCodecsByName(allCodecs_initial, initialCodecNames);

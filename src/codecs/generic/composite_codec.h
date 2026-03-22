@@ -57,9 +57,9 @@ class CompositeStatefulIntegerCodec : public StatefulIntegerCodec<T> {
   size_t BenchEncode(const T* in, const size_t length) override {
     firstCodec->AllocEncoded(in, length);
 
-    auto tenc1Start = std::chrono::high_resolution_clock::now();
+    auto tenc1Start = std::chrono::steady_clock::now();
     firstCodec->EncodeArray(in, length);
-    auto tenc1End = std::chrono::high_resolution_clock::now();
+    auto tenc1End = std::chrono::steady_clock::now();
 
     auto& intermediateData = firstCodec->GetEncoded();
     intermediateEncodedSize =
@@ -67,9 +67,9 @@ class CompositeStatefulIntegerCodec : public StatefulIntegerCodec<T> {
 
     secondCodec->AllocEncoded(intermediateData.data(), intermediateEncodedSize);
 
-    auto tenc2Start = std::chrono::high_resolution_clock::now();
+    auto tenc2Start = std::chrono::steady_clock::now();
     secondCodec->EncodeArray(intermediateData.data(), intermediateEncodedSize);
-    auto tenc2End = std::chrono::high_resolution_clock::now();
+    auto tenc2End = std::chrono::steady_clock::now();
 
     firstCodec->clear();
 
@@ -89,17 +89,17 @@ class CompositeStatefulIntegerCodec : public StatefulIntegerCodec<T> {
         intermediateEncodedSize +
         secondCodec->GetOverflowSize(intermediateEncodedSize));
 
-    auto tdec1Start = std::chrono::high_resolution_clock::now();
+    auto tdec1Start = std::chrono::steady_clock::now();
     secondCodec->DecodeArray(decodedIntermediateData.data(),
                              intermediateEncodedSize);
-    auto tdec1End = std::chrono::high_resolution_clock::now();
+    auto tdec1End = std::chrono::steady_clock::now();
 
     decodedIntermediateData.resize(intermediateEncodedSize);
     // Now the first codec has the original intermediate data. Decode.
 
-    auto tdec2Start = std::chrono::high_resolution_clock::now();
+    auto tdec2Start = std::chrono::steady_clock::now();
     firstCodec->DecodeArray(out, length);
-    auto tdec2End = std::chrono::high_resolution_clock::now();
+    auto tdec2End = std::chrono::steady_clock::now();
 
     secondCodec->clear();
 

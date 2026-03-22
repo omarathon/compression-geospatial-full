@@ -1,7 +1,7 @@
 #include <zlib.h>
 
 #include <cstdint>
-#include <iostream>
+#include <stdexcept>
 #include <string>
 
 #include "generic_codecs.h"
@@ -18,10 +18,8 @@ class DeflateCodec : public StatefulIntegerCodec<int32_t> {
     uLongf outputSize = compressBound(length * sizeof(int32_t));
     if (compress2(compressed.data(), &outputSize,
                   reinterpret_cast<const Bytef*>(in), length * sizeof(int32_t),
-                  Z_BEST_COMPRESSION) != Z_OK) {
-      std::cerr << "DEFLATE compression failed." << std::endl;
-      exit(1);
-    }
+                  Z_BEST_COMPRESSION) != Z_OK)
+      throw std::runtime_error("DEFLATE compression failed");
     compressed.resize(outputSize);
   }
 
@@ -63,7 +61,5 @@ class DeflateCodec : public StatefulIntegerCodec<int32_t> {
   std::vector<int32_t>& GetEncoded() override {
     throw std::runtime_error(
         "Encoded format does not match input. Cannot forward.");
-    std::vector<int32_t> dummy{};
-    return dummy;
   };
 };

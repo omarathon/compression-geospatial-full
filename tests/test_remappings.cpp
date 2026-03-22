@@ -1,12 +1,11 @@
 #include <algorithm>
-#include <iostream>
+#include <numeric>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include "remappings.h"
 
-// ── Morton order ──────────────────────────────────────────────────────────────
 
 TEST(RemappingTest, MortonOrder2x2) {
   // libmorton encode(x,y) interleaves x in even bits, y in odd bits:
@@ -25,15 +24,15 @@ TEST(RemappingTest, MortonOrder2x2) {
 TEST(RemappingTest, MortonOrderPreservesAllValues) {
   const int N = 8;
   std::vector<int32_t> input(N * N);
-  for (int i = 0; i < N * N; i++) input[i] = i + 1;
+  std::iota(input.begin(), input.end(), 1);
 
   auto result = RemapToMortonOrder(input, N);
 
-  ASSERT_EQ(result.size(), static_cast<size_t>(N * N));
-  std::vector<int32_t> sorted_input = input;
-  std::vector<int32_t> sorted_result = result;
-  std::sort(sorted_input.begin(), sorted_input.end());
-  std::sort(sorted_result.begin(), sorted_result.end());
+  ASSERT_EQ(result.size(), static_cast<std::size_t>(N * N));
+  auto sorted_input = input;
+  auto sorted_result = result;
+  std::ranges::sort(sorted_input);
+  std::ranges::sort(sorted_result);
   EXPECT_EQ(sorted_input, sorted_result);
 }
 
@@ -42,7 +41,6 @@ TEST(RemappingTest, MortonOrderInvalidSizeThrows) {
   EXPECT_THROW(RemapToMortonOrder(input, 2), std::invalid_argument);
 }
 
-// ── Zigzag order ──────────────────────────────────────────────────────────────
 
 TEST(RemappingTest, ZigzagOrderEvenRowUnchangedOddRowReversed) {
   // Row 0 (even): unchanged {1,2}. Row 1 (odd): reversed {4,3}.
@@ -58,22 +56,22 @@ TEST(RemappingTest, ZigzagOrderEvenRowUnchangedOddRowReversed) {
 TEST(RemappingTest, ZigzagOrderPreservesAllValues) {
   const int N = 8;
   std::vector<int32_t> input(N * N);
-  for (int i = 0; i < N * N; i++) input[i] = i + 1;
+  std::iota(input.begin(), input.end(), 1);
 
   auto result = RemapToZigzagOrder(input, N);
 
-  ASSERT_EQ(result.size(), static_cast<size_t>(N * N));
-  std::vector<int32_t> sorted_input = input;
-  std::vector<int32_t> sorted_result = result;
-  std::sort(sorted_input.begin(), sorted_input.end());
-  std::sort(sorted_result.begin(), sorted_result.end());
+  ASSERT_EQ(result.size(), static_cast<std::size_t>(N * N));
+  auto sorted_input = input;
+  auto sorted_result = result;
+  std::ranges::sort(sorted_input);
+  std::ranges::sort(sorted_result);
   EXPECT_EQ(sorted_input, sorted_result);
 }
 
 TEST(RemappingTest, ZigzagLargeSmoke) {
   const int N = 256;
   std::vector<int32_t> input(N * N);
-  for (int i = 0; i < N * N; i++) input[i] = i;
+  std::iota(input.begin(), input.end(), 0);
   auto result = RemapToZigzagOrder(input, N);
-  EXPECT_EQ(result.size(), static_cast<size_t>(N * N));
+  EXPECT_EQ(result.size(), static_cast<std::size_t>(N * N));
 }

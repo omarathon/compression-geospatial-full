@@ -2,6 +2,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -42,11 +43,11 @@ static bool TestCodec(std::vector<int32_t>& data,
     return false;
   }
 
-  for (size_t i = 0; i < data.size(); i++) {
-    if (data[i] != data_back[i]) {
+  for (auto [i, vals] : std::views::enumerate(std::views::zip(data, data_back))) {
+    auto [orig, back] = vals;
+    if (orig != back) {
       ADD_FAILURE() << "Round-trip mismatch in " << codec.name() << " at i="
-                    << i << " expected=" << data[i]
-                    << " got=" << data_back[i];
+                    << i << " expected=" << orig << " got=" << back;
       codec.clear();
       return false;
     }
@@ -55,7 +56,6 @@ static bool TestCodec(std::vector<int32_t>& data,
   return true;
 }
 
-// ── Test fixture ──────────────────────────────────────────────────────────────
 
 class CodecRoundtripTest : public ::testing::Test {
  protected:
@@ -75,7 +75,7 @@ class CodecRoundtripTest : public ::testing::Test {
     std::mt19937 gen(42);  // fixed seed for reproducibility
     std::uniform_int_distribution<> distr(kMin, kMax);
 
-    for (int i = 0; i < kN; i++) {
+    for (int i : std::views::iota(0, kN)) {
       large_data.push_back(i);
       large_data.push_back(kMin + i);
       large_data.push_back(kMax - i);
@@ -84,7 +84,6 @@ class CodecRoundtripTest : public ::testing::Test {
   }
 };
 
-// ── Individual codec tests ────────────────────────────────────────────────────
 
 TEST_F(CodecRoundtripTest, DeltaCodec) {
   DeltaCodec c;
@@ -227,8 +226,7 @@ TEST_F(CodecRoundtripTest, FastPForAllSchemes) {
   const std::vector<std::string> kBroken = {
       "Simple8b_RLE", "Simple9_RLE", "SimplePFor+VariableByte", "VSEncoding"};
   for (auto& fpf : factory.allSchemes()) {
-    if (std::find(kBroken.begin(), kBroken.end(), fpf->name()) !=
-        kBroken.end())
+    if (std::ranges::contains(kBroken, fpf->name()))
       continue;
     SCOPED_TRACE("FastPFor codec=" + fpf->name());
     FastPForCodec c(fpf);
