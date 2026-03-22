@@ -6,12 +6,27 @@
 
 #include "gdal_priv.h"
 
+// GDALDataType trait
+template <typename T> constexpr GDALDataType GdalType();
+template <> constexpr GDALDataType GdalType<int32_t>() { return GDT_Int32; }
+template <> constexpr GDALDataType GdalType<uint16_t>() { return GDT_UInt16; }
+template <> constexpr GDALDataType GdalType<int16_t>() { return GDT_Int16; }
+
 // Updates `min` with the minimum value found in the given raster block.
 inline void ComputeMinForBlock(GDALRasterBand* band, int xOff, int yOff,
                                 int blockSize, int32_t& min) {
   std::vector<int32_t> blockData(blockSize * blockSize);
   band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(),
                  blockSize, blockSize, GDT_Int32, 0, 0);
+  for (auto& v : blockData) min = std::min(min, v);
+}
+
+template <typename T>
+void ComputeMinForBlock(GDALRasterBand* band, int xOff, int yOff,
+                        int blockSize, T& min) {
+  std::vector<T> blockData(blockSize * blockSize);
+  band->RasterIO(GF_Read, xOff, yOff, blockSize, blockSize, blockData.data(),
+                 blockSize, blockSize, GdalType<T>(), 0, 0);
   for (auto& v : blockData) min = std::min(min, v);
 }
 
