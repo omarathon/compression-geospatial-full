@@ -119,7 +119,7 @@ static void BenchmarkAccess(
 
       std::size_t transTime =
           ApplyAccessTransformation(buf, accessTransformation, blockSize);
-      if (gTraceSums) std::println("TRACE block={} sum={}", blockIndex, kLinearSumSink);
+      if (gTraceSums) std::cout << std::format("TRACE block={} sum={}", blockIndex, kLinearSumSink) << '\n';
       statsTrans.Update(transTime);
 
       if (dataChange) {
@@ -314,7 +314,7 @@ static void BenchmarkAccessU16(
 
       std::size_t transTime =
           ApplyAccessTransformation(buf, accessTransformation, blockSize);
-      if (gTraceSums) std::println("TRACE block={} sum={}", blockIndex, kLinearSumSink);
+      if (gTraceSums) std::cout << std::format("TRACE block={} sum={}", blockIndex, kLinearSumSink) << '\n';
       statsTrans.Update(transTime);
 
       if (dataChange) {
@@ -351,14 +351,14 @@ static void RunOneCombinationU16(
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<uint16_t>& baseCodec,
     StatefulIntegerCodec<uint16_t>& accessCodec) {
-  std::println("**BENCHMARK ACCESS**");
-  std::println("file={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << "**BENCHMARK ACCESS**\n";
+  std::cout << std::format("file={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={}",
                filePath, blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
-               ToString(accessPattern), ToString(combo.accessTrans));
+               ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
 
@@ -372,7 +372,7 @@ static void RunOneCombinationU16(
         SplitIntoFullBlocksU16(band, nXSize, nYSize, blockSize, numBlocks,
                                std::move(expBase), minShift, hasNoData, nodata16);
     if (codecGrid.empty()) {
-      std::println(stderr, "NO CODECS FORMING GRID.");
+      std::cerr << "NO CODECS FORMING GRID.\n";
       return;
     }
 
@@ -380,12 +380,12 @@ static void RunOneCombinationU16(
                        combo.accessTrans, statsDec, statsTrans, statsEnc);
   }
 
-  std::println("tottimedec:{},meantimedec:{},vartimedec:{},"
+  std::cout << std::format("tottimedec:{},meantimedec:{},vartimedec:{},"
                "tottimetrans:{},meantimetrans:{},vartimetrans:{},"
                "tottimeenc:{},meantimeenc:{},vartimeenc:{}",
                statsDec.Total(),  statsDec.mean,  statsDec.Variance(),
                statsTrans.Total(), statsTrans.mean, statsTrans.Variance(),
-               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance());
+               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance()) << '\n';
 }
 
 static void RunAllBenchmarksU16(
