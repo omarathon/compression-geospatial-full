@@ -329,6 +329,83 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
 }
 
 
+template <>
+inline std::size_t ApplyAccessTransformation<uint16_t>(
+    std::vector<uint16_t>& data, AccessTransformation t,
+    std::size_t blockSize) {
+  auto startRead = std::chrono::steady_clock::now();
+  switch (t) {
+    case AccessTransformation::LinearSum: {
+      volatile int32_t dummy = 0;
+      for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
+        dummy += data[bi];
+      }
+      break;
+    }
+    case AccessTransformation::LinearSumSimd: {
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      __m128i vsum = _mm_setzero_si128();
+      static const __m128i ones = _mm_set1_epi16(1);
+      for (; i + 8 <= total; i += 8) {
+        __m128i v = _mm_loadu_si128((const __m128i*)&data[i]);
+        vsum = _mm_add_epi32(vsum, _mm_madd_epi16(v, ones));
+      }
+      vsum = _mm_hadd_epi32(vsum, vsum);
+      vsum = _mm_hadd_epi32(vsum, vsum);
+      kLinearSumSink = _mm_cvtsi128_si32(vsum);
+      for (; i < total; ++i)
+        kLinearSumSink += data[i];
+      break;
+    }
+    case AccessTransformation::LinearSumFused: {
+      // Reconstruct int32 sum from 2 uint16 overflow slots
+      std::size_t n = blockSize * blockSize;
+      kLinearSumSink = static_cast<int32_t>(
+          static_cast<uint32_t>(data[n]) |
+          (static_cast<uint32_t>(data[n + 1]) << 16));
+      break;
+    }
+    case AccessTransformation::RandomXOR: {
+      volatile uint16_t dummy = 0;
+      std::vector<int> bis(blockSize * blockSize);
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
+      }
+      startRead = std::chrono::steady_clock::now();
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        dummy ^= data[bis[iti]];
+      }
+      break;
+    }
+    case AccessTransformation::RandomSum: {
+      volatile int32_t dummy = 0;
+      std::vector<int> bis(blockSize * blockSize);
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
+      }
+      startRead = std::chrono::steady_clock::now();
+      for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
+        dummy += data[bis[iti]];
+      }
+      break;
+    }
+    default:  // LinearXOR
+    {
+      volatile uint16_t dummy = 0;
+      for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
+        dummy ^= data[bi];
+      }
+      break;
+    }
+  }
+  auto endRead = std::chrono::steady_clock::now();
+  return static_cast<std::size_t>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead)
+          .count());
+}
+
+
 struct RunningStats {
   std::size_t n = 0;
   double mean   = 0.0;

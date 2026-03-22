@@ -41,6 +41,7 @@ set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/generic
   ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/int32
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/uint16
   ${EXT}
   ${EXT}/libmorton/include/libmorton
   ${EXT}/dictionary/src
