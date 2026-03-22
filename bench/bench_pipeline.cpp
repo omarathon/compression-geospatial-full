@@ -250,6 +250,7 @@ int main(int argc, char* argv[]) {
   srand(1);  // rand() is used in random access patterns; seed before benchmarking.
 
   GDALAllRegister();
+  GDALSetCacheMax(64 * 1024 * 1024);  // 64 MB — prevents GDAL cache inflating RSS
   GDALDataset* dataset =
       static_cast<GDALDataset*>(GDALOpen(filePath.c_str(), GA_ReadOnly));
   if (dataset == nullptr) {
