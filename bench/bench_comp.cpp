@@ -1,7 +1,8 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <print>
+#include <format>
+#include <iostream>
 #include <ranges>
 #include <vector>
 
@@ -43,15 +44,15 @@ static void RunBenchConfig(
     const std::string& filePath, int blockSize, int nBlocks, int32_t globalMin,
     const std::string& compositeName, Ordering ordering, Transformation trans,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs) {
-  std::println("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite={},"
+  std::cout << std::format("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite={},"
                "ordering={},transformation={}",
                filePath, blockSize, nBlocks, compositeName,
-               ToString(ordering), ToString(trans));
+               ToString(ordering), ToString(trans)) << '\n';
 
-  std::println("*CODECS:*");
+  std::cout << "*CODECS:*\n";
   for (std::size_t ci = 0; ci < codecs.size(); ++ci)
-    std::println("{}={}", ci, codecs[ci]->name());
-  std::println("*ENDCODECS*");
+    std::cout << std::format("{}={}", ci, codecs[ci]->name()) << '\n';
+  std::cout << "*ENDCODECS*\n";
 
   int blocksInWidth = rasterWidth / blockSize;
   int blocksInHeight = rasterHeight / blockSize;
@@ -86,9 +87,9 @@ static void RunBenchConfig(
     float bpim = Mean(bpis), bpiv = Variance(bpis,  bpim);
     float tem  = Mean(tencs), tev = Variance(tencs,  tem);
     float tdm  = Mean(tdecs), tdv = Variance(tdecs,  tdm);
-    std::println("c:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
+    std::cout << std::format("c:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
                  "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{}",
-                 ci, cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv);
+                 ci, cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv) << '\n';
   }
 }
 
@@ -122,7 +123,7 @@ int main(int argc, char** argv) {
   GDALDataset* dataset =
       static_cast<GDALDataset*>(GDALOpen(filePath.c_str(), GA_ReadOnly));
   if (!dataset) {
-    std::println(stderr, "Failed to open file: {}", filePath);
+    std::cerr << std::format("Failed to open file: {}", filePath) << '\n';
     return 1;
   }
 
@@ -148,8 +149,8 @@ int main(int argc, char** argv) {
                          nBlocks, globalMin, compositeName, orderingEnum,
                          transEnum, codecs);
         } catch (const std::exception& e) {
-          std::println(" ERROR see cerr");
-          std::println(stderr, "Error: {}", e.what());
+          std::cout << " ERROR see cerr\n";
+          std::cerr << std::format("Error: {}", e.what()) << '\n';
         }
       }
     }
