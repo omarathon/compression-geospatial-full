@@ -21,13 +21,13 @@ static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 BuildAllCodecs() {
   auto pool = InitCodecs(/* nonCascaded */ true, nullptr);
   for (auto& c :
-       InitCodecs(/* nonCascaded */ false, std::make_unique<DeltaCodecAVX512>()))
+       InitCodecs(/* nonCascaded */ false, std::make_unique<DeltaCodec>()))
     pool.push_back(std::move(c));
   for (auto& c :
-       InitCodecs(/* nonCascaded */ false, std::make_unique<RLECodecAVX512>()))
+       InitCodecs(/* nonCascaded */ false, std::make_unique<RLECodec>()))
     pool.push_back(std::move(c));
   for (auto& c :
-       InitCodecs(/* nonCascaded */ false, std::make_unique<FORCodecAVX512>()))
+       InitCodecs(/* nonCascaded */ false, std::make_unique<FORCodec>()))
     pool.push_back(std::move(c));
   pool.push_back(std::make_unique<DirectAccessCodec>());
   return pool;

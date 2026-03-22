@@ -10,7 +10,6 @@ add_compile_options(
   -Wall
   -O3
   -msse4.1
-  -mavx512f
   -mbmi2
 )
 
@@ -30,29 +29,6 @@ set_target_properties(FastPFor PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${EXT}/FastPFor/headers
 )
 
-add_library(MaskedVByte SHARED IMPORTED)
-set_target_properties(MaskedVByte PROPERTIES
-  IMPORTED_LOCATION ${EXT}/MaskedVByte/libmaskedvbyte.so
-  INTERFACE_INCLUDE_DIRECTORIES ${EXT}/MaskedVByte/include
-)
-
-add_library(StreamVByte STATIC IMPORTED)
-set_target_properties(StreamVByte PROPERTIES
-  IMPORTED_LOCATION ${EXT}/streamvbyte/build/libstreamvbyte.a
-  INTERFACE_INCLUDE_DIRECTORIES ${EXT}/streamvbyte/include
-)
-
-add_library(TurboPFor STATIC IMPORTED)
-set_target_properties(TurboPFor PROPERTIES
-  IMPORTED_LOCATION ${EXT}/TurboPFor/libic.a
-  INTERFACE_INCLUDE_DIRECTORIES ${EXT}/TurboPFor/include
-)
-
-add_library(FrameOfReference STATIC IMPORTED)
-set_target_properties(FrameOfReference PROPERTIES
-  IMPORTED_LOCATION ${EXT}/FrameOfReference/release/libFrameOfReference.a
-  INTERFACE_INCLUDE_DIRECTORIES ${EXT}/FrameOfReference/include
-)
 
 add_library(SimdComp STATIC IMPORTED)
 set_target_properties(SimdComp PROPERTIES
@@ -73,16 +49,8 @@ set(EXTRA_INCLUDES
 # ── Common codec link deps ────────────────────────────────────────────────────
 set(CODEC_LIBS
   FastPFor
-  MaskedVByte
-  StreamVByte
-  TurboPFor
-  FrameOfReference
   SimdComp
   OpenMP::OpenMP_CXX
-  z      # zlib
-  lzma
-  lz4
-  zstd
   m
 )
 
@@ -109,14 +77,13 @@ enable_testing()
 function(configure_bench TARGET)
   target_include_directories(${TARGET} PRIVATE ${EXTRA_INCLUDES} ${GDAL_INCLUDE_DIRS})
   target_link_libraries(${TARGET} PRIVATE ${CODEC_LIBS} ${GDAL_LIBRARIES} CLI11::CLI11)
-  target_link_options(${TARGET} PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
 endfunction()
 
 # ── Test executables ──────────────────────────────────────────────────────────
 add_executable(test_comp tests/test_int32_codecs.cpp)
 target_include_directories(test_comp PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_comp PRIVATE ${CODEC_LIBS} GTest::gtest_main)
-target_link_options(test_comp PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
+
 
 add_executable(test_remappings tests/test_remappings.cpp)
 target_include_directories(test_remappings PRIVATE ${EXTRA_INCLUDES})
@@ -125,7 +92,7 @@ target_link_libraries(test_remappings PRIVATE GTest::gtest_main)
 add_executable(test_bench_utils tests/test_bench_utils.cpp)
 target_include_directories(test_bench_utils PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_bench_utils PRIVATE ${CODEC_LIBS} GTest::gtest_main)
-target_link_options(test_bench_utils PRIVATE -Wl,-rpath,${EXT}/MaskedVByte)
+
 
 include(GoogleTest)
 gtest_discover_tests(test_comp)
