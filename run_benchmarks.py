@@ -7,18 +7,18 @@ BENCH = "/home/omsst2/diss/compression-geospatial-full/build/bench_pipeline"
 GDIR = "/maps/omsst2/diss"
 
 configs = [
-    ("srtm_45_15.tif",                                        256, 16000, "custom_direct_access",              "linearSumSimd"),
-    ("srtm_45_15.tif",                                        256, 16000, "simdcomp_fused",                    "linearSumFused"),
-    ("srtm_45_15.tif",                                        256, 16000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
-    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 16000, "custom_direct_access",              "linearSumSimd"),
-    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 16000, "simdcomp_fused",                    "linearSumFused"),
-    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 16000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
-    ("accessibility.tif",                                     64,  64000, "custom_direct_access",              "linearSumSimd"),
-    ("accessibility.tif",                                     64,  64000, "simdcomp_fused",                    "linearSumFused"),
-    ("accessibility.tif",                                     64,  64000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
-    ("slope-srtm_35_11.tif",                                  256, 16000, "custom_direct_access",              "linearSumSimd"),
-    ("slope-srtm_35_11.tif",                                  256, 16000, "simdcomp_fused",                    "linearSumFused"),
-    ("slope-srtm_35_11.tif",                                  256, 16000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
+    ("srtm_45_15.tif",                                        256, 2000, "custom_direct_access",              "linearSumSimd"),
+    ("srtm_45_15.tif",                                        256, 2000, "simdcomp_fused",                    "linearSumFused"),
+    ("srtm_45_15.tif",                                        256, 2000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
+    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 2000, "custom_direct_access",              "linearSumSimd"),
+    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 2000, "simdcomp_fused",                    "linearSumFused"),
+    ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",    256, 2000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
+    ("accessibility.tif",                                     64,  32000, "custom_direct_access",              "linearSumSimd"),
+    ("accessibility.tif",                                     64,  32000, "simdcomp_fused",                    "linearSumFused"),
+    ("accessibility.tif",                                     64,  32000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
+    ("slope-srtm_35_11.tif",                                  256, 2000, "custom_direct_access",              "linearSumSimd"),
+    ("slope-srtm_35_11.tif",                                  256, 2000, "simdcomp_fused",                    "linearSumFused"),
+    ("slope-srtm_35_11.tif",                                  256, 2000, "FastPFor_fused_SIMDPFor+VariableByte", "linearSumFused"),
 ]
 
 results = []
@@ -28,6 +28,7 @@ for i, (tif, bs, nb, codec, atrans) in enumerate(configs):
 
     cmd = [
         "/usr/bin/time", "-v",
+        "stdbuf", "-oL",
         BENCH, f"{GDIR}/{tif}",
         "-b", str(bs), "-n", str(nb), "-r", "5",
         "--icodec", codec, "--acodec", codec,
