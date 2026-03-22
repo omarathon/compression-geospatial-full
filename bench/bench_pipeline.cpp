@@ -3,7 +3,8 @@
 #include <cstdlib>
 #include <limits>
 #include <memory>
-#include <print>
+#include <format>
+#include <iostream>
 #include <random>
 #include <string>
 #include <vector>
@@ -145,14 +146,14 @@ static void RunOneCombination(
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<int32_t>& baseCodec,
     StatefulIntegerCodec<int32_t>& accessCodec) {
-  std::println("**BENCHMARK ACCESS**");
-  std::println("file={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << "**BENCHMARK ACCESS**\n";
+  std::cout << std::format("file={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={}",
                filePath, blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
-               ToString(accessPattern), ToString(combo.accessTrans));
+               ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
 
@@ -167,7 +168,7 @@ static void RunOneCombination(
                              std::move(expBase), min, combo.initTrans,
                              combo.ordering);
     if (codecGrid.empty()) {
-      std::println(stderr, "NO CODECS FORMING GRID.");
+      std::cerr << "NO CODECS FORMING GRID.\n";
       return;
     }
 
@@ -175,12 +176,12 @@ static void RunOneCombination(
                     combo.accessTrans, statsDec, statsTrans, statsEnc);
   }
 
-  std::println("tottimedec:{},meantimedec:{},vartimedec:{},"
+  std::cout << std::format("tottimedec:{},meantimedec:{},vartimedec:{},"
                "tottimetrans:{},meantimetrans:{},vartimetrans:{},"
                "tottimeenc:{},meantimeenc:{},vartimeenc:{}",
                statsDec.Total(),  statsDec.mean,  statsDec.Variance(),
                statsTrans.Total(), statsTrans.mean, statsTrans.Variance(),
-               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance());
+               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance()) << '\n';
 }
 
 static void RunAllBenchmarks(
@@ -253,7 +254,7 @@ int main(int argc, char* argv[]) {
   GDALDataset* dataset =
       static_cast<GDALDataset*>(GDALOpen(filePath.c_str(), GA_ReadOnly));
   if (dataset == nullptr) {
-    std::println(stderr, "Failed to open file: {}", filePath);
+    std::cerr << std::format("Failed to open file: {}", filePath) << '\n';
     return 1;
   }
 

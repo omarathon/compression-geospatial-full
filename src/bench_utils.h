@@ -7,7 +7,8 @@
 #include <cstdlib>
 #include <memory>
 #include <nmmintrin.h>  // SSE4.2 (includes SSSE3 for _mm_hadd_epi32)
-#include <print>
+#include <format>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -363,8 +364,8 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
   try {
     codec->EncodeArray(data.data(), data.size());
   } catch (const std::exception& e) {
-    std::println(" ERROR see cerr");
-    std::println(stderr, "error encoding {}: {}", codec->name(), e.what());
+    std::cout << " ERROR see cerr\n";
+    std::cerr << std::format("error encoding {}: {}", codec->name(), e.what()) << '\n';
     return stats;
   }
   auto endEncode = std::chrono::steady_clock::now();
@@ -377,17 +378,17 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
   try {
     codec->DecodeArray(dataBack.data(), data.size());
   } catch (const std::exception& e) {
-    std::println(" ERROR see cerr");
-    std::println(stderr, "error decoding {}: {}", codec->name(), e.what());
+    std::cout << " ERROR see cerr\n";
+    std::cerr << std::format("error decoding {}: {}", codec->name(), e.what()) << '\n';
     return stats;
   }
   auto endDecode = std::chrono::steady_clock::now();
 
   for (std::size_t i = 0; i < data.size(); i++) {
     if (data[i] != dataBack[i]) {
-      std::println(" ERROR see cerr");
-      std::println(stderr, "in!=out {}(i={}:o{}b{},len={})",
-                   codec->name(), i, data[i], dataBack[i], data.size());
+      std::cout << " ERROR see cerr\n";
+      std::cerr << std::format("in!=out {}(i={}:o{}b{},len={})",
+                   codec->name(), i, data[i], dataBack[i], data.size()) << '\n';
       return stats;
     }
   }
