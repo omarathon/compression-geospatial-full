@@ -77,10 +77,8 @@ SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
 static void BenchmarkAccess(
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs,
     std::unique_ptr<StatefulIntegerCodec<int32_t>> accessCodec, int blockSize,
-    AccessPattern sampleAccessPattern, AccessTransformation accessTransformation,
-    std::vector<std::size_t>& timesDec,
-    std::vector<std::size_t>& timesAccessTransformation,
-    std::vector<std::size_t>& timesEnc) {
+    AccessPattern accessPattern, AccessTransformation accessTransformation,
+    RunningStats& statsDec, RunningStats& statsTrans, RunningStats& statsEnc) {
   srand(1);
 
   bool isDirectAccess = (codecs[0]->name() == "custom_direct_access");
@@ -92,7 +90,7 @@ static void BenchmarkAccess(
 
   std::vector<std::size_t> accessIndexes(codecs.size());
   std::iota(accessIndexes.begin(), accessIndexes.end(), 0);
-  if (sampleAccessPattern != AccessPattern::Linear) {
+  if (accessPattern != AccessPattern::Linear) {
     std::default_random_engine engine(1);
     std::shuffle(accessIndexes.begin(), accessIndexes.end(), engine);
   }
@@ -104,30 +102,30 @@ static void BenchmarkAccess(
     auto benchblock = [&](std::vector<int32_t>& buf) {
       std::size_t decodeTime = 0;
       if (!isDirectAccess) {
-        auto t0 = std::chrono::high_resolution_clock::now();
+        auto t0 = std::chrono::steady_clock::now();
         codec->DecodeArray(buf.data(), blockSize * blockSize);
-        auto t1 = std::chrono::high_resolution_clock::now();
+        auto t1 = std::chrono::steady_clock::now();
         decodeTime = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
       }
-      timesDec.push_back(decodeTime);
+      statsDec.Update(decodeTime);
 
       std::size_t transTime =
           ApplyAccessTransformation(buf, accessTransformation, blockSize);
-      timesAccessTransformation.push_back(transTime);
+      statsTrans.Update(transTime);
 
       if (dataChange) {
         std::unique_ptr<StatefulIntegerCodec<int32_t>> reenc(
             accessCodec->CloneFresh());
         if (isDirectReenc) {
-          timesEnc.push_back(0);
+          statsEnc.Update(0);
           reenc->AllocEncoded(buf.data(), blockSize * blockSize);
           reenc->EncodeArray(buf.data(), blockSize * blockSize);
         } else {
           reenc->AllocEncoded(buf.data(), blockSize * blockSize);
-          auto t0 = std::chrono::high_resolution_clock::now();
+          auto t0 = std::chrono::steady_clock::now();
           reenc->EncodeArray(buf.data(), blockSize * blockSize);
-          auto t1 = std::chrono::high_resolution_clock::now();
-          timesEnc.push_back(
+          auto t1 = std::chrono::steady_clock::now();
+          statsEnc.Update(
               std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0)
                   .count());
         }
@@ -147,34 +145,29 @@ static void BenchmarkAccess(
 
 // Parameter bundle for one (ordering × initTrans × accessTrans) combination.
 struct BenchCombo {
-  std::string ordering;
-  Ordering orderingEnum;
-  std::string initialTransformation;
-  Transformation initTransEnum;
-  std::string accessTransformation;
-  AccessTransformation accessTransEnum;
+  Ordering ordering;
+  Transformation initTrans;
+  AccessTransformation accessTrans;
 };
 
 static void RunOneCombination(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
     int blockSize, int numBlocks, int numReps, int32_t min,
-    const BenchCombo& combo, const std::string& sampleAccessPattern,
-    AccessPattern accessPatternEnum, StatefulIntegerCodec<int32_t>& baseCodec,
+    const BenchCombo& combo, AccessPattern accessPattern,
+    StatefulIntegerCodec<int32_t>& baseCodec,
     StatefulIntegerCodec<int32_t>& accessCodec) {
   std::cout << "**BENCHMARK ACCESS**" << std::endl;
   std::cout << "file=" << filePath << ",blocksize=" << blockSize
             << ",numblocks=" << numBlocks << ",numreps=" << numReps
             << ",basecodec=" << baseCodec.name()
             << ",accesscodec=" << accessCodec.name()
-            << ",ordering=" << combo.ordering
-            << ",initialtransformation=" << combo.initialTransformation
-            << ",sampleaccesspattern=" << sampleAccessPattern
-            << ",accesstransformation=" << combo.accessTransformation
+            << ",ordering=" << ToString(combo.ordering)
+            << ",initialtransformation=" << ToString(combo.initTrans)
+            << ",sampleaccesspattern=" << ToString(accessPattern)
+            << ",accesstransformation=" << ToString(combo.accessTrans)
             << std::endl;
 
-  std::vector<std::size_t> timesDec;
-  std::vector<std::size_t> timesAccessTransformation;
-  std::vector<std::size_t> timesEnc;
+  RunningStats statsDec, statsTrans, statsEnc;
 
   for (int rep = 0; rep < numReps; rep++) {
     std::unique_ptr<StatefulIntegerCodec<int32_t>> expBase(
@@ -184,28 +177,26 @@ static void RunOneCombination(
 
     auto codecGrid =
         SplitIntoFullBlocks(band, nXSize, nYSize, blockSize, numBlocks,
-                             std::move(expBase), min, combo.initTransEnum,
-                             combo.orderingEnum);
+                             std::move(expBase), min, combo.initTrans,
+                             combo.ordering);
     if (codecGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID." << std::endl;
       return;
     }
 
-    BenchmarkAccess(codecGrid, std::move(expAccess), blockSize, accessPatternEnum,
-                    combo.accessTransEnum, timesDec, timesAccessTransformation,
-                    timesEnc);
+    BenchmarkAccess(codecGrid, std::move(expAccess), blockSize, accessPattern,
+                    combo.accessTrans, statsDec, statsTrans, statsEnc);
   }
 
-  std::cout << "tottimedec:" << Sum(timesDec);
-  std::cout << ",meantimedec:" << Mean(timesDec);
-  std::cout << ",vartimedec:" << Variance(timesDec, Mean(timesDec));
-  std::cout << ",tottimetrans:" << Sum(timesAccessTransformation);
-  std::cout << ",meantimetrans:" << Mean(timesAccessTransformation);
-  std::cout << ",vartimetrans:"
-            << Variance(timesAccessTransformation, Mean(timesAccessTransformation));
-  std::cout << ",tottimeenc:" << Sum(timesEnc);
-  std::cout << ",meantimeenc:" << Mean(timesEnc);
-  std::cout << ",vartimeenc:" << Variance(timesEnc, Mean(timesEnc)) << std::endl;
+  std::cout << "tottimedec:" << statsDec.Total();
+  std::cout << ",meantimedec:" << statsDec.mean;
+  std::cout << ",vartimedec:" << statsDec.Variance();
+  std::cout << ",tottimetrans:" << statsTrans.Total();
+  std::cout << ",meantimetrans:" << statsTrans.mean;
+  std::cout << ",vartimetrans:" << statsTrans.Variance();
+  std::cout << ",tottimeenc:" << statsEnc.Total();
+  std::cout << ",meantimeenc:" << statsEnc.mean;
+  std::cout << ",vartimeenc:" << statsEnc.Variance() << std::endl;
 }
 
 // ─── Combination sweep ────────────────────────────────────────────────────────
@@ -225,15 +216,15 @@ static void RunAllBenchmarks(
   for (auto& o : orderings)
     for (auto& it : initialTransformations)
       for (auto& at : accessTransformations)
-        combos.push_back({o, ParseOrdering(o), it, ParseTransformation(it),
-                           at, ParseAccessTransformation(at)});
+        combos.push_back({ParseOrdering(o), ParseTransformation(it),
+                           ParseAccessTransformation(at)});
 
   for (auto& combo : combos) {
     for (auto& baseCodec : baseCodecs) {
       for (auto& accessCodec : accessCodecs) {
         for (auto& pattern : sampleAccessPatterns) {
           RunOneCombination(band, nXSize, nYSize, filePath, blockSize,
-                            numBlocks, numReps, min, combo, pattern,
+                            numBlocks, numReps, min, combo,
                             ParseAccessPattern(pattern), *baseCodec,
                             *accessCodec);
         }
@@ -275,9 +266,9 @@ int main(int argc, char* argv[]) {
   app.add_option("--pattern", sampleAccessPatterns,
                  "Access pattern(s): linear|random");
   app.add_option("--atrans", accessTransformations,
-                 "Access transformation(s): linearXOR|linearSum|randomXOR|"
-                 "randomSum|Threshold|SmoothAndShift|IndexBasedClassification|"
-                 "ValueBasedClassification|ValueShift");
+                 "Access transformation(s): linearXOR|linearSum|linearSumSimd|"
+                 "linearSumFused|randomXOR|randomSum|Threshold|SmoothAndShift|"
+                 "IndexBasedClassification|ValueBasedClassification|ValueShift");
 
   CLI11_PARSE(app, argc, argv);
 

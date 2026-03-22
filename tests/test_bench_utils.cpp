@@ -79,6 +79,10 @@ TEST(ParseAccessTransformation, RecognisesAllVariants) {
             AccessTransformation::LinearXOR);
   EXPECT_EQ(ParseAccessTransformation("linearSum"),
             AccessTransformation::LinearSum);
+  EXPECT_EQ(ParseAccessTransformation("linearSumSimd"),
+            AccessTransformation::LinearSumSimd);
+  EXPECT_EQ(ParseAccessTransformation("linearSumFused"),
+            AccessTransformation::LinearSumFused);
   EXPECT_EQ(ParseAccessTransformation("randomXOR"),
             AccessTransformation::RandomXOR);
   EXPECT_EQ(ParseAccessTransformation("randomSum"),
@@ -97,6 +101,8 @@ TEST(ParseAccessTransformation, RecognisesAllVariants) {
 
 TEST(ParseAccessTransformation, RoundTrips) {
   EXPECT_EQ(ToString(ParseAccessTransformation("linearXOR")), "linearXOR");
+  EXPECT_EQ(ToString(ParseAccessTransformation("linearSumSimd")), "linearSumSimd");
+  EXPECT_EQ(ToString(ParseAccessTransformation("linearSumFused")), "linearSumFused");
   EXPECT_EQ(ToString(ParseAccessTransformation("randomSum")), "randomSum");
   EXPECT_EQ(ToString(ParseAccessTransformation("Threshold")), "Threshold");
   EXPECT_EQ(ToString(ParseAccessTransformation("ValueShift")), "ValueShift");
@@ -150,6 +156,10 @@ TEST(AccessTransformationMutatesData, ReadOnlyVariants) {
       AccessTransformationMutatesData(AccessTransformation::LinearXOR));
   EXPECT_FALSE(
       AccessTransformationMutatesData(AccessTransformation::LinearSum));
+  EXPECT_FALSE(
+      AccessTransformationMutatesData(AccessTransformation::LinearSumSimd));
+  EXPECT_FALSE(
+      AccessTransformationMutatesData(AccessTransformation::LinearSumFused));
   EXPECT_FALSE(
       AccessTransformationMutatesData(AccessTransformation::RandomXOR));
   EXPECT_FALSE(

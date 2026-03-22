@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <nmmintrin.h>  // SSE4.2 (includes SSSE3 for _mm_hadd_epi32)
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -34,6 +35,8 @@ enum class AccessPattern { Linear, Random };
 enum class AccessTransformation {
   LinearXOR,
   LinearSum,
+  LinearSumSimd,   // SSE SIMD vectorised sum — fair baseline matching FastPFor ISA
+  LinearSumFused,  // reads pre-computed 32-bit sum from codec overflow slot
   RandomXOR,
   RandomSum,
   Threshold,
@@ -74,6 +77,8 @@ inline AccessTransformation ParseAccessTransformation(const std::string& s) {
   if (s.empty() || s == "default" || s == "linearXOR")
     return AccessTransformation::LinearXOR;
   if (s == "linearSum") return AccessTransformation::LinearSum;
+  if (s == "linearSumSimd") return AccessTransformation::LinearSumSimd;
+  if (s == "linearSumFused") return AccessTransformation::LinearSumFused;
   if (s == "randomXOR") return AccessTransformation::RandomXOR;
   if (s == "randomSum") return AccessTransformation::RandomSum;
   if (s == "Threshold") return AccessTransformation::Threshold;
@@ -134,6 +139,10 @@ inline std::string ToString(AccessTransformation t) {
       return "linearXOR";
     case AccessTransformation::LinearSum:
       return "linearSum";
+    case AccessTransformation::LinearSumSimd:
+      return "linearSumSimd";
+    case AccessTransformation::LinearSumFused:
+      return "linearSumFused";
     case AccessTransformation::RandomXOR:
       return "randomXOR";
     case AccessTransformation::RandomSum:
@@ -211,6 +220,9 @@ void RemapAndTransform(std::vector<T>& data, Ordering o, Transformation t,
 
 // ─── Access transformation ────────────────────────────────────────────────────
 
+// Sink for SIMD/fused sum results — file-scope prevents dead-code elimination.
+inline int32_t kLinearSumSink = 0;
+
 // Returns true for variants that mutate the block data (requiring re-encoding).
 inline bool AccessTransformationMutatesData(AccessTransformation t) {
   switch (t) {
@@ -237,7 +249,7 @@ template <>
 inline std::size_t ApplyAccessTransformation<int32_t>(
     std::vector<int32_t>& data, AccessTransformation t,
     std::size_t blockSize) {
-  auto startRead = std::chrono::high_resolution_clock::now();
+  auto startRead = std::chrono::steady_clock::now();
   switch (t) {
     case AccessTransformation::Threshold:
       Threshold(data, Avg(data));
@@ -255,10 +267,31 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       ValueShift(data, static_cast<int32_t>(std::pow(2, 23)));
       break;
     case AccessTransformation::LinearSum: {
-      volatile int64_t dummy = 0;
+      volatile int64_t dummy = 0;  // volatile prevents auto-vectorisation
       for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
         dummy += data[bi];
       }
+      break;
+    }
+    case AccessTransformation::LinearSumSimd: {
+      // Explicit SSE SIMD sum — same ISA FastPFor is allowed to use.
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      __m128i vsum = _mm_setzero_si128();
+      for (; i + 4 <= total; i += 4) {
+        __m128i v = _mm_loadu_si128((const __m128i*)&data[i]);
+        vsum = _mm_add_epi32(vsum, v);
+      }
+      vsum = _mm_hadd_epi32(vsum, vsum);
+      vsum = _mm_hadd_epi32(vsum, vsum);
+      kLinearSumSink = _mm_cvtsi128_si32(vsum);
+      for (; i < total; ++i)
+        kLinearSumSink += data[i];
+      break;
+    }
+    case AccessTransformation::LinearSumFused: {
+      // Reads 32-bit sum written by the codec into the overflow slot.
+      kLinearSumSink = data[blockSize * blockSize];
       break;
     }
     case AccessTransformation::RandomXOR: {
@@ -267,7 +300,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
         bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
       }
-      startRead = std::chrono::high_resolution_clock::now();
+      startRead = std::chrono::steady_clock::now();
       for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
         dummy ^= data[bis[iti]];
       }
@@ -279,7 +312,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
         bis[iti] = rand() % static_cast<int>(blockSize * blockSize);
       }
-      startRead = std::chrono::high_resolution_clock::now();
+      startRead = std::chrono::steady_clock::now();
       for (std::size_t iti = 0; iti < blockSize * blockSize; iti++) {
         dummy += data[bis[iti]];
       }
@@ -294,11 +327,28 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       break;
     }
   }
-  auto endRead = std::chrono::high_resolution_clock::now();
+  auto endRead = std::chrono::steady_clock::now();
   return static_cast<std::size_t>(
       std::chrono::duration_cast<std::chrono::nanoseconds>(endRead - startRead)
           .count());
 }
+
+// ─── Running statistics (Welford's online algorithm) ─────────────────────────
+
+struct RunningStats {
+  std::size_t n = 0;
+  double mean   = 0.0;
+  double M2     = 0.0;
+
+  void Update(std::size_t x) {
+    ++n;
+    double delta = static_cast<double>(x) - mean;
+    mean += delta / static_cast<double>(n);
+    M2   += delta * (static_cast<double>(x) - mean);
+  }
+  double Variance() const { return n > 1 ? M2 / static_cast<double>(n) : 0.0; }
+  double Total()    const { return mean * static_cast<double>(n); }
+};
 
 // ─── Codec statistics ─────────────────────────────────────────────────────────
 
@@ -318,7 +368,7 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
                               std::unique_ptr<StatefulIntegerCodec<T>>& codec) {
   CodecStats stats;
   codec->AllocEncoded(data.data(), data.size());
-  auto startEncode = std::chrono::high_resolution_clock::now();
+  auto startEncode = std::chrono::steady_clock::now();
   try {
     codec->EncodeArray(data.data(), data.size());
   } catch (const std::exception& e) {
@@ -327,13 +377,13 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
               << std::endl;
     return stats;
   }
-  auto endEncode = std::chrono::high_resolution_clock::now();
+  auto endEncode = std::chrono::steady_clock::now();
 
   std::size_t numCodedValues = codec->EncodedNumValues();
   std::size_t sizeCodedValue = codec->EncodedSizeValue();
 
   std::vector<T> dataBack(data.size() + codec->GetOverflowSize(data.size()));
-  auto startDecode = std::chrono::high_resolution_clock::now();
+  auto startDecode = std::chrono::steady_clock::now();
   try {
     codec->DecodeArray(dataBack.data(), data.size());
   } catch (const std::exception& e) {
@@ -342,7 +392,7 @@ CodecStats BenchmarkOneCodec(std::vector<T>& data,
               << std::endl;
     return stats;
   }
-  auto endDecode = std::chrono::high_resolution_clock::now();
+  auto endDecode = std::chrono::steady_clock::now();
 
   for (std::size_t i = 0; i < data.size(); i++) {
     if (data[i] != dataBack[i]) {
