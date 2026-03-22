@@ -1,0 +1,30 @@
+# Build outputs (compiled binaries)
+test_comp
+test_remappings
+bench_comp
+bench_pipeline
+
+# CMake build directory
+build/
+cmake-build-*/
+
+# Output data
+out/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Misc
+resolv.conf.old
+*.o
+*.a
+*.so
+*.so.*
+
+# Experimental/derived external variants (not tracked as submodules)
+external/FastPFor_fused0/
+external/FastPFor_unfused/
+external/simdcomp_fused/
+external/simdcomp_unfused/

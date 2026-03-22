@@ -28,7 +28,7 @@ void simdpack(const uint32_t *in, __m128i *out, const uint32_t bit);
 void simdpackwithoutmask(const uint32_t *in, __m128i *out, const uint32_t bit);
 
 /* reads  "bit" 128-bit vectors from "in", writes  128 values to "out" */
-void simdunpack(const __m128i *in, uint32_t *out, const uint32_t bit, __m128i* sum_lo, __m128i* sum_hi);
+void simdunpack(const __m128i *in, uint32_t *out, const uint32_t bit, __m128i* sum_lo);
 
 /* how many compressed bytes are needed to compressed length integers using a
 bit width of bit with the  simdpack_length function. */

@@ -1,0 +1,16 @@
+
+todo
+* fyi ive got clang-tidy installed now. how can i run it? pls commit these changes before i do it.
+* run old vs new verify no regressions
+	* computing linear sums. fused & not fused. verify both (simdcomp & fastpfor).
+	* maybe make integration test for this
+* make 16 bit benchmark for summing... 
+
+
+run exps: https://github.com/omarathon/compression-geospatial-full/commit/cf57c7008f99fa5a5f0dc7bef984b06153eb209b
+
+
+fusion changes: https://github.com/omarathon/compression-geospatial-full/commit/0292f33a41be1e79f4142c1bf41310e8ab85cd3b?diff=split#diff-35ee9b17ea18d609bf050127483feeb41020fe2823e02abe587447ad406ac03b
+
+
+latest old: https://github.com/omarathon/compression-geospatial-full/commits/16bit/
