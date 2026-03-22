@@ -1,0 +1,40 @@
+omsst2@sherwood:~/diss/compression-geospatial-full$ python3 run_benchmarks.py
+[1/12] srtm_45_15.tif  codec=custom_direct_access  atrans=linearSumSimd
+  meantimedec=0.0 ns  meantimetrans=16290.7 ns  sum=16290.7 ns  RSS=639596 kB
+[2/12] srtm_45_15.tif  codec=simdcomp_fused  atrans=linearSumFused
+  meantimedec=5251.7 ns  meantimetrans=29.0 ns  sum=5280.7 ns  RSS=173704 kB
+[3/12] srtm_45_15.tif  codec=FastPFor_fused_SIMDPFor+VariableByte  atrans=linearSumFused
+  meantimedec=3718.3 ns  meantimetrans=28.8 ns  sum=3747.1 ns  RSS=172708 kB
+[4/12] JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  codec=custom_direct_access  atrans=linearSumSimd
+  meantimedec=0.0 ns  meantimetrans=16370.2 ns  sum=16370.2 ns  RSS=639020 kB
+[5/12] JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  codec=simdcomp_fused  atrans=linearSumFused
+  meantimedec=5183.3 ns  meantimetrans=29.0 ns  sum=5212.3 ns  RSS=153600 kB
+[6/12] JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  codec=FastPFor_fused_SIMDPFor+VariableByte  atrans=linearSumFused
+  meantimedec=3909.7 ns  meantimetrans=28.9 ns  sum=3938.7 ns  RSS=160724 kB
+[7/12] accessibility.tif  codec=custom_direct_access  atrans=linearSumSimd
+  meantimedec=0.0 ns  meantimetrans=1043.8 ns  sum=1043.8 ns  RSS=643072 kB
+[8/12] accessibility.tif  codec=simdcomp_fused  atrans=linearSumFused
+  meantimedec=405.4 ns  meantimetrans=28.8 ns  sum=434.2 ns  RSS=217232 kB
+[9/12] accessibility.tif  codec=FastPFor_fused_SIMDPFor+VariableByte  atrans=linearSumFused
+  meantimedec=444.0 ns  meantimetrans=28.8 ns  sum=472.8 ns  RSS=219136 kB
+[10/12] slope-srtm_35_11.tif  codec=custom_direct_access  atrans=linearSumSimd
+  meantimedec=0.0 ns  meantimetrans=16294.2 ns  sum=16294.2 ns  RSS=638976 kB
+[11/12] slope-srtm_35_11.tif  codec=simdcomp_fused  atrans=linearSumFused
+  meantimedec=6628.8 ns  meantimetrans=29.0 ns  sum=6657.8 ns  RSS=211276 kB
+[12/12] slope-srtm_35_11.tif  codec=FastPFor_fused_SIMDPFor+VariableByte  atrans=linearSumFused
+  meantimedec=7085.0 ns  meantimetrans=28.9 ns  sum=7114.0 ns  RSS=198656 kB
+
+File                                                    Codec                                       dec(ns)  trans(ns)    sum(ns)   RSS(MB)
+--------------------------------------------------------------------------------------------------------------------------------------------
+srtm_45_15.tif                                          custom_direct_access                            0.0    16290.7    16290.7     624.6
+srtm_45_15.tif                                          simdcomp_fused                               5251.7       29.0     5280.7     169.6
+srtm_45_15.tif                                          FastPFor_fused_SIMDPFor+VariableByte         3718.3       28.8     3747.1     168.7
+JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif       custom_direct_access                            0.0    16370.2    16370.2     624.0
+JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif       simdcomp_fused                               5183.3       29.0     5212.3     150.0
+JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif       FastPFor_fused_SIMDPFor+VariableByte         3909.7       28.9     3938.7     157.0
+accessibility.tif                                       custom_direct_access                            0.0     1043.8     1043.8     628.0
+accessibility.tif                                       simdcomp_fused                                405.4       28.8      434.2     212.1
+accessibility.tif                                       FastPFor_fused_SIMDPFor+VariableByte          444.0       28.8      472.8     214.0
+slope-srtm_35_11.tif                                    custom_direct_access                            0.0    16294.2    16294.2     624.0
+slope-srtm_35_11.tif                                    simdcomp_fused                               6628.8       29.0     6657.8     206.3
+slope-srtm_35_11.tif                                    FastPFor_fused_SIMDPFor+VariableByte         7085.0       28.9     7114.0     194.0
