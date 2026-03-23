@@ -83,3 +83,79 @@ TEST_F(U16CodecRoundtripTest, RLECodecSSE42U16) {
   EXPECT_TRUE(TestCodecU16(small_data, c));
   EXPECT_TRUE(TestCodecU16(large_data, c));
 }
+
+// ── New logical codecs ──────────────────────────────────────────────────────
+
+TEST_F(U16CodecRoundtripTest, DoubleDeltaCodecU16) {
+  DoubleDeltaCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(small_data, c));
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+TEST_F(U16CodecRoundtripTest, XorDeltaCodecU16) {
+  XorDeltaCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(small_data, c));
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+TEST_F(U16CodecRoundtripTest, ByteShuffleCodecU16) {
+  ByteShuffleCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(small_data, c));
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+// 2D predictors need square data — large_data is 256 = 16x16.
+TEST_F(U16CodecRoundtripTest, PredUpCodecU16) {
+  PredUpCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(large_data, c));  // 256 = 16x16
+}
+
+TEST_F(U16CodecRoundtripTest, PredAvgCodecU16) {
+  PredAvgCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+TEST_F(U16CodecRoundtripTest, PredLorenzoCodecU16) {
+  PredLorenzoCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+TEST_F(U16CodecRoundtripTest, PredJPEGLSCodecU16) {
+  PredJPEGLSCodecU16 c;
+  EXPECT_TRUE(TestCodecU16(large_data, c));
+}
+
+// Test 2D predictors on a larger 64x64 block with smooth gradient data
+// (simulates elevation-like data where 2D predictors should excel).
+TEST(U16Predictor2D, SmoothGradient64x64) {
+  const int N = 64;
+  std::vector<uint16_t> data(N * N);
+  for (int y = 0; y < N; ++y)
+    for (int x = 0; x < N; ++x)
+      data[y * N + x] = static_cast<uint16_t>(100 + 3 * x + 7 * y);
+
+  PredUpCodecU16 up;
+  EXPECT_TRUE(TestCodecU16(data, up));
+
+  PredAvgCodecU16 avg;
+  EXPECT_TRUE(TestCodecU16(data, avg));
+
+  PredLorenzoCodecU16 lor;
+  EXPECT_TRUE(TestCodecU16(data, lor));
+
+  PredJPEGLSCodecU16 jpegls;
+  EXPECT_TRUE(TestCodecU16(data, jpegls));
+
+  // Lorenzo on a linear gradient should produce near-zero residuals.
+  // Verify: encode and check most residuals are tiny.
+  lor.clear();
+  lor.AllocEncoded(data.data(), data.size());
+  lor.EncodeArray(data.data(), data.size());
+  auto& enc = lor.GetEncoded();
+  int nonzero = 0;
+  for (int y = 1; y < N; ++y)
+    for (int x = 1; x < N; ++x)
+      if (enc[y * N + x] != 0) ++nonzero;
+  EXPECT_EQ(nonzero, 0) << "Lorenzo on linear gradient should give 0 residuals "
+                            "for interior pixels (row>0, col>0)";
+}
