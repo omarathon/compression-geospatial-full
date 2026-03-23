@@ -94,11 +94,16 @@ add_executable(test_bench_utils tests/test_bench_utils.cpp)
 target_include_directories(test_bench_utils PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_bench_utils PRIVATE ${CODEC_LIBS} GTest::gtest_main)
 
+add_executable(test_uint16_codecs tests/test_uint16_codecs.cpp)
+target_include_directories(test_uint16_codecs PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_uint16_codecs PRIVATE ${CODEC_LIBS} GTest::gtest_main)
+
 
 include(GoogleTest)
 gtest_discover_tests(test_comp)
 gtest_discover_tests(test_remappings)
 gtest_discover_tests(test_bench_utils)
+gtest_discover_tests(test_uint16_codecs)
 
 # ── Benchmark executables ─────────────────────────────────────────────────────
 add_executable(bench_comp bench/bench_comp.cpp)
