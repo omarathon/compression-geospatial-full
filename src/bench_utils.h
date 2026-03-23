@@ -160,14 +160,8 @@ inline std::string ToString(AccessTransformation t) {
 }
 
 
-// Primary template: no-op for unsupported element types.
 template <typename T>
-void ApplyOrdering(std::vector<T>& /*data*/, Ordering /*o*/,
-                   int /*blockSize*/) {}
-
-template <>
-inline void ApplyOrdering<int32_t>(std::vector<int32_t>& data, Ordering o,
-                                    int blockSize) {
+void ApplyOrdering(std::vector<T>& data, Ordering o, int blockSize) {
   if (o == Ordering::Zigzag) {
     auto remapped = RemapToZigzagOrder(data, blockSize);
     std::copy(remapped.begin(), remapped.end(), data.begin());
