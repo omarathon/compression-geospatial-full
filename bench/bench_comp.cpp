@@ -1,10 +1,12 @@
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <memory>
 #include <format>
 #include <iostream>
 #include <numeric>
 #include <ranges>
+#include <type_traits>
 #include <vector>
 
 #include <CLI/CLI.hpp>
@@ -33,55 +35,92 @@ BuildCodecsForComposite(const std::string& compositeName) {
   return pool;
 }
 
-// ── Verification helpers ────────────────────────────────────────────────────
+// ── Benchmark + verification ────────────────────────────────────────────────
+
+// Codecs that don't write decoded data (fused / direct_access).
+static bool IsNonDecodingCodec(const std::string& name) {
+  return name.find("fused") != std::string::npos ||
+         name.find("direct_access") != std::string::npos;
+}
+
+// Codecs that produce a sum in overflow slots.
+static bool IsSumProducingCodec(const std::string& name) {
+  return name.find("fused") != std::string::npos;
+}
 
 template <typename T>
-static bool VerifyRoundtrip(const std::vector<T>& original,
-                            const std::vector<T>& decoded,
-                            const std::string& codecName) {
-  for (std::size_t i = 0; i < original.size(); i++) {
-    if (original[i] != decoded[i]) {
-      std::cerr << std::format("ROUNDTRIP FAIL {}: i={} expected={} got={}",
-                               codecName, i, original[i], decoded[i]) << '\n';
-      return false;
+static CodecStats BenchAndVerify(std::vector<T>& data,
+                                 std::unique_ptr<StatefulIntegerCodec<T>>& codec,
+                                 VerifyMode verify) {
+  CodecStats stats;
+  const std::string codecName = codec->name();
+
+  codec->AllocEncoded(data.data(), data.size());
+  auto startEncode = std::chrono::steady_clock::now();
+  try {
+    codec->EncodeArray(data.data(), data.size());
+  } catch (const std::exception& e) {
+    std::cerr << std::format("error encoding {}: {}", codecName, e.what()) << '\n';
+    return stats;
+  }
+  auto endEncode = std::chrono::steady_clock::now();
+
+  std::size_t numCodedValues = codec->EncodedNumValues();
+  std::size_t sizeCodedValue = codec->EncodedSizeValue();
+
+  std::vector<T> dataBack(data.size() + codec->GetOverflowSize(data.size()));
+  auto startDecode = std::chrono::steady_clock::now();
+  try {
+    codec->DecodeArray(dataBack.data(), data.size());
+  } catch (const std::exception& e) {
+    std::cerr << std::format("error decoding {}: {}", codecName, e.what()) << '\n';
+    return stats;
+  }
+  auto endDecode = std::chrono::steady_clock::now();
+
+  // Roundtrip check — skip for codecs that don't write decoded data
+  if (verify == VerifyMode::Roundtrip && !IsNonDecodingCodec(codecName)) {
+    for (std::size_t i = 0; i < data.size(); i++) {
+      if (data[i] != dataBack[i]) {
+        std::cerr << std::format("ROUNDTRIP FAIL {}: i={} expected={} got={}",
+                                 codecName, i, data[i], dataBack[i]) << '\n';
+        codec = std::unique_ptr<StatefulIntegerCodec<T>>(codec->CloneFresh());
+        return stats;
+      }
     }
   }
-  return true;
-}
 
-// For fused codecs that store a uint32 sum in overflow slots.
-// uint16 codecs: sum stored in out[length] (lo16) and out[length+1] (hi16).
-static bool VerifySumU16(const std::vector<uint16_t>& original,
-                         const std::vector<uint16_t>& decoded,
-                         const std::string& codecName) {
-  uint32_t expected = 0;
-  for (auto v : original)
-    expected += v;
-  uint32_t got = static_cast<uint32_t>(decoded[original.size()]) |
-                 (static_cast<uint32_t>(decoded[original.size() + 1]) << 16);
-  if (expected != got) {
-    std::cerr << std::format("SUM FAIL {}: expected={} got={}",
-                             codecName, expected, got) << '\n';
-    return false;
-  }
-  return true;
-}
+  // Sum check — only for codecs that produce sums in overflow slots
+  if (verify == VerifyMode::Sums && IsSumProducingCodec(codecName)) {
+    uint32_t expected = 0;
+    for (auto v : data)
+      expected += static_cast<uint32_t>(v);
 
-// For int32 fused codecs: sum stored in out[length] as int32.
-static bool VerifySum32(const std::vector<int32_t>& original,
-                        const std::vector<int32_t>& decoded,
-                        const std::string& codecName) {
-  int64_t expected = 0;
-  for (auto v : original)
-    expected += v;
-  int32_t got = decoded[original.size()];
-  // Compare lower 32 bits
-  if (static_cast<int32_t>(expected) != got) {
-    std::cerr << std::format("SUM FAIL {}: expected={} got={}",
-                             codecName, static_cast<int32_t>(expected), got) << '\n';
-    return false;
+    uint32_t got;
+    if constexpr (std::is_same_v<T, uint16_t>) {
+      got = static_cast<uint32_t>(dataBack[data.size()]) |
+            (static_cast<uint32_t>(dataBack[data.size() + 1]) << 16);
+    } else {
+      got = static_cast<uint32_t>(dataBack[data.size()]);
+    }
+
+    if (expected != got) {
+      std::cerr << std::format("SUM FAIL {}: expected={} got={}",
+                               codecName, expected, got) << '\n';
+    }
   }
-  return true;
+
+  stats.cf = static_cast<float>(numCodedValues * sizeCodedValue) /
+             static_cast<float>(data.size() * sizeof(T));
+  stats.bpi = static_cast<float>(numCodedValues * sizeCodedValue) /
+              static_cast<float>(data.size());
+  stats.tenc = static_cast<float>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count());
+  stats.tdec = static_cast<float>(
+      std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count());
+
+  codec = std::unique_ptr<StatefulIntegerCodec<T>>(codec->CloneFresh());
+  return stats;
 }
 
 // ── int32 pipeline ──────────────────────────────────────────────────────────
@@ -92,17 +131,7 @@ static std::vector<CodecStats> BenchmarkWindow(
     VerifyMode verify) {
   std::vector<CodecStats> stats(codecs.size());
   std::ranges::transform(codecs, stats.begin(), [&](auto& codec) {
-    auto s = BenchmarkOneCodec(windowData, codec);
-    if (verify == VerifyMode::Sums) {
-      // Re-encode+decode for sum verification (codec was already reset)
-      auto c2 = std::unique_ptr<StatefulIntegerCodec<int32_t>>(codec->CloneFresh());
-      c2->AllocEncoded(windowData.data(), windowData.size());
-      c2->EncodeArray(windowData.data(), windowData.size());
-      std::vector<int32_t> dec(windowData.size() + c2->GetOverflowSize(windowData.size()));
-      c2->DecodeArray(dec.data(), windowData.size());
-      VerifySum32(windowData, dec, c2->name());
-    }
-    return s;
+    return BenchAndVerify(windowData, codec, verify);
   });
   return stats;
 }
@@ -181,16 +210,7 @@ static std::vector<CodecStats> BenchmarkWindowU16(
     VerifyMode verify) {
   std::vector<CodecStats> stats(codecs.size());
   std::ranges::transform(codecs, stats.begin(), [&](auto& codec) {
-    auto s = BenchmarkOneCodec(windowData, codec);
-    if (verify == VerifyMode::Sums) {
-      auto c2 = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh());
-      c2->AllocEncoded(windowData.data(), windowData.size());
-      c2->EncodeArray(windowData.data(), windowData.size());
-      std::vector<uint16_t> dec(windowData.size() + c2->GetOverflowSize(windowData.size()));
-      c2->DecodeArray(dec.data(), windowData.size());
-      VerifySumU16(windowData, dec, c2->name());
-    }
-    return s;
+    return BenchAndVerify(windowData, codec, verify);
   });
   return stats;
 }
