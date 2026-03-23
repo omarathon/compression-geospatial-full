@@ -234,7 +234,8 @@ static std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 SplitIntoFullBlocksU16(GDALRasterBand* band, int rasterWidth, int rasterHeight,
                        int blockSize, int numBlocks,
                        std::unique_ptr<StatefulIntegerCodec<uint16_t>> baseCodec,
-                       int16_t minShift, bool hasNoData, int16_t nodata16) {
+                       int16_t minShift, bool hasNoData, int16_t nodata16,
+                       uint16_t nodataU16) {
   int blocksInWidth = rasterWidth / blockSize;
   int blocksInHeight = rasterHeight / blockSize;
 
@@ -265,6 +266,10 @@ SplitIntoFullBlocksU16(GDALRasterBand* band, int rasterWidth, int rasterHeight,
                          blockData.data(), blockSize, blockSize, GDT_UInt16, 0, 0);
       if (err != CE_None)
         throw std::runtime_error("Error reading raster block data");
+      if (hasNoData) {
+        for (auto& v : blockData)
+          if (v == nodataU16) v = 0;
+      }
     }
 
     std::unique_ptr<StatefulIntegerCodec<uint16_t>> cloned(
@@ -347,7 +352,7 @@ static void BenchmarkAccessU16(
 static void RunOneCombinationU16(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
     int blockSize, int numBlocks, int numReps, int16_t minShift,
-    bool hasNoData, int16_t nodata16,
+    bool hasNoData, int16_t nodata16, uint16_t nodataU16,
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<uint16_t>& baseCodec,
     StatefulIntegerCodec<uint16_t>& accessCodec) {
@@ -370,7 +375,8 @@ static void RunOneCombinationU16(
 
     auto codecGrid =
         SplitIntoFullBlocksU16(band, nXSize, nYSize, blockSize, numBlocks,
-                               std::move(expBase), minShift, hasNoData, nodata16);
+                               std::move(expBase), minShift, hasNoData, nodata16,
+                               nodataU16);
     if (codecGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID.\n";
       return;
@@ -391,7 +397,7 @@ static void RunOneCombinationU16(
 static void RunAllBenchmarksU16(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
     int blockSize, int numBlocks, int numReps, int16_t minShift,
-    bool hasNoData, int16_t nodata16,
+    bool hasNoData, int16_t nodata16, uint16_t nodataU16,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& baseCodecs,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& accessCodecs,
     const std::vector<std::string>& orderings,
@@ -411,7 +417,7 @@ static void RunAllBenchmarksU16(
         for (auto& pattern : sampleAccessPatterns)
           RunOneCombinationU16(band, nXSize, nYSize, filePath, blockSize,
                               numBlocks, numReps, minShift,
-                              hasNoData, nodata16, combo,
+                              hasNoData, nodata16, nodataU16, combo,
                               ParseAccessPattern(pattern), *baseCodec,
                               *accessCodec);
 }
@@ -478,7 +484,18 @@ int main(int argc, char* argv[]) {
     // ── uint16 / int16 path ───────────────────────────────────────────────
     int hasNoData = 0;
     double rawNoData = band->GetNoDataValue(&hasNoData);
+    // If the nodata value doesn't fit in the raster's data type, it can
+    // never occur in the data — treat as "no nodata".
+    if (hasNoData) {
+      if (dt == GDT_Int16 &&
+          (rawNoData < -32768.0 || rawNoData > 32767.0))
+        hasNoData = 0;
+      else if ((dt == GDT_UInt16 || dt == GDT_Byte) &&
+               (rawNoData < 0.0 || rawNoData > 65535.0))
+        hasNoData = 0;
+    }
     int16_t nodata16 = hasNoData ? static_cast<int16_t>(rawNoData) : 0;
+    uint16_t nodataU16 = hasNoData ? static_cast<uint16_t>(rawNoData) : 0;
 
     int16_t minShift = 0;
     if (dt == GDT_Int16) {
@@ -506,7 +523,7 @@ int main(int argc, char* argv[]) {
 
     RunAllBenchmarksU16(band, nXSize, nYSize, filePath.c_str(), blockSize,
                         numBlocks, numReps, minShift, hasNoData != 0, nodata16,
-                        baseCodecs, accessCodecs, orderings,
+                        nodataU16, baseCodecs, accessCodecs, orderings,
                         initialTransformations, accessTransformations,
                         sampleAccessPatterns);
   } else {
