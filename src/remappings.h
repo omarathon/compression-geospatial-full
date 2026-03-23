@@ -9,13 +9,14 @@
 #include "morton.h"
 
 // Remap a 1D array from row-major to Morton order using the libmorton library.
-inline std::vector<int32_t> RemapToMortonOrder(
-    const std::vector<int32_t>& input, int N) {
+template <typename T>
+inline std::vector<T> RemapToMortonOrder(
+    const std::vector<T>& input, int N) {
   if (static_cast<int>(input.size()) != N * N)
     throw std::invalid_argument(
         "Morton remap input size does not match the specified dimensions.");
 
-  std::vector<int32_t> output(N * N, 0);
+  std::vector<T> output(N * N, 0);
   uint_fast32_t maxIndex = static_cast<uint_fast32_t>(N * N - 1);
 
   for (int y = 0; y < N; ++y) {
@@ -33,9 +34,10 @@ inline std::vector<int32_t> RemapToMortonOrder(
 }
 
 // Remap a 1D array from row-major to zigzag order.
-inline std::vector<int32_t> RemapToZigzagOrder(
-    const std::vector<int32_t>& input, int N) {
-  std::vector<int32_t> output(N * N);
+template <typename T>
+inline std::vector<T> RemapToZigzagOrder(
+    const std::vector<T>& input, int N) {
+  std::vector<T> output(N * N);
 
   for (int y = 0; y < N; ++y) {
     for (int x = 0; x < N; ++x) {

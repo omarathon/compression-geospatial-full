@@ -222,11 +222,12 @@ static void RunBenchConfigU16(
     GDALRasterBand* band, int rasterWidth, int rasterHeight,
     const std::string& filePath, int blockSize, int nBlocks,
     int16_t minShift, bool hasNoData, int16_t nodata16, uint16_t nodataU16,
+    Ordering ordering,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& codecs,
     VerifyMode verify) {
   std::cout << std::format("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite=none,"
-               "ordering=default,transformation=none",
-               filePath, blockSize, nBlocks) << '\n';
+               "ordering={},transformation=none",
+               filePath, blockSize, nBlocks, ToString(ordering)) << '\n';
 
   std::cout << "*CODECS:*\n";
   for (std::size_t ci = 0; ci < codecs.size(); ++ci)
@@ -260,6 +261,8 @@ static void RunBenchConfigU16(
           if (v == nodataU16) v = 0;
       }
     }
+
+    ApplyOrdering(blockData, ordering, blockSize);
 
     auto blockStats = BenchmarkWindowU16(blockData, codecs, verify);
     for (std::size_t ci = 0; ci < codecs.size(); ++ci)
@@ -371,14 +374,17 @@ int main(int argc, char** argv) {
       minShift = min16;
     }
 
-    auto codecs = BuildAllCodecsU16();
-    try {
-      RunBenchConfigU16(band, rasterWidth, rasterHeight, filePath, blockSize,
-                        nBlocks, minShift, hasNoData, nodata16, nodataU16,
-                        codecs, verify);
-    } catch (const std::exception& e) {
-      std::cout << " ERROR see cerr\n";
-      std::cerr << std::format("Error: {}", e.what()) << '\n';
+    for (auto& ordering : orderings) {
+      Ordering orderingEnum = ParseOrdering(ordering);
+      auto codecs = BuildAllCodecsU16();
+      try {
+        RunBenchConfigU16(band, rasterWidth, rasterHeight, filePath, blockSize,
+                          nBlocks, minShift, hasNoData, nodata16, nodataU16,
+                          orderingEnum, codecs, verify);
+      } catch (const std::exception& e) {
+        std::cout << " ERROR see cerr\n";
+        std::cerr << std::format("Error: {}", e.what()) << '\n';
+      }
     }
   } else {
     // ── int32 path ───────────────────────────────────────────────────────
