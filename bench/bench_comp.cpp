@@ -43,9 +43,12 @@ static bool IsNonDecodingCodec(const std::string& name) {
          name.find("direct_access") != std::string::npos;
 }
 
-// Codecs that produce a sum in overflow slots.
+// Standalone fused codecs that produce a sum in overflow slots.
+// Composites ([+]_) are excluded: the fused codec sums the intermediate
+// (delta/FOR/RLE-encoded) data, not the original.
 static bool IsSumProducingCodec(const std::string& name) {
-  return name.find("fused") != std::string::npos;
+  return name.find("fused") != std::string::npos &&
+         name.find("[+]_") == std::string::npos;
 }
 
 template <typename T>
