@@ -7,10 +7,12 @@ and diffs the per-block sums against the int32 baseline.
 Usage:
     python3 scripts/verify_sums.py <tif_file> [options]
     python3 scripts/verify_sums.py --all [options]
+    python3 scripts/verify_sums.py --all --dirs /path/a /path/b [options]
 
 Examples:
     python3 scripts/verify_sums.py ~/diss/geotiffs/srtm_45_15.tif
     python3 scripts/verify_sums.py --all -b 256 -n 1000
+    python3 scripts/verify_sums.py --all --dirs /maps/omsst2/diss /maps/omsst2/diss/rasterlite
 """
 
 import argparse
@@ -103,31 +105,63 @@ def verify_file(tif, block_size, num_blocks):
     return all_pass
 
 
-def find_tifs():
-    """Find compatible TIF files (Int16, UInt16, Byte)."""
-    search_dir = os.environ.get("GEOTIFF_DIR", os.path.expanduser("~/diss/geotiffs"))
+DEFAULT_DIRS = [
+    os.environ.get("GEOTIFF_DIR", os.path.expanduser("~/diss/geotiffs")),
+]
+
+# Server directories containing the new TIF datasets
+SERVER_DIRS = [
+    "/maps/omsst2/diss",
+    "/maps/omsst2/diss/rasterlite/ETOPO1",
+    "/maps/omsst2/diss/rasterlite/SRTM_Italy",
+    "/maps/omsst2/diss/rasterlite/landsat_pano",
+    "/maps/omsst2/diss/zalilinus/landsat_band4_mosaic",
+]
+
+
+def find_tifs(extra_dirs=None):
+    """Find compatible TIF files (Int16, UInt16, Byte) across multiple directories."""
+    search_dirs = list(DEFAULT_DIRS)
+    if extra_dirs:
+        search_dirs = extra_dirs
+    else:
+        # Auto-add server dirs if they exist
+        for d in SERVER_DIRS:
+            if os.path.isdir(d):
+                search_dirs.append(d)
+
+    seen = set()
     tifs = []
-    for f in sorted(Path(search_dir).glob("*.tif")):
-        try:
-            info = subprocess.run(
-                ["gdalinfo", str(f)],
-                capture_output=True, text=True, timeout=10
-            )
-            for line in info.stdout.splitlines():
-                if "Type=" in line:
-                    for dt in ("Int16", "UInt16", "Byte"):
-                        if f"Type={dt}" in line:
-                            tifs.append(str(f))
-                    break
-        except Exception:
-            pass
+    for search_dir in search_dirs:
+        if not os.path.isdir(search_dir):
+            continue
+        for pattern in ("*.tif", "*.TIF"):
+            for f in sorted(Path(search_dir).glob(pattern)):
+                real = str(f.resolve())
+                if real in seen:
+                    continue
+                seen.add(real)
+                try:
+                    info = subprocess.run(
+                        ["gdalinfo", str(f)],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    for line in info.stdout.splitlines():
+                        if "Type=" in line:
+                            for dt in ("Int16", "UInt16", "Byte"):
+                                if f"Type={dt}" in line:
+                                    tifs.append(str(f))
+                            break
+                except Exception:
+                    pass
     return tifs
 
 
 def main():
     parser = argparse.ArgumentParser(description="Verify uint16 codec sums vs int32 ground truth")
-    parser.add_argument("tif", nargs="?", help="GeoTIFF file path")
-    parser.add_argument("--all", action="store_true", help="Test all compatible TIFs in GEOTIFF_DIR")
+    parser.add_argument("tif", nargs="*", help="GeoTIFF file path(s)")
+    parser.add_argument("--all", action="store_true", help="Test all compatible TIFs (auto-discovers directories)")
+    parser.add_argument("--dirs", nargs="+", help="Directories to search when using --all")
     parser.add_argument("-b", "--blocksize", type=int, default=256, help="Block size (default: 256)")
     parser.add_argument("-n", "--numblocks", type=int, default=100, help="Number of blocks (default: 100)")
     args = parser.parse_args()
@@ -137,13 +171,15 @@ def main():
         sys.exit(1)
 
     if args.all:
-        tifs = find_tifs()
+        tifs = find_tifs(extra_dirs=args.dirs)
         if not tifs:
-            print("No compatible TIFs found. Set GEOTIFF_DIR env var.", file=sys.stderr)
+            print("No compatible TIFs found. Use --dirs or set GEOTIFF_DIR env var.", file=sys.stderr)
             sys.exit(1)
-        print(f"Found {len(tifs)} compatible TIF(s)")
+        print(f"Found {len(tifs)} compatible TIF(s):")
+        for t in tifs:
+            print(f"  {t}")
     else:
-        tifs = [args.tif]
+        tifs = args.tif
 
     all_pass = True
     for tif in tifs:
