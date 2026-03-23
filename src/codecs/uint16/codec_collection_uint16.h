@@ -9,6 +9,7 @@
 #include "simdcomp_fused_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 #include "custom_vec_logic_codecs.h"
+#include "predictive_codecs_u16.h"
 
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitLogicalCodecsU16() {
@@ -16,6 +17,13 @@ InitLogicalCodecsU16() {
   codecs.push_back(std::make_unique<DeltaCodecSSE42U16>());
   codecs.push_back(std::make_unique<FORCodecSSE42U16>());
   codecs.push_back(std::make_unique<RLECodecSSE42U16>());
+  codecs.push_back(std::make_unique<DoubleDeltaCodecU16>());
+  codecs.push_back(std::make_unique<XorDeltaCodecU16>());
+  codecs.push_back(std::make_unique<ByteShuffleCodecU16>());
+  codecs.push_back(std::make_unique<PredUpCodecU16>());
+  codecs.push_back(std::make_unique<PredAvgCodecU16>());
+  codecs.push_back(std::make_unique<PredLorenzoCodecU16>());
+  codecs.push_back(std::make_unique<PredJPEGLSCodecU16>());
   return codecs;
 }
 
