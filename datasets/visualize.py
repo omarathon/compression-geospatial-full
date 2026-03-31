@@ -93,12 +93,13 @@ def render_crop(ds, xoff, yoff, size, nodata_vals):
 def save_png(img, path):
     """Save an (H, W, 3) uint8 array as a PNG via GDAL."""
     h, w = img.shape[:2]
-    driver = gdal.GetDriverByName("PNG")
-    out = driver.Create(path, w, h, 3, gdal.GDT_Byte)
+    mem_drv = gdal.GetDriverByName("MEM")
+    mem_ds = mem_drv.Create("", w, h, 3, gdal.GDT_Byte)
     for b in range(3):
-        out.GetRasterBand(b + 1).WriteArray(img[:, :, b])
-    out.FlushCache()
-    del out
+        mem_ds.GetRasterBand(b + 1).WriteArray(img[:, :, b])
+    png_drv = gdal.GetDriverByName("PNG")
+    png_drv.CreateCopy(path, mem_ds, 0)
+    del mem_ds
 
 
 def grid_crops(ds, grid, crop_size, nodata_vals, out_dir, name):
