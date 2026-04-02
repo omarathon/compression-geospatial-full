@@ -132,9 +132,9 @@ static void RunBenchConfig(
     float maxNodataPct, bool normalize, int32_t globalGCD,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& codecs,
     VerifyMode verify) {
-  std::cout << std::format("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite={},"
+  std::cout << std::format("**BENCHMARK**\nfile={},band={},blockSize={},nBlocks={},composite={},"
                "ordering={},transformation={},normalize={},maxNodataPct={},globalMin={},globalGCD={}",
-               filePath, blockSize, nBlocks, compositeName,
+               filePath, band->GetBand(), blockSize, nBlocks, compositeName,
                ToString(ordering), ToString(trans),
                normalize ? "true" : "false", maxNodataPct, globalMin, globalGCD) << '\n';
 
@@ -228,9 +228,9 @@ static void RunBenchConfigU16(
     float maxNodataPct, bool normalize, uint16_t normMinU16, uint16_t normGCDU16,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& codecs,
     VerifyMode verify) {
-  std::cout << std::format("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite=none,"
+  std::cout << std::format("**BENCHMARK**\nfile={},band={},blockSize={},nBlocks={},composite=none,"
                "ordering={},transformation=none,normalize={},maxNodataPct={},minShift={},normMinU16={},normGCDU16={}",
-               filePath, blockSize, nBlocks, ToString(ordering),
+               filePath, band->GetBand(), blockSize, nBlocks, ToString(ordering),
                normalize ? "true" : "false", maxNodataPct, minShift, normMinU16, normGCDU16) << '\n';
 
   std::cout << "*CODECS:*\n";
@@ -331,9 +331,9 @@ static void RunBenchConfigU8(
     float maxNodataPct, Ordering ordering,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint8_t>>>& codecs,
     VerifyMode verify) {
-  std::cout << std::format("**BENCHMARK**\nfile={},blockSize={},nBlocks={},composite=none,"
+  std::cout << std::format("**BENCHMARK**\nfile={},band={},blockSize={},nBlocks={},composite=none,"
                "ordering={},transformation=none,normalize=false,maxNodataPct={}",
-               filePath, blockSize, nBlocks, ToString(ordering), maxNodataPct) << '\n';
+               filePath, band->GetBand(), blockSize, nBlocks, ToString(ordering), maxNodataPct) << '\n';
 
   std::cout << "*CODECS:*\n";
   for (std::size_t ci = 0; ci < codecs.size(); ++ci)
@@ -438,7 +438,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  GDALRasterBand* band = dataset->GetRasterBand(1);
+  int nBands = dataset->GetRasterCount();
+  for (int bandIdx = 1; bandIdx <= nBands; bandIdx++) {
+  GDALRasterBand* band = dataset->GetRasterBand(bandIdx);
   int rasterWidth = band->GetXSize();
   int rasterHeight = band->GetYSize();
   GDALDataType dt = band->GetRasterDataType();
@@ -611,6 +613,7 @@ int main(int argc, char** argv) {
     // }
   }
 
+  } // bandIdx loop
   GDALClose(dataset);
   return 0;
 }
