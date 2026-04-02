@@ -523,6 +523,7 @@ inline std::vector<BlockOffset> SampleBlockOffsets(int blocksInWidth,
   std::vector<BlockOffset> offsets;
   offsets.reserve(numBlocks);
   int totalBlocks = blocksInWidth * blocksInHeight;
+  numBlocks = std::min(numBlocks, totalBlocks);
   int sampleInterval = std::max(1, totalBlocks / numBlocks);
   for (int blockNum = 0, sampled = 0; sampled < numBlocks;
        blockNum += sampleInterval, sampled++) {

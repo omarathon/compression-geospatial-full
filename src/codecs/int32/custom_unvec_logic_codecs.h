@@ -63,6 +63,71 @@ class DeltaCodec : public StatefulIntegerCodec<int32_t> {
   std::vector<int32_t>& GetEncoded() override { return compressed_data; };
 };
 
+class DoubleDeltaCodec : public StatefulIntegerCodec<int32_t> {
+ private:
+  std::vector<int32_t> compressed_data;
+
+ public:
+  DoubleDeltaCodec() {}
+
+  void EncodeArray(const int32_t* in, const size_t length) override {
+    if (length > 0) {
+      std::vector<int32_t> d1(length);
+      d1[0] = in[0];
+      for (size_t i = 1; i < length; ++i)
+        d1[i] = static_cast<int32_t>(in[i] - in[i - 1]);
+
+      compressed_data.push_back(d1[0]);
+      for (size_t i = 1; i < length; ++i) {
+        int32_t delta = d1[i] - d1[i - 1];
+        uint32_t zigzagged = (delta << 1) ^ (delta >> 31);
+        compressed_data.push_back(static_cast<int32_t>(
+            zigzagged));  // Cast to int32_t if your vector is of type int32_t
+      }
+    }
+  }
+
+  void DecodeArray(int32_t* out, const size_t length) override {
+    if (length > 0) {
+      std::vector<int32_t> d1(length);
+      d1[0] = compressed_data[0];
+      for (size_t i = 1; i < length; ++i) {
+        uint32_t zigzagged = static_cast<uint32_t>(compressed_data[i]);
+        int32_t delta = (zigzagged >> 1) ^ -(zigzagged & 1);
+        d1[i] = delta + d1[i - 1];
+      }
+      out[0] = d1[0];
+      for (size_t i = 1; i < length; ++i)
+        out[i] = static_cast<int32_t>(out[i - 1] + d1[i]);
+    }
+  }
+
+  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+
+  std::size_t EncodedSizeValue() override { return sizeof(int32_t); }
+
+  virtual ~DoubleDeltaCodec() {}
+
+  std::string name() const override { return "custom_doubledelta_unvec"; }
+
+  std::size_t GetOverflowSize(size_t) const override { return 0; }
+
+  StatefulIntegerCodec<int32_t>* CloneFresh() const override {
+    return new DoubleDeltaCodec();
+  }
+
+  void AllocEncoded(const int32_t* in, size_t length) override {
+    compressed_data.reserve(length);
+  };
+
+  void clear() override {
+    compressed_data.clear();
+    compressed_data.shrink_to_fit();
+  }
+
+  std::vector<int32_t>& GetEncoded() override { return compressed_data; };
+};
+
 class FORCodec : public StatefulIntegerCodec<int32_t> {
  private:
   std::vector<int32_t> compressed_data;

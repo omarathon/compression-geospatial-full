@@ -10,6 +10,7 @@
 #include "composite_codec.h"
 #include "custom_unvec_logic_codecs.h"
 #include "custom_vec_logic_codecs.h"
+#include "predictive_codecs.h"
 #include "deflate_codecs.h"
 #include "fastpfor_codecs.h"
 #include "frameofreference_codecs.h"
@@ -75,6 +76,8 @@ class CodecRoundtripTest : public ::testing::Test {
     std::mt19937 gen(42);  // fixed seed for reproducibility
     std::uniform_int_distribution<> distr(kMin, kMax);
 
+    // i=0 deterministically pushes kMin(=0) and kMax, so boundary values are
+    // always present regardless of the random fourth element.
     for (int i : std::views::iota(0, kN)) {
       large_data.push_back(i);
       large_data.push_back(kMin + i);
@@ -255,6 +258,57 @@ TEST_F(CodecRoundtripTest, CompositeRLEAVX512PlusTurboPFor) {
     auto tpf = std::make_unique<TurboPForCodec>(method);
     CompositeStatefulIntegerCodec<int32_t> c(std::move(rle), std::move(tpf));
     EXPECT_TRUE(TestCodec(small_data, c));
+    EXPECT_TRUE(TestCodec(large_data, c));
+  }
+}
+
+// ── Predictive codec round-trip tests ───────────────────────────────────────
+
+// Helper: returns one fresh instance of each predictive codec.
+static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
+MakePredictiveCodecs() {
+  std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>> v;
+  v.push_back(std::make_unique<JpegPred1Codec>());
+  v.push_back(std::make_unique<JpegPred2Codec>());
+  v.push_back(std::make_unique<JpegPred3Codec>());
+  v.push_back(std::make_unique<JpegPred4Codec>());
+  v.push_back(std::make_unique<JpegPred5Codec>());
+  v.push_back(std::make_unique<JpegPred6Codec>());
+  v.push_back(std::make_unique<JpegPred7Codec>());
+  v.push_back(std::make_unique<JpegLSMedCodec>());
+  v.push_back(std::make_unique<PaethCodec>());
+  return v;
+}
+
+TEST_F(CodecRoundtripTest, PredictiveCodecsStandalone) {
+  for (auto& codec : MakePredictiveCodecs()) {
+    SCOPED_TRACE(codec->name());
+    EXPECT_TRUE(TestCodec(small_data, *codec));
+    EXPECT_TRUE(TestCodec(large_data, *codec));
+  }
+}
+
+TEST_F(CodecRoundtripTest, PredictiveCodecsPlusSimdComp) {
+  for (auto& pred : MakePredictiveCodecs()) {
+    SCOPED_TRACE(pred->name() + "+SimdComp");
+    auto phys = std::make_unique<SimdCompCodec>();
+    CompositeStatefulIntegerCodec<int32_t> c(
+        std::unique_ptr<StatefulIntegerCodec<int32_t>>(pred->CloneFresh()),
+        std::move(phys));
+    EXPECT_TRUE(TestCodec(small_data, c));
+    EXPECT_TRUE(TestCodec(large_data, c));
+  }
+}
+
+TEST_F(CodecRoundtripTest, PredictiveCodecsPlusFastPForSIMDPFor) {
+  CODECFactory factory;
+  for (auto& pred : MakePredictiveCodecs()) {
+    SCOPED_TRACE(pred->name() + "+SIMDPFor+VariableByte");
+    auto phys = std::make_unique<FastPForFusedCodec>(
+        factory, "SIMDPFor+VariableByte");
+    CompositeStatefulIntegerCodec<int32_t> c(
+        std::unique_ptr<StatefulIntegerCodec<int32_t>>(pred->CloneFresh()),
+        std::move(phys));
     EXPECT_TRUE(TestCodec(large_data, c));
   }
 }

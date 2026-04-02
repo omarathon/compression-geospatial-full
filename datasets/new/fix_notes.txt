@@ -1,0 +1,42 @@
+worldclim temperatures were quantized by multiplying by 10 (it's only accurate to .1 deg so its fine)
+
+for region in nyc iowa himalayas sahara amazon; do     gdal_translate -ot Int16 -scale 0 1 0 10 -a_nodata -32768         WorldClim_temp_${region}.tif WorldClim_temp_${region}_int16.tif;     mv WorldClim_temp_${region}_int16.tif WorldClim_temp_${region}.tif; done
+
+etopo1 high-res is float32 so it was quantized to int32 by multipliying by 1000:
+
+for region in nyc iowa himalayas sahara amazon ocean; do
+    gdal_calc.py \
+        -A etopo_highres/ETOPO_HighRes_${region}.tif \
+        --calc="A*1000" \
+        --outfile=etopo_highres_quant/ETOPO_HighRes_${region}.tif \
+        --type=Int32 \
+        --NoDataValue=-2147483647 \
+        --overwrite
+done
+
+
+
+
+
+visualizations:
+
+for f in etopo1/*.tif srtm/*.tif worldclim/*.tif etopo_highres/*.tif          landscan/*.tif landsat8/*.tif sentinel2/*.tif worldcover/*.tif          srtm_highres/*.tif; do     python3  ~/diss/compression-geospatial-full/datasets/visualize.py "$f" "vis/$(basename "${f%.tif}").png"; done
+
+for f in srtm/*.tif worldclim/WorldClim_temp*.tif etopo_highres_quant/*.tif; do     python3  ~/diss/compression-geospatial-full/datasets/visualize.py "$f" "vis_fix/$(basename "${f%.tif}").png"; done
+
+for f in etopo_highres_quant/*.tif; do     python3  ~/diss/compression-geospatial-full/datasets/visualize.py "$f" "vis_fix_fix/$(basename "${f%.tif}").png"; done
+
+
+stats:
+
+for f in etopo1/*.tif srtm/*.tif worldclim/*.tif etopo_highres/*.tif \
+         landscan/*.tif landsat8/*.tif sentinel2/*.tif worldcover/*.tif \
+         srtm_highres/*.tif; do
+    gdalinfo -stats "$f"
+done
+
+for f in srtm/*.tif worldclim/WorldClim_temp*.tif etopo_highres_quant/*.tif; do
+    gdalinfo -stats "$f"
+done
+
+

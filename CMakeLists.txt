@@ -11,6 +11,7 @@ add_compile_options(
   -O3
   -msse4.1
   -mbmi2
+  -mavx2
 )
 
 # ── OpenMP ────────────────────────────────────────────────────────────────────
@@ -36,24 +37,79 @@ set_target_properties(SimdComp PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${EXT}/simdcomp/include
 )
 
+add_library(TurboPFor STATIC IMPORTED)
+set_target_properties(TurboPFor PROPERTIES
+  IMPORTED_LOCATION ${EXT}/TurboPFor/libic.a
+  INTERFACE_INCLUDE_DIRECTORIES ${EXT}/TurboPFor/include
+)
+
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/generic
   ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/int32
   ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/uint16
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/codecs/uint8
   ${EXT}
+  ${EXT}/TurboPFor/include
   ${EXT}/libmorton/include/libmorton
-  ${EXT}/dictionary/src
 )
+
+# ── System compression libraries ─────────────────────────────────────────────
+pkg_check_modules(OpenJPEG REQUIRED libopenjp2)
 
 # ── Common codec link deps ────────────────────────────────────────────────────
 set(CODEC_LIBS
   FastPFor
   SimdComp
+  TurboPFor
   OpenMP::OpenMP_CXX
   m
+  z        # zlib  (Deflate)
+  lz4      # LZ4
+  zstd     # Zstd
+  lzma     # LZMA/XZ
+  png      # libpng
+  ${OpenJPEG_LIBRARIES}  # JPEG 2000
 )
+
+list(APPEND EXTRA_INCLUDES ${OpenJPEG_INCLUDE_DIRS})
+
+# ── Optional: CharLS (install libcharls-dev to enable) ────────────────────────
+find_library(CHARLS_LIB NAMES charls)
+find_path(CHARLS_INCLUDE NAMES charls/charls.h)
+if(CHARLS_LIB AND CHARLS_INCLUDE)
+  list(APPEND CODEC_LIBS ${CHARLS_LIB})
+  list(APPEND EXTRA_INCLUDES ${CHARLS_INCLUDE})
+  add_compile_definitions(HAVE_CHARLS)
+  message(STATUS "CharLS found: ${CHARLS_LIB}")
+else()
+  message(STATUS "CharLS not found - install libcharls-dev to enable")
+endif()
+
+# ── Optional: Snappy (install libsnappy-dev to enable) ────────────────────────
+find_library(SNAPPY_LIB NAMES snappy)
+find_path(SNAPPY_INCLUDE NAMES snappy.h)
+if(SNAPPY_LIB AND SNAPPY_INCLUDE)
+  list(APPEND CODEC_LIBS ${SNAPPY_LIB})
+  list(APPEND EXTRA_INCLUDES ${SNAPPY_INCLUDE})
+  add_compile_definitions(HAVE_SNAPPY)
+  message(STATUS "Snappy found: ${SNAPPY_LIB}")
+else()
+  message(STATUS "Snappy not found - install libsnappy-dev to enable")
+endif()
+
+# ── Optional: LERC (install liblerc-dev to enable) ────────────────────────────
+find_library(LERC_LIB NAMES Lerc lerc)
+find_path(LERC_INCLUDE NAMES Lerc_c_api.h)
+if(LERC_LIB AND LERC_INCLUDE)
+  list(APPEND CODEC_LIBS ${LERC_LIB})
+  list(APPEND EXTRA_INCLUDES ${LERC_INCLUDE})
+  add_compile_definitions(HAVE_LERC)
+  message(STATUS "LERC found: ${LERC_LIB}")
+else()
+  message(STATUS "LERC not found - install liblerc-dev to enable")
+endif()
 
 # ── GoogleTest (fetched at configure time) ────────────────────────────────────
 include(FetchContent)
@@ -98,12 +154,26 @@ add_executable(test_uint16_codecs tests/test_uint16_codecs.cpp)
 target_include_directories(test_uint16_codecs PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_uint16_codecs PRIVATE ${CODEC_LIBS} GTest::gtest_main)
 
+add_executable(test_int32_codecs_server tests/test_int32_codecs_server.cpp)
+target_include_directories(test_int32_codecs_server PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_int32_codecs_server PRIVATE ${CODEC_LIBS} GTest::gtest_main)
+
+add_executable(test_uint16_codecs_server tests/test_uint16_codecs_server.cpp)
+target_include_directories(test_uint16_codecs_server PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_uint16_codecs_server PRIVATE ${CODEC_LIBS} GTest::gtest_main)
+
+add_executable(test_uint8_codecs_server tests/test_uint8_codecs_server.cpp)
+target_include_directories(test_uint8_codecs_server PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_uint8_codecs_server PRIVATE GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(test_comp)
 gtest_discover_tests(test_remappings)
 gtest_discover_tests(test_bench_utils)
 gtest_discover_tests(test_uint16_codecs)
+gtest_discover_tests(test_int32_codecs_server)
+gtest_discover_tests(test_uint16_codecs_server)
+gtest_discover_tests(test_uint8_codecs_server)
 
 # ── Benchmark executables ─────────────────────────────────────────────────────
 add_executable(bench_comp bench/bench_comp.cpp)

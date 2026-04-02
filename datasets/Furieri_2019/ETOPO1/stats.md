@@ -33,7 +33,7 @@ Center      (   0.0000000,   0.0000000)
 Band 1 Block=21601x1 Type=Int16, ColorInterp=Gray
   Min=-10898.000 Max=8271.000
   Minimum=-10898.000, Maximum=8271.000, Mean=-1892.353, StdDev=2650.140
-  NoData Value=-2147483648
+  NoData Value=-32768
   Metadata:
     NETCDF_VARNAME=z
     STATISTICS_MAXIMUM=8271
