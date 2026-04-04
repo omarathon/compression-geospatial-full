@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ── Compiler flags ────────────────────────────────────────────────────────────
 add_compile_options(
   -Wall
-  -O3
+  -O1
   -msse4.1
   -mbmi2
 )

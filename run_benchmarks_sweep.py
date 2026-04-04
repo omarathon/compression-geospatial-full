@@ -44,7 +44,7 @@ def numblocks_for_rss(rss_bytes, blocksize, elem_bytes):
     return max(1, math.floor(rss_bytes / block_bytes))
 
 
-def run_one(tif, blocksize, numblocks, codec, atrans):
+def run_one(tif, blocksize, numblocks, codec, atrans, force_int32=False):
     cmd = [
         "/usr/bin/time", "-v",
         "stdbuf", "-oL",
@@ -54,6 +54,8 @@ def run_one(tif, blocksize, numblocks, codec, atrans):
         "--ordering", "morton", "--itrans", "none",
         "--pattern", "linear", "--atrans", atrans,
     ]
+    if force_int32:
+        cmd.append("--force-int32")
     proc = subprocess.run(cmd, capture_output=True, text=True)
     out = proc.stdout + proc.stderr
 
@@ -101,10 +103,11 @@ def main():
     results = []
     for i, (tif, bs, nb, rss_mb, codec, atrans) in enumerate(runs):
         print(f"[{i+1}/{len(runs)}] {tif}  rss={rss_mb}MB  n={nb}  codec={codec}", flush=True)
-        r = run_one(tif, bs, nb, codec, atrans)
+        r = run_one(tif, bs, nb, codec, atrans, force_int32=args.bits32)
         r["target_rss_mb"] = rss_mb
         results.append(r)
-        print(f"  sum={r['sum_ns']:.1f} ns  RSS={r['rss_kb']} kB", flush=True)
+        sum_str = f"{r['sum_ns']:.1f} ns" if r['sum_ns'] is not None else "None"
+        print(f"  sum={sum_str}  RSS={r['rss_kb']} kB", flush=True)
 
     out_file = f"bench_sweep_{tag}.json"
     with open(out_file, "w") as f:
