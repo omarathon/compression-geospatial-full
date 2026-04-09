@@ -11,10 +11,6 @@ gdal.UseExceptions()
 
 
 def detect_layout_creation_options(ds):
-    """
-    Preserve the practical GTiff layout characteristics of the source:
-    compression, interleave, tiling/striping, block size, predictor, nbits.
-    """
     md = ds.GetMetadata("IMAGE_STRUCTURE") or {}
     band1 = ds.GetRasterBand(1)
     xsize = ds.RasterXSize
@@ -38,9 +34,6 @@ def detect_layout_creation_options(ds):
     if nbits:
         creation.append(f"NBITS={nbits}")
 
-    # Detect tiled vs striped from actual block layout.
-    # Striped GTiff commonly shows Block = full_width x 1 (or full_width x rows_per_strip).
-    # Tiled GTiff shows smaller repeating blocks, e.g. 512x512.
     is_striped = (blockx == xsize)
 
     if is_striped:
@@ -53,19 +46,23 @@ def detect_layout_creation_options(ds):
     return creation
 
 
+def strip_statistics_metadata(obj):
+    md = obj.GetMetadata() or {}
+    for key in list(md.keys()):
+        if key.startswith("STATISTICS_"):
+            obj.SetMetadataItem(key, None)
+
+
 def copy_metadata_and_band_properties(src_ds, dst_ds):
-    """
-    Copy dataset and band metadata/properties that gdal.Translate may not preserve exactly.
-    We intentionally do not overwrite IMAGE_STRUCTURE metadata, because it should reflect
-    the actual output file, not the source declaration.
-    """
     src_domains = src_ds.GetMetadataDomainList() or []
     for domain in src_domains:
         if domain == "IMAGE_STRUCTURE":
             continue
         md = src_ds.GetMetadata(domain)
         if md:
-            dst_ds.SetMetadata(md, domain)
+            clean_md = {k: v for k, v in md.items() if not k.startswith("STATISTICS_")}
+            if clean_md:
+                dst_ds.SetMetadata(clean_md, domain)
 
     dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
     dst_ds.SetProjection(src_ds.GetProjection())
@@ -74,12 +71,10 @@ def copy_metadata_and_band_properties(src_ds, dst_ds):
         sb = src_ds.GetRasterBand(b)
         db = dst_ds.GetRasterBand(b)
 
-        # Per-band nodata
         nd = sb.GetNoDataValue()
         if nd is not None:
             db.SetNoDataValue(nd)
 
-        # Common band properties
         db.SetColorInterpretation(sb.GetColorInterpretation())
 
         desc = sb.GetDescription()
@@ -106,26 +101,25 @@ def copy_metadata_and_band_properties(src_ds, dst_ds):
         if color_table is not None:
             db.SetColorTable(color_table)
 
-        # Per-band metadata domains
         band_domains = sb.GetMetadataDomainList() or []
         for domain in band_domains:
             if domain == "IMAGE_STRUCTURE":
                 continue
             md = sb.GetMetadata(domain)
             if md:
-                db.SetMetadata(md, domain)
+                clean_md = {k: v for k, v in md.items() if not k.startswith("STATISTICS_")}
+                if clean_md:
+                    db.SetMetadata(clean_md, domain)
 
+        strip_statistics_metadata(db)
+
+    strip_statistics_metadata(dst_ds)
     dst_ds.FlushCache()
 
 
 def lerc_roundtrip(input_tif, output_tif, maxz, source_creation_opts, src_ds):
-    """
-    Step 1: source -> temporary LERC file
-    Step 2: temporary LERC -> final output with preserved source layout/compression
-    """
     temp_lerc = output_tif + ".lerc_tmp.tif"
 
-    # Use source layout for temp too when practical, but swap compression to LERC.
     temp_creation = []
     for opt in source_creation_opts:
         if not opt.startswith("COMPRESS="):
@@ -147,7 +141,6 @@ def lerc_roundtrip(input_tif, output_tif, maxz, source_creation_opts, src_ds):
         creationOptions=source_creation_opts,
     )
 
-    # Explicitly restore metadata/band properties/nodata after round-trip.
     out_ds = gdal.Open(output_tif, gdal.GA_Update)
     if out_ds is None:
         raise RuntimeError(f"Failed to open output for metadata copy: {output_tif}")
@@ -158,33 +151,17 @@ def lerc_roundtrip(input_tif, output_tif, maxz, source_creation_opts, src_ds):
 
 
 def choose_stats_chunk_shape(ds, band_index):
-    """
-    Read using windows aligned to the source block layout.
-    For tiled rasters, this preserves good I/O behavior.
-    For striped rasters, we batch multiple rows to reduce Python overhead.
-    """
     band = ds.GetRasterBand(band_index)
     xsize = ds.RasterXSize
     ysize = ds.RasterYSize
     blockx, blocky = band.GetBlockSize()
 
     if blockx == xsize:
-        # Striped: batch many rows together, but keep memory reasonable.
-        # 512 or 1024 rows is a decent compromise.
         return xsize, min(max(blocky, 512), ysize)
-    else:
-        # Tiled: use multiples of native tile size to reduce loop overhead.
-        mult = 4
-        return min(blockx * mult, xsize), min(blocky * mult, ysize)
+    return min(blockx * 4, xsize), min(blocky * 4, ysize)
 
 
 def compute_stats_per_band(orig_ds, recon_ds):
-    """
-    Efficient blockwise stats:
-    - block-aligned windows
-    - no expensive compaction copies like arr = arr[mask]
-    - integer diff for integer rasters where possible
-    """
     if (
         orig_ds.RasterXSize != recon_ds.RasterXSize
         or orig_ds.RasterYSize != recon_ds.RasterYSize
@@ -204,7 +181,6 @@ def compute_stats_per_band(orig_ds, recon_ds):
 
         sum_sq = 0.0
         sum_abs = 0.0
-        sum_diff = 0.0
         sum_orig = 0.0
         sum_recon = 0.0
         sum_orig_sq = 0.0
@@ -225,17 +201,6 @@ def compute_stats_per_band(orig_ds, recon_ds):
                 if o is None or r is None:
                     raise RuntimeError(f"ReadAsArray failed for band {b}, window x={x}, y={y}")
 
-                if nodata is None:
-                    mask = None
-                    valid_count = o.size
-                else:
-                    mask = (o != nodata)
-                    valid_count = int(mask.sum())
-
-                if valid_count == 0:
-                    continue
-
-                # Use integer diff for integer rasters; float64 otherwise.
                 if np.issubdtype(o.dtype, np.integer) and np.issubdtype(r.dtype, np.integer):
                     diff = r.astype(np.int64, copy=False) - o.astype(np.int64, copy=False)
                     o_acc = o.astype(np.float64, copy=False)
@@ -245,31 +210,28 @@ def compute_stats_per_band(orig_ds, recon_ds):
                     r_acc = r.astype(np.float64, copy=False)
                     diff = r_acc - o_acc
 
-                if mask is None:
-                    sum_diff += float(np.sum(diff, dtype=np.float64))
-                    absdiff = np.abs(diff)
-                    sum_abs += float(np.sum(absdiff, dtype=np.float64))
-                    sum_sq += float(np.sum(diff * diff, dtype=np.float64))
-                    max_abs = max(max_abs, float(np.max(absdiff)))
-                    sum_orig += float(np.sum(o_acc, dtype=np.float64))
-                    sum_recon += float(np.sum(r_acc, dtype=np.float64))
-                    sum_orig_sq += float(np.sum(o_acc * o_acc, dtype=np.float64))
-                    count += valid_count
+                if nodata is None:
+                    valid = np.ones(o.shape, dtype=bool)
                 else:
-                    sum_diff += float(np.sum(diff, where=mask, dtype=np.float64))
-                    absdiff = np.abs(diff)
-                    sum_abs += float(np.sum(absdiff, where=mask, dtype=np.float64))
-                    sum_sq += float(np.sum(diff * diff, where=mask, dtype=np.float64))
-                    sum_orig += float(np.sum(o_acc, where=mask, dtype=np.float64))
-                    sum_recon += float(np.sum(r_acc, where=mask, dtype=np.float64))
-                    sum_orig_sq += float(np.sum(o_acc * o_acc, where=mask, dtype=np.float64))
+                    valid = (o != nodata)
 
-                    # max with mask still needs selection somewhere
-                    chunk_max = float(np.max(absdiff[mask]))
-                    if chunk_max > max_abs:
-                        max_abs = chunk_max
+                valid_count = int(valid.sum())
+                if valid_count == 0:
+                    continue
 
-                    count += valid_count
+                absdiff = np.abs(diff)
+
+                sum_sq += float(np.sum(diff * diff, where=valid, dtype=np.float64))
+                sum_abs += float(np.sum(absdiff, where=valid, dtype=np.float64))
+                sum_orig += float(np.sum(o_acc, where=valid, dtype=np.float64))
+                sum_recon += float(np.sum(r_acc, where=valid, dtype=np.float64))
+                sum_orig_sq += float(np.sum(o_acc * o_acc, where=valid, dtype=np.float64))
+
+                chunk_max = float(np.max(absdiff[valid]))
+                if chunk_max > max_abs:
+                    max_abs = chunk_max
+
+                count += valid_count
 
         if count == 0:
             results[str(b)] = {}
@@ -286,7 +248,6 @@ def compute_stats_per_band(orig_ds, recon_ds):
         if var < 0.0:
             var = 0.0
         std = math.sqrt(var)
-
         nrmse = None if std == 0.0 else (rmse / std)
 
         results[str(b)] = {
