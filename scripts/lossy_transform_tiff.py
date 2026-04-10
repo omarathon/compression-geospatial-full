@@ -209,69 +209,6 @@ def median_filter_transform(output_tif, kernel_size, source_creation_opts, src_d
     out_ds = None
 
 
-def bm3d_transform(output_tif, sigma, source_creation_opts, src_ds):
-    try:
-        import bm3d as bm3d_pkg
-    except ImportError as e:
-        raise RuntimeError(
-            "BM3D requires the bm3d package. Install it with: pip install bm3d"
-        ) from e
-
-    if sigma <= 0:
-        raise ValueError("--bm3d-sigma must be > 0")
-
-    out_ds = create_output_dataset(output_tif, src_ds, source_creation_opts)
-
-    for b in range(1, src_ds.RasterCount + 1):
-        sb = src_ds.GetRasterBand(b)
-        db = out_ds.GetRasterBand(b)
-
-        arr = sb.ReadAsArray()
-        if arr is None:
-            raise RuntimeError(f"Failed to read band {b} for BM3D")
-
-        nodata = sb.GetNoDataValue()
-        nodata_mask = None
-        if nodata is not None:
-            nodata_mask = (arr == nodata)
-
-        valid = arr if nodata is None else arr[~nodata_mask]
-        if valid.size == 0:
-            db.WriteArray(arr)
-            continue
-
-        vmin = float(valid.min())
-        vmax = float(valid.max())
-        scale = vmax - vmin
-        if scale <= 0:
-            den = arr.copy()
-            if nodata_mask is not None:
-                den[nodata_mask] = nodata
-            db.WriteArray(den)
-            continue
-
-        arr_norm = (arr.astype(np.float32) - vmin) / scale
-        sigma_norm = float(sigma) / scale
-
-        den_norm = bm3d_pkg.bm3d(arr_norm, sigma_psd=sigma_norm)
-        den = np.rint(den_norm * scale + vmin)
-
-        if np.issubdtype(arr.dtype, np.integer):
-            info = np.iinfo(arr.dtype)
-            den = np.clip(den, info.min, info.max).astype(arr.dtype)
-        else:
-            den = den.astype(arr.dtype, copy=False)
-
-        if nodata_mask is not None:
-            den = den.copy()
-            den[nodata_mask] = nodata
-
-        db.WriteArray(den)
-
-    out_ds.FlushCache()
-    out_ds = None
-
-
 def generate_evenly_spaced_block_windows(xsize, ysize, block_size=256, max_blocks=512):
     nx = math.ceil(xsize / block_size)
     ny = math.ceil(ysize / block_size)
@@ -420,7 +357,7 @@ def dataset_summary(ds):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Raster transform (LERC or median or BM3D) with preserved GTiff layout and sampled per-band stats"
+        description="Raster transform (LERC or median) with preserved GTiff layout and sampled per-band stats"
     )
     parser.add_argument("input", help="Input GeoTIFF")
     parser.add_argument("--output-dir", default=".")
@@ -429,7 +366,6 @@ def main():
     method_group = parser.add_mutually_exclusive_group(required=True)
     method_group.add_argument("--z-errors", nargs="+", type=float, help="LERC round-trip MaxZError values")
     method_group.add_argument("--median-kernel", type=int, help="Odd median kernel size, e.g. 3 or 5")
-    method_group.add_argument("--bm3d-sigma", type=float, help="BM3D sigma in original pixel units")
 
     args = parser.parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
@@ -503,35 +439,6 @@ def main():
             "method": "median",
             "parameter_name": "kernel_size",
             "parameter_value": k,
-            "output_file": os.path.abspath(out_path),
-            "output_summary": dataset_summary(recon_ds),
-            "bands": stats
-        })
-
-        recon_ds = None
-
-    elif args.bm3d_sigma is not None:
-        sigma = args.bm3d_sigma
-        sigma_label = int(sigma) if float(sigma).is_integer() else str(sigma).replace(".", "p")
-        print(f"\n=== Processing BM3D sigma={sigma} ===")
-
-        out_path = os.path.join(
-            args.output_dir,
-            f"{base}_BM3DSigma{sigma_label}.tif"
-        )
-
-        bm3d_transform(out_path, sigma, creation_opts, src_ds)
-
-        recon_ds = gdal.Open(out_path, gdal.GA_ReadOnly)
-        if recon_ds is None:
-            raise RuntimeError(f"Failed to open reconstructed output: {out_path}")
-
-        stats = compute_stats_per_band(src_ds, recon_ds)
-
-        stats_all["results"].append({
-            "method": "bm3d",
-            "parameter_name": "sigma",
-            "parameter_value": sigma,
             "output_file": os.path.abspath(out_path),
             "output_summary": dataset_summary(recon_ds),
             "bands": stats
