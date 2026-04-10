@@ -47,53 +47,6 @@ run_tif() {
     base=$(basename "$tif")
     base="${base%.*}"
 
-    local z
-    for z in "${LERC_Z_ERRORS[@]}"; do
-        local out_tif="$work_dir/${base}_Denoised_MaxZ${z}.tif"
-
-        echo ">>> LERC Z=$z : generating TIFF" >> "$tif_log"
-
-        stdbuf -oL -eL \
-            env "${THREAD_ENV[@]}" \
-            $SCRIPT "$tif" \
-            --z-errors "$z" \
-            --output-dir "$work_dir" \
-            --json-name "stats_lerc_Z${z}.json" \
-            >> "$tif_log" 2>&1
-
-        rc=$?
-        if ((rc != 0)); then
-            echo "ERROR: LERC generation failed (Z=$z)" >> "$tif_log"
-            return "$rc"
-        fi
-
-        local nodata
-        for nodata in "${NODATA_VALUES[@]}"; do
-            {
-                echo
-                echo ">>> BENCH START: tif=$out_tif | method=lerc | Z=$z | nodata=$nodata | normalize=yes"
-            } >> "$tif_log"
-
-            stdbuf -oL -eL \
-                env "${THREAD_ENV[@]}" \
-                "$BENCH" "$out_tif" \
-                -b 256 \
-                -n 4000 \
-                --ordering default morton \
-                --max-nodata-pct "$nodata" \
-                --check-roundtrip \
-                --normalize \
-                >> "$tif_log" 2>&1
-
-            rc=$?
-            echo ">>> RUN END rc=$rc" >> "$tif_log"
-            if ((rc != 0)); then return "$rc"; fi
-        done
-
-        echo ">>> Deleting $out_tif" >> "$tif_log"
-        rm -f "$out_tif"
-    done
-
     local k
     for k in "${MEDIAN_KERNELS[@]}"; do
         local out_tif="$work_dir/${base}_MedianK${k}.tif"
@@ -119,6 +72,53 @@ run_tif() {
             {
                 echo
                 echo ">>> BENCH START: tif=$out_tif | method=median | K=$k | nodata=$nodata | normalize=yes"
+            } >> "$tif_log"
+
+            stdbuf -oL -eL \
+                env "${THREAD_ENV[@]}" \
+                "$BENCH" "$out_tif" \
+                -b 256 \
+                -n 4000 \
+                --ordering default morton \
+                --max-nodata-pct "$nodata" \
+                --check-roundtrip \
+                --normalize \
+                >> "$tif_log" 2>&1
+
+            rc=$?
+            echo ">>> RUN END rc=$rc" >> "$tif_log"
+            if ((rc != 0)); then return "$rc"; fi
+        done
+
+        echo ">>> Deleting $out_tif" >> "$tif_log"
+        rm -f "$out_tif"
+    done
+
+    local z
+    for z in "${LERC_Z_ERRORS[@]}"; do
+        local out_tif="$work_dir/${base}_Denoised_MaxZ${z}.tif"
+
+        echo ">>> LERC Z=$z : generating TIFF" >> "$tif_log"
+
+        stdbuf -oL -eL \
+            env "${THREAD_ENV[@]}" \
+            $SCRIPT "$tif" \
+            --z-errors "$z" \
+            --output-dir "$work_dir" \
+            --json-name "stats_lerc_Z${z}.json" \
+            >> "$tif_log" 2>&1
+
+        rc=$?
+        if ((rc != 0)); then
+            echo "ERROR: LERC generation failed (Z=$z)" >> "$tif_log"
+            return "$rc"
+        fi
+
+        local nodata
+        for nodata in "${NODATA_VALUES[@]}"; do
+            {
+                echo
+                echo ">>> BENCH START: tif=$out_tif | method=lerc | Z=$z | nodata=$nodata | normalize=yes"
             } >> "$tif_log"
 
             stdbuf -oL -eL \
