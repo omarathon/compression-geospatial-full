@@ -7,14 +7,14 @@
 #include "snappy_codecs.h"
 #include "custom_unvec_logic_codecs.h"
 // #include "fastpfor_codecs.h"
-// #include "fastpfor_fused_codecs.h"
+#include "fastpfor_fused_codecs.h"
 #include "generic_codecs.h"
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
 #include "predictive_codecs.h"
 #include "turbopfor_codecs.h"
 // #include "simdcomp_codecs.h"
-// #include "simdcomp_fused_codecs.h"
+#include "simdcomp_fused_codecs.h"
 
 std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 InitLogicalCodecs() {
@@ -50,9 +50,16 @@ InitPhysicalCodecs() {
   codecs.push_back(std::make_unique<TurboPForCodec>(7)); // turbopack
 
   // codecs.push_back(std::make_unique<SimdCompCodec>());
-  // codecs.push_back(std::make_unique<SimdCompFusedCodec>());
+  codecs.push_back(std::make_unique<SimdCompFusedCodec>());
 
   // FastPFor Codecs
+  {
+    CODECFactory fastpfor_codecfactory;
+    auto simdpfor = fastpfor_codecfactory.getFromName("SIMDPFor+VariableByte");
+    codecs.push_back(std::make_unique<FastPForFusedCodec>(simdpfor));
+  }
+
+
   // CODECFactory fastpfor_codecfactory;
   // for (auto& fastpfor_codec : fastpfor_codecfactory.allSchemes()) {
   //   if (fastpfor_codec->name() == "Simple8b_RLE" ||

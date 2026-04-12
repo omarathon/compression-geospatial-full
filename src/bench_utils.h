@@ -260,6 +260,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
         dummy += data[bi];
       }
+      kLinearSumSink = static_cast<int32_t>(dummy);
       break;
     }
     case AccessTransformation::LinearSumSimd: {
@@ -322,6 +323,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
           .count());
 }
 
+static const __m128i kZero = {0, 0};
 
 template <>
 inline std::size_t ApplyAccessTransformation<uint16_t>(
@@ -334,19 +336,19 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
       for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
         dummy += data[bi];
       }
+      kLinearSumSink = static_cast<int32_t>(dummy);
       break;
     }
     case AccessTransformation::LinearSumSimd: {
       int total = static_cast<int>(blockSize * blockSize);
       int i = 0;
       __m128i vsum = _mm_setzero_si128();
-      __m128i zero = _mm_setzero_si128();
       for (; i + 8 <= total; i += 8) {
         __m128i v = _mm_loadu_si128((const __m128i*)&data[i]);
         // Zero-extend uint16 to int32 (unpack with zero), then accumulate.
         // _mm_madd_epi16 treats inputs as signed — wrong for values > 32767.
-        vsum = _mm_add_epi32(vsum, _mm_unpacklo_epi16(v, zero));
-        vsum = _mm_add_epi32(vsum, _mm_unpackhi_epi16(v, zero));
+        vsum = _mm_add_epi32(vsum, _mm_unpacklo_epi16(v, kZero));
+        vsum = _mm_add_epi32(vsum, _mm_unpackhi_epi16(v, kZero));
       }
       vsum = _mm_hadd_epi32(vsum, vsum);
       vsum = _mm_hadd_epi32(vsum, vsum);
