@@ -23,7 +23,7 @@
 static bool gTraceSums = false;
 
 static std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
-BuildAllCodecs() {
+BuildAllCodecsPipeline() {
   auto pool = InitCodecs(/* nonCascaded */ true, nullptr);
   for (auto& c :
        InitCodecs(/* nonCascaded */ false, std::make_unique<DeltaCodec>()))
@@ -544,8 +544,8 @@ int main(int argc, char* argv[]) {
           min = std::min(min, v);
     }
 
-    auto allCodecs_initial = BuildAllCodecs();
-    auto allCodecs_access = BuildAllCodecs();
+    auto allCodecs_initial = BuildAllCodecsPipeline();
+    auto allCodecs_access = BuildAllCodecsPipeline();
     auto baseCodecs = SelectCodecsByName(allCodecs_initial, initialCodecNames);
     auto accessCodecs = SelectCodecsByName(allCodecs_access, accessCodecNames);
 

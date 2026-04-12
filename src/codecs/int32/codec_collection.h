@@ -7,7 +7,7 @@
 #include "snappy_codecs.h"
 #include "custom_unvec_logic_codecs.h"
 // #include "fastpfor_codecs.h"
-// #include "fastpfor_fused_codecs.h"
+#include "fastpfor_fused_codecs.h"
 #include "generic_codecs.h"
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
@@ -53,19 +53,11 @@ InitPhysicalCodecs() {
   // codecs.push_back(std::make_unique<SimdCompFusedCodec>());
 
   // FastPFor Codecs
-  // CODECFactory fastpfor_codecfactory;
-  // for (auto& fastpfor_codec : fastpfor_codecfactory.allSchemes()) {
-  //   if (fastpfor_codec->name() == "Simple8b_RLE" ||
-  //       fastpfor_codec->name() == "Simple9_RLE" ||
-  //       fastpfor_codec->name() == "SimplePFor+VariableByte" ||
-  //       fastpfor_codec->name() == "SIMDGroupSimple+VariableByte" ||
-  //       fastpfor_codec->name() == "SIMDGroupSimple_RingBuf+VariableByte" ||
-  //       fastpfor_codec->name() == "VSEncoding") {
-  //     continue;
-  //   }
-  //   codecs.push_back(std::make_unique<FastPForCodec>(fastpfor_codec));
-  //   codecs.push_back(std::make_unique<FastPForFusedCodec>(fastpfor_codec));
-  // }
+  {
+    CODECFactory fastpfor_codecfactory;
+    auto simdpfor = fastpfor_codecfactory.getFromName("SIMDPFor+VariableByte");
+    codecs.push_back(std::make_unique<FastPForFusedCodec>(simdpfor));
+  }
 
   return codecs;
 }
