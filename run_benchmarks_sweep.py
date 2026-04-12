@@ -16,14 +16,14 @@ GDIR = "/maps/omsst2/diss"
 
 # (filename, blocksize)
 TIFS_32BIT = [
-    ("srtm_45_15.tif",                                     256),
+    # ("srtm_45_15.tif",                                     256),
     ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",  256),
     ("accessibility.tif",                                   64),
     ("slope-srtm_35_11.tif",                                256),
 ]
 
 TIFS_16BIT = [
-    ("srtm_45_15.tif",                                     256),
+    # ("srtm_45_15.tif",                                     256),
     ("JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif",  256),
     ("slope-srtm_35_11.tif",                                256),
 ]
