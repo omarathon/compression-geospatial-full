@@ -260,6 +260,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
         dummy += data[bi];
       }
+      kLinearSumSink = static_cast<int32_t>(dummy);
       break;
     }
     case AccessTransformation::LinearSumSimd: {
@@ -334,6 +335,7 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
       for (std::size_t bi = 0; bi < blockSize * blockSize; bi++) {
         dummy += data[bi];
       }
+      kLinearSumSink = static_cast<int32_t>(dummy);
       break;
     }
     case AccessTransformation::LinearSumSimd: {
