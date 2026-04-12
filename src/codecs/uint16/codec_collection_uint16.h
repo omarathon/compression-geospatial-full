@@ -123,5 +123,7 @@ BuildAllCodecsU16() {
     }
   }
 
+  codecs.push_back(std::make_unique<DirectAccessCodecU16>());
+
   return codecs;
 }
