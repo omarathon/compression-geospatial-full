@@ -64,25 +64,6 @@ run_tif() {
         # --- Benchmark this TIFF ---
         local nodata
         for nodata in "${NODATA_VALUES[@]}"; do
-
-            {
-                echo
-                echo ">>> BENCH START: tif=$out_tif | Z=$z | nodata=$nodata | normalize=no"
-            } >> "$tif_log"
-
-            stdbuf -oL -eL \
-                "$BENCH" "$out_tif" \
-                -b 256 \
-                -n 4000 \
-                --ordering default morton \
-                --max-nodata-pct "$nodata" \
-                --check-roundtrip \
-                >> "$tif_log" 2>&1
-
-            rc=$?
-            echo ">>> RUN END rc=$rc" >> "$tif_log"
-            if ((rc != 0)); then return "$rc"; fi
-
             {
                 echo
                 echo ">>> BENCH START: tif=$out_tif | Z=$z | nodata=$nodata | normalize=yes"
@@ -185,33 +166,33 @@ run_experiment "Zalipynis_2019_Landsat8_B4_Mosaic" \
     /maps/omsst2/diss/papers/zalipynis/2019_landsat_band4_mosaic/exact/landsat8_mosaic_B4.tif &
 pids+=($!)
 
-# run_experiment "Zaytar_2025_Sentinel2" \
-#     /maps/omsst2/diss/papers/zaytar/2025/final/*.tif &
-# pids+=($!)
+run_experiment "Zaytar_2025_Sentinel2" \
+    /maps/omsst2/diss/papers/zaytar/2025/final/*.tif &
+pids+=($!)
 
-# run_experiment "other_landsat8" \
-#     /maps/omsst2/diss/others/landsat8/*.tif &
-# pids+=($!)
+run_experiment "other_landsat8" \
+    /maps/omsst2/diss/others/landsat8/*.tif &
+pids+=($!)
 
-# run_experiment "other_sentinel2" \
-#     /maps/omsst2/diss/others/sentinel2/*.tif &
-# pids+=($!)
+run_experiment "other_sentinel2" \
+    /maps/omsst2/diss/others/sentinel2/*.tif &
+pids+=($!)
 
-# run_experiment "other_srtm_highres" \
-#     /maps/omsst2/diss/others/srtm_highres/*.tif &
-# pids+=($!)
+run_experiment "other_srtm_highres" \
+    /maps/omsst2/diss/others/srtm_highres/*.tif &
+pids+=($!)
 
-# run_experiment "other_etopo1" \
-#     /maps/omsst2/diss/others/etopo1/*.tif &
-# pids+=($!)
+run_experiment "other_etopo1" \
+    /maps/omsst2/diss/others/etopo1/*.tif &
+pids+=($!)
 
-# run_experiment "other_etopo_highres_quant" \
-#     /maps/omsst2/diss/others/etopo_highres_quant/*.tif &
-# pids+=($!)
+run_experiment "other_etopo_highres_quant" \
+    /maps/omsst2/diss/others/etopo_highres_quant/*.tif &
+pids+=($!)
 
-# run_experiment "other_srtm" \
-#     /maps/omsst2/diss/others/srtm/*.tif &
-# pids+=($!)
+run_experiment "other_srtm" \
+    /maps/omsst2/diss/others/srtm/*.tif &
+pids+=($!)
 
 overall_rc=0
 for pid in "${pids[@]}"; do
