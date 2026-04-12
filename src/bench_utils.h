@@ -264,17 +264,20 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
       break;
     }
     case AccessTransformation::LinearSumSimd: {
-      // Explicit SSE SIMD sum — same ISA FastPFor is allowed to use.
+      // Explicit AVX2 SIMD sum — same reduction style as FastPFor decode path.
       int total = static_cast<int>(blockSize * blockSize);
       int i = 0;
-      __m128i vsum = _mm_setzero_si128();
-      for (; i + 4 <= total; i += 4) {
-        __m128i v = _mm_loadu_si128((const __m128i*)&data[i]);
-        vsum = _mm_add_epi32(vsum, v);
+      __m256i vsum = _mm256_setzero_si256();
+      for (; i + 8 <= total; i += 8) {
+        __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
+        vsum = _mm256_add_epi32(vsum, v);
       }
-      vsum = _mm_hadd_epi32(vsum, vsum);
-      vsum = _mm_hadd_epi32(vsum, vsum);
-      kLinearSumSink = _mm_cvtsi128_si32(vsum);
+      __m128i lo = _mm256_castsi256_si128(vsum);
+      __m128i hi = _mm256_extracti128_si256(vsum, 1);
+      __m128i s = _mm_add_epi32(lo, hi);
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1, 0, 3, 2)));
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(2, 3, 0, 1)));
+      kLinearSumSink = _mm_cvtsi128_si32(s);
       for (; i < total; ++i)
         kLinearSumSink += data[i];
       break;
@@ -323,6 +326,7 @@ inline std::size_t ApplyAccessTransformation<int32_t>(
           .count());
 }
 
+static const __m256i kZero = {0, 0, 0, 0};
 
 template <>
 inline std::size_t ApplyAccessTransformation<uint16_t>(
@@ -341,18 +345,20 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
     case AccessTransformation::LinearSumSimd: {
       int total = static_cast<int>(blockSize * blockSize);
       int i = 0;
-      __m128i vsum = _mm_setzero_si128();
-      __m128i zero = _mm_setzero_si128();
-      for (; i + 8 <= total; i += 8) {
-        __m128i v = _mm_loadu_si128((const __m128i*)&data[i]);
+      __m256i vsum = _mm256_setzero_si256();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
         // Zero-extend uint16 to int32 (unpack with zero), then accumulate.
-        // _mm_madd_epi16 treats inputs as signed — wrong for values > 32767.
-        vsum = _mm_add_epi32(vsum, _mm_unpacklo_epi16(v, zero));
-        vsum = _mm_add_epi32(vsum, _mm_unpackhi_epi16(v, zero));
+        // _mm256_madd_epi16 treats inputs as signed — wrong for values > 32767.
+        vsum = _mm256_add_epi32(vsum, _mm256_unpacklo_epi16(v, kZero));
+        vsum = _mm256_add_epi32(vsum, _mm256_unpackhi_epi16(v, kZero));
       }
-      vsum = _mm_hadd_epi32(vsum, vsum);
-      vsum = _mm_hadd_epi32(vsum, vsum);
-      kLinearSumSink = _mm_cvtsi128_si32(vsum);
+      __m128i lo = _mm256_castsi256_si128(vsum);
+      __m128i hi = _mm256_extracti128_si256(vsum, 1);
+      __m128i s = _mm_add_epi32(lo, hi);
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1, 0, 3, 2)));
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(2, 3, 0, 1)));
+      kLinearSumSink = _mm_cvtsi128_si32(s);
       for (; i < total; ++i)
         kLinearSumSink += data[i];
       break;

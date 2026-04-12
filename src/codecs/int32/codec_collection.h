@@ -14,7 +14,7 @@
 #include "predictive_codecs.h"
 #include "turbopfor_codecs.h"
 // #include "simdcomp_codecs.h"
-// #include "simdcomp_fused_codecs.h"
+#include "simdcomp_fused_codecs.h"
 
 std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>
 InitLogicalCodecs() {
@@ -50,13 +50,20 @@ InitPhysicalCodecs() {
   codecs.push_back(std::make_unique<TurboPForCodec>(7)); // turbopack
 
   // codecs.push_back(std::make_unique<SimdCompCodec>());
-  // codecs.push_back(std::make_unique<SimdCompFusedCodec>());
+  codecs.push_back(std::make_unique<SimdCompFusedCodec>());
 
   // FastPFor Codecs
-  {
-    CODECFactory fastpfor_codecfactory;
-    auto simdpfor = fastpfor_codecfactory.getFromName("SIMDPFor+VariableByte");
-    codecs.push_back(std::make_unique<FastPForFusedCodec>(simdpfor));
+  CODECFactory fastpfor_codecfactory;
+  for (auto& fastpfor_codec : fastpfor_codecfactory.allSchemes()) {
+    if (fastpfor_codec->name() == "Simple8b_RLE" ||
+        fastpfor_codec->name() == "Simple9_RLE" ||
+        fastpfor_codec->name() == "SimplePFor+VariableByte" ||
+        fastpfor_codec->name() == "SIMDGroupSimple+VariableByte" ||
+        fastpfor_codec->name() == "SIMDGroupSimple_RingBuf+VariableByte" ||
+        fastpfor_codec->name() == "VSEncoding") {
+      continue;
+    }
+    codecs.push_back(std::make_unique<FastPForFusedCodec>(fastpfor_codec));
   }
 
   return codecs;
