@@ -16,17 +16,17 @@ class SimdCompFusedCodec : public StatefulIntegerCodec<int32_t> {
   uint32_t b;
 
   void EncodeArray(const int32_t *in, const size_t length) override {
-    __m128i *endofbuf =
+    __m256i *endofbuf =
         simdpack_length(reinterpret_cast<const uint32_t *>(in), length,
-                        (__m128i *)compressed.data(), b);
+                        (__m256i *)compressed.data(), b);
     int howmanybytes =
-        (endofbuf - (__m128i *)compressed.data()) * sizeof(__m128i);
+        (endofbuf - (__m256i *)compressed.data()) * sizeof(__m256i);
     compressed.resize(howmanybytes);
   }
 
   void DecodeArray(int32_t *out, const std::size_t length) override {
     uint64_t checksum = 0;
-    simdunpack_length((const __m128i *)compressed.data(), length,
+    simdunpack_length((const __m256i *)compressed.data(), length,
                       reinterpret_cast<uint32_t *>(out), b, &checksum);
     out[length]     = static_cast<int32_t>(checksum & 0xFFFFFFFF);
     out[length + 1] = static_cast<int32_t>(checksum >> 32);

@@ -12,7 +12,7 @@
 #include "direct_codec_uint16.h"
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
-// #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_fused_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 
 #include "custom_vec_logic_codecs.h"
@@ -54,7 +54,7 @@ InitLogicalCodecsU16() {
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
-  // codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack

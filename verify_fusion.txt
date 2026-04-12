@@ -1,0 +1,87 @@
+FastPFor:::
+
+16-bit::
+
+JRC_TMF:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums
+simd sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSumSimd   --pattern linear   --ordering default   --trace-sums
+fused sum (FastPFor)
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "FastPFor_fused_SIMDPFor+VariableByte"   --acodec "FastPFor_fused_SIMDPFor+VariableByte"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums
+
+srtm:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums
+simd sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSumSimd   --pattern linear   --ordering default   --trace-sums
+fused sum (FastPFor)
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "FastPFor_fused_SIMDPFor+VariableByte"   --acodec "FastPFor_fused_SIMDPFor+VariableByte"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums
+
+
+============
+
+32-bit::
+
+JRC_TMF:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+simd sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSumSimd   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+fused sum (FastPFor)
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "FastPFor_fused_SIMDPFor+VariableByte"   --acodec "FastPFor_fused_SIMDPFor+VariableByte"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+
+srtm:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+simd sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSumSimd   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+fused sum (FastPFor)
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "FastPFor_fused_SIMDPFor+VariableByte"   --acodec "FastPFor_fused_SIMDPFor+VariableByte"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+
+
+
+simdcomp:::
+
+16-bit::
+
+JRC_TMF:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums
+fused sum (simdcomp)
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "simdcomp"   --acodec "simdcomp"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums
+
+srtm:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums
+fused sum (simdcomp)
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "simdcomp_fused"   --acodec "simdcomp_fused"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums
+
+
+============
+
+32-bit::
+
+JRC_TMF:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+fused sum (simdcomp)
+./build/bench_pipeline /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif  -b 256 -n 2000 -r 1   --icodec "simdcomp_fused"   --acodec "simdcomp_fused"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+
+srtm:
+
+direct sum
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+fused sum (simdcomp)
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 2000 -r 1   --icodec "simdcomp_fused"   --acodec "simdcomp_fused"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums --force-int32 &> out.txt
+
+
+
+ALL GOOD! MATCHING
