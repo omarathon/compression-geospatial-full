@@ -5,6 +5,7 @@
 #include <memory>
 #include <format>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <string>
 #include <type_traits>
@@ -43,7 +44,8 @@ SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
                     int blockSize, int numBlocks,
                     std::unique_ptr<StatefulIntegerCodec<int32_t>> baseCodec,
                     int32_t min, bool hasNoData, int32_t nodata32,
-                    Transformation transformation, Ordering ordering) {
+                    Transformation transformation, Ordering ordering,
+                    bool normalize, int32_t globalGCD) {
   int blocksInWidth = rasterWidth / blockSize;
   int blocksInHeight = rasterHeight / blockSize;
 
@@ -58,7 +60,15 @@ SplitIntoFullBlocks(GDALRasterBand* band, int rasterWidth, int rasterHeight,
                        blockData.data(), blockSize, blockSize, GDT_Int32, 0, 0);
     if (err != CE_None)
       throw std::runtime_error("Error reading raster block data");
-    if (min < 0) {
+    if (normalize) {
+      for (auto& v : blockData) {
+        if (hasNoData && v == nodata32)
+          v = 0;
+        else
+          v = static_cast<int32_t>(
+              (static_cast<int64_t>(v) - static_cast<int64_t>(min)) / globalGCD);
+      }
+    } else if (min < 0) {
       int32_t shift = -min;
       for (auto& v : blockData) {
         if (hasNoData && v == nodata32)
@@ -162,12 +172,13 @@ static void RunOneCombination(
     bool hasNoData, int32_t nodata32,
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<int32_t>& baseCodec,
-    StatefulIntegerCodec<int32_t>& accessCodec) {
+    StatefulIntegerCodec<int32_t>& accessCodec,
+    bool normalize, int32_t globalGCD) {
   std::cout << "**BENCHMARK ACCESS**\n";
-  std::cout << std::format("file={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={}",
-               filePath, blockSize, numBlocks, numReps,
+               filePath, band->GetBand(), blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
                ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
@@ -183,7 +194,7 @@ static void RunOneCombination(
     auto codecGrid =
         SplitIntoFullBlocks(band, nXSize, nYSize, blockSize, numBlocks,
                              std::move(expBase), min, hasNoData, nodata32,
-                             combo.initTrans, combo.ordering);
+                             combo.initTrans, combo.ordering, normalize, globalGCD);
     if (codecGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID.\n";
       return;
@@ -210,7 +221,8 @@ static void RunAllBenchmarks(
     const std::vector<std::string>& orderings,
     const std::vector<std::string>& initialTransformations,
     const std::vector<std::string>& accessTransformations,
-    const std::vector<std::string>& sampleAccessPatterns) {
+    const std::vector<std::string>& sampleAccessPatterns,
+    bool normalize, int32_t globalGCD) {
   std::vector<BenchCombo> combos;
   for (auto& o : orderings)
     for (auto& it : initialTransformations)
@@ -225,7 +237,7 @@ static void RunAllBenchmarks(
           RunOneCombination(band, nXSize, nYSize, filePath, blockSize,
                             numBlocks, numReps, min, hasNoData, nodata32,
                             combo, ParseAccessPattern(pattern), *baseCodec,
-                            *accessCodec);
+                            *accessCodec, normalize, globalGCD);
 }
 
 // ── uint16 pipeline ─────────────────────────────────────────────────────────
@@ -235,7 +247,8 @@ SplitIntoFullBlocksU16(GDALRasterBand* band, int rasterWidth, int rasterHeight,
                        int blockSize, int numBlocks,
                        std::unique_ptr<StatefulIntegerCodec<uint16_t>> baseCodec,
                        int16_t minShift, bool hasNoData, int16_t nodata16,
-                       uint16_t nodataU16) {
+                       uint16_t nodataU16,
+                       bool normalize, uint16_t normMinU16, uint16_t normGCDU16) {
   int blocksInWidth = rasterWidth / blockSize;
   int blocksInHeight = rasterHeight / blockSize;
 
@@ -269,6 +282,14 @@ SplitIntoFullBlocksU16(GDALRasterBand* band, int rasterWidth, int rasterHeight,
       if (hasNoData) {
         for (auto& v : blockData)
           if (v == nodataU16) v = 0;
+      }
+    }
+
+    if (normalize) {
+      for (auto& v : blockData) {
+        if (v == 0) continue;  // nodata sentinel, leave as 0
+        v = static_cast<uint16_t>(
+            (static_cast<uint32_t>(v) - static_cast<uint32_t>(normMinU16)) / normGCDU16);
       }
     }
 
@@ -355,12 +376,13 @@ static void RunOneCombinationU16(
     bool hasNoData, int16_t nodata16, uint16_t nodataU16,
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<uint16_t>& baseCodec,
-    StatefulIntegerCodec<uint16_t>& accessCodec) {
+    StatefulIntegerCodec<uint16_t>& accessCodec,
+    bool normalize, uint16_t normMinU16, uint16_t normGCDU16) {
   std::cout << "**BENCHMARK ACCESS**\n";
-  std::cout << std::format("file={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={}",
-               filePath, blockSize, numBlocks, numReps,
+               filePath, band->GetBand(), blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
                ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
@@ -376,7 +398,7 @@ static void RunOneCombinationU16(
     auto codecGrid =
         SplitIntoFullBlocksU16(band, nXSize, nYSize, blockSize, numBlocks,
                                std::move(expBase), minShift, hasNoData, nodata16,
-                               nodataU16);
+                               nodataU16, normalize, normMinU16, normGCDU16);
     if (codecGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID.\n";
       return;
@@ -403,7 +425,8 @@ static void RunAllBenchmarksU16(
     const std::vector<std::string>& orderings,
     const std::vector<std::string>& initialTransformations,
     const std::vector<std::string>& accessTransformations,
-    const std::vector<std::string>& sampleAccessPatterns) {
+    const std::vector<std::string>& sampleAccessPatterns,
+    bool normalize, uint16_t normMinU16, uint16_t normGCDU16) {
   std::vector<BenchCombo> combos;
   for (auto& o : orderings)
     for (auto& it : initialTransformations)
@@ -419,7 +442,7 @@ static void RunAllBenchmarksU16(
                               numBlocks, numReps, minShift,
                               hasNoData, nodata16, nodataU16, combo,
                               ParseAccessPattern(pattern), *baseCodec,
-                              *accessCodec);
+                              *accessCodec, normalize, normMinU16, normGCDU16);
 }
 
 int main(int argc, char* argv[]) {
@@ -435,6 +458,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> accessTransformations = {"linearXOR"};
   bool forceInt32 = false;
   bool traceSums = false;
+  bool normalize = false;
 
   app.add_option("file", filePath, "GeoTIFF file path")->required();
   app.add_option("--blocksize,-b", blockSize, "Block side length in pixels")
@@ -460,6 +484,8 @@ int main(int argc, char* argv[]) {
                  "IndexBasedClassification|ValueBasedClassification|ValueShift");
   app.add_flag("--force-int32", forceInt32, "Force int32 pipeline for any raster type");
   app.add_flag("--trace-sums", traceSums, "Print per-block sums for verification");
+  app.add_flag("--normalize", normalize,
+               "Normalize blocks: subtract global min, divide by global GCD");
 
   CLI11_PARSE(app, argc, argv);
   gTraceSums = traceSums;
@@ -475,7 +501,9 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  GDALRasterBand* band = dataset->GetRasterBand(1);
+  int nBands = dataset->GetRasterCount();
+  for (int bandIdx = 1; bandIdx <= nBands; bandIdx++) {
+  GDALRasterBand* band = dataset->GetRasterBand(bandIdx);
   int nXSize = band->GetXSize();
   int nYSize = band->GetYSize();
   GDALDataType dt = band->GetRasterDataType();
@@ -498,6 +526,9 @@ int main(int argc, char* argv[]) {
     uint16_t nodataU16 = hasNoData ? static_cast<uint16_t>(rawNoData) : 0;
 
     int16_t minShift = 0;
+    uint16_t normMinU16 = 0;
+    uint16_t normGCDU16 = 1;
+
     if (dt == GDT_Int16) {
       // Compute min excluding nodata
       int16_t min16 = std::numeric_limits<int16_t>::max();
@@ -512,6 +543,52 @@ int main(int argc, char* argv[]) {
             min16 = std::min(min16, v);
       }
       minShift = min16;
+      // normMinU16 = 0: post-shift non-nodata values have min 0
+
+      if (normalize && min16 < std::numeric_limits<int16_t>::max()) {
+        uint32_t gcdAcc = 0;
+        for (auto& offset : SampleBlockOffsets(nXSize / blockSize,
+                                                nYSize / blockSize, blockSize,
+                                                numBlocks)) {
+          std::vector<int16_t> tmp(blockSize * blockSize);
+          band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
+                         tmp.data(), blockSize, blockSize, GDT_Int16, 0, 0);
+          for (auto v : tmp)
+            if (!hasNoData || v != nodata16)
+              gcdAcc = std::gcd(gcdAcc,
+                  static_cast<uint32_t>(static_cast<int32_t>(v) - minShift));
+        }
+        normGCDU16 = gcdAcc > 0 ? static_cast<uint16_t>(gcdAcc) : 1;
+      }
+    } else if (normalize) {
+      // UInt16: scan for normMin then normGCD
+      uint16_t minU16 = std::numeric_limits<uint16_t>::max();
+      for (auto& offset : SampleBlockOffsets(nXSize / blockSize,
+                                              nYSize / blockSize, blockSize,
+                                              numBlocks)) {
+        std::vector<uint16_t> tmp(blockSize * blockSize);
+        band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
+                       tmp.data(), blockSize, blockSize, GDT_UInt16, 0, 0);
+        for (auto v : tmp)
+          if (!hasNoData || v != nodataU16)
+            minU16 = std::min(minU16, v);
+      }
+      if (minU16 < std::numeric_limits<uint16_t>::max()) {
+        normMinU16 = minU16;
+        uint32_t gcdAcc = 0;
+        for (auto& offset : SampleBlockOffsets(nXSize / blockSize,
+                                                nYSize / blockSize, blockSize,
+                                                numBlocks)) {
+          std::vector<uint16_t> tmp(blockSize * blockSize);
+          band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
+                         tmp.data(), blockSize, blockSize, GDT_UInt16, 0, 0);
+          for (auto v : tmp)
+            if (!hasNoData || v != nodataU16)
+              gcdAcc = std::gcd(gcdAcc,
+                  static_cast<uint32_t>(v) - static_cast<uint32_t>(normMinU16));
+        }
+        normGCDU16 = gcdAcc > 0 ? static_cast<uint16_t>(gcdAcc) : 1;
+      }
     }
 
     auto allCodecsU16_initial = BuildAllCodecsU16();
@@ -525,7 +602,7 @@ int main(int argc, char* argv[]) {
                         numBlocks, numReps, minShift, hasNoData != 0, nodata16,
                         nodataU16, baseCodecs, accessCodecs, orderings,
                         initialTransformations, accessTransformations,
-                        sampleAccessPatterns);
+                        sampleAccessPatterns, normalize, normMinU16, normGCDU16);
   } else {
     // ── int32 path (existing) ─────────────────────────────────────────────
     int hasNoData32 = 0;
@@ -544,6 +621,23 @@ int main(int argc, char* argv[]) {
           min = std::min(min, v);
     }
 
+    int32_t globalGCD = 1;
+    if (normalize && min < std::numeric_limits<int32_t>::max()) {
+      uint64_t gcdAcc = 0;
+      for (auto& offset : SampleBlockOffsets(nXSize / blockSize,
+                                              nYSize / blockSize, blockSize,
+                                              numBlocks)) {
+        std::vector<int32_t> tmp(blockSize * blockSize);
+        band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
+                       tmp.data(), blockSize, blockSize, GDT_Int32, 0, 0);
+        for (auto v : tmp)
+          if (!hasNoData32 || v != nodata32)
+            gcdAcc = std::gcd(gcdAcc, static_cast<uint64_t>(
+                                  static_cast<int64_t>(v) - static_cast<int64_t>(min)));
+      }
+      globalGCD = gcdAcc > 0 ? static_cast<int32_t>(gcdAcc) : 1;
+    }
+
     auto allCodecs_initial = BuildAllCodecsPipeline();
     auto allCodecs_access = BuildAllCodecsPipeline();
     auto baseCodecs = SelectCodecsByName(allCodecs_initial, initialCodecNames);
@@ -553,9 +647,10 @@ int main(int argc, char* argv[]) {
                      numBlocks, numReps, min, hasNoData32 != 0, nodata32,
                      baseCodecs, accessCodecs, orderings,
                      initialTransformations, accessTransformations,
-                     sampleAccessPatterns);
+                     sampleAccessPatterns, normalize, globalGCD);
   }
 
+  } // bandIdx loop
   GDALClose(dataset);
   return 0;
 }
