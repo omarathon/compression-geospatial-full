@@ -9,6 +9,7 @@
 #include "generic_codecs.h"
 #include "predictive_codecs_u16.h"  // ZigzagEnc16 / ZigzagDec16
 #include "FastPFor/headers/compositecodec_u16.h"
+#include "delta_scratch_u16.h"
 
 class FastPForFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  private:
@@ -78,24 +79,21 @@ class FastPForFusedCorrectedDeltaLocalCodecU16
     : public StatefulIntegerCodec<uint16_t> {
  private:
   FastPForLib::CompositeCodecU16 codec;
-  std::vector<uint16_t> scratch;  // delta+zigzag pre-pass buffer
 
  public:
   std::vector<uint32_t> compressed;
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    // Scalar pre-pass: prev resets every 16 elements; anchor (offset%16 == 0)
-    // is encoded as zigzag(in[i] - 0) = zigzag(in[i]).
-    scratch.resize(length);
+    // Scalar pre-pass into shared thread-local scratch (no heap alloc).
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       if ((i & 15) == 0) prev = 0;
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
     size_t compressed_size = compressed.size();
-    codec.encodeArray(scratch.data(), length, compressed.data(),
+    codec.encodeArray(s_delta_scratch, length, compressed.data(),
                       compressed_size);
     compressed.resize(compressed_size);
     compressed.shrink_to_fit();
@@ -129,8 +127,6 @@ class FastPForFusedCorrectedDeltaLocalCodecU16
   void clear() override {
     compressed.clear();
     compressed.shrink_to_fit();
-    scratch.clear();
-    scratch.shrink_to_fit();
   }
 
   std::vector<uint16_t>& GetEncoded() override {
@@ -146,21 +142,19 @@ class FastPForFusedCorrectedDeltaCarryCodecU16
     : public StatefulIntegerCodec<uint16_t> {
  private:
   FastPForLib::CompositeCodecU16 codec;
-  std::vector<uint16_t> scratch;
 
  public:
   std::vector<uint32_t> compressed;
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    scratch.resize(length);
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
     size_t compressed_size = compressed.size();
-    codec.encodeArray(scratch.data(), length, compressed.data(),
+    codec.encodeArray(s_delta_scratch, length, compressed.data(),
                       compressed_size);
     compressed.resize(compressed_size);
     compressed.shrink_to_fit();
@@ -194,8 +188,6 @@ class FastPForFusedCorrectedDeltaCarryCodecU16
   void clear() override {
     compressed.clear();
     compressed.shrink_to_fit();
-    scratch.clear();
-    scratch.shrink_to_fit();
   }
 
   std::vector<uint16_t>& GetEncoded() override {
