@@ -4,7 +4,7 @@
 
 set -u
 
-TIF=/home/omar/diss/geotiffs/srtm_45_15.tif
+TIF=/home/omar/diss/geotiffs/slope-srtm_35_11.tif
 COMMON_ARGS="-b 256 -n 4000 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
 
 # tag         atrans          codec
