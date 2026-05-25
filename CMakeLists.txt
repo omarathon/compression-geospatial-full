@@ -166,6 +166,10 @@ add_executable(test_uint8_codecs_server tests/test_uint8_codecs_server.cpp)
 target_include_directories(test_uint8_codecs_server PRIVATE ${EXTRA_INCLUDES})
 target_link_libraries(test_uint8_codecs_server PRIVATE GTest::gtest_main)
 
+add_executable(test_fused_codecs tests/test_fused_codecs.cpp)
+target_include_directories(test_fused_codecs PRIVATE ${EXTRA_INCLUDES})
+target_link_libraries(test_fused_codecs PRIVATE ${CODEC_LIBS} GTest::gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_comp)
 gtest_discover_tests(test_remappings)
@@ -174,6 +178,7 @@ gtest_discover_tests(test_uint16_codecs)
 gtest_discover_tests(test_int32_codecs_server)
 gtest_discover_tests(test_uint16_codecs_server)
 gtest_discover_tests(test_uint8_codecs_server)
+gtest_discover_tests(test_fused_codecs)
 
 # ── Benchmark executables ─────────────────────────────────────────────────────
 add_executable(bench_comp bench/bench_comp.cpp)
