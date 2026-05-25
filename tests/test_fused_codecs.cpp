@@ -197,3 +197,131 @@ TEST_F(FusedSumTest, FastPForFusedCorrected_FixedBlock) {
   FastPForFusedCorrectedCodecU16 c;
   CheckFusedSum(MakeLargeFixed(), c);
 }
+
+// ── SimdComp fused delta-local ────────────────────────────────────────────────
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaLocal_Zeros) {
+  SimdCompFusedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaLocal_Constant) {
+  SimdCompFusedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaLocal_Sequential) {
+  SimdCompFusedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaLocal_Random) {
+  SimdCompFusedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaLocal_FixedBlock) {
+  SimdCompFusedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── SimdComp fused delta-carry ────────────────────────────────────────────────
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_Zeros) {
+  SimdCompFusedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_Constant) {
+  SimdCompFusedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_Sequential) {
+  SimdCompFusedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_Random) {
+  SimdCompFusedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_FixedBlock) {
+  SimdCompFusedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── FastPFor fused corrected delta-local ──────────────────────────────────────
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Zeros) {
+  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Constant) {
+  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Sequential) {
+  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Random) {
+  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_FixedBlock) {
+  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── FastPFor fused corrected delta-carry ──────────────────────────────────────
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Zeros) {
+  FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Constant) {
+  FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Sequential) {
+  FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Random) {
+  FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_FixedBlock) {
+  FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
