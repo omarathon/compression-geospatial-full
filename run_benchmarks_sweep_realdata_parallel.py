@@ -129,7 +129,15 @@ def run_one(tif_path, blocksize, numblocks, codec, atrans, force_int32=False,
     ]
     if force_int32:
         cmd.append("--force-int32")
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    # Prevent GDAL, OpenMP, or any transitively-linked threading library from
+    # spawning extra threads that would escape taskset pinning and compete with
+    # other workers for cache / CPU time.
+    env = os.environ.copy()
+    env["OMP_NUM_THREADS"] = "1"
+    env["GDAL_NUM_THREADS"] = "1"
+    env["OPENBLAS_NUM_THREADS"] = "1"
+    env["MKL_NUM_THREADS"] = "1"
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
     out = proc.stdout + proc.stderr
 
     rss = re.search(r"Maximum resident set size \(kbytes\):\s*(\d+)", out)

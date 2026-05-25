@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdio>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -52,6 +53,14 @@ static void CheckFusedSum(const std::vector<uint16_t>& data,
 // All-zero block – trivial but exercises the codec path.
 static std::vector<uint16_t> MakeZeros(size_t n) {
   return std::vector<uint16_t>(n, 0);
+}
+
+// Period-16 sawtooth: [0,1,...,15, 0,1,...,15, …].
+// Best-case for delta-LOCAL (anchors delta from 0 = 0; intra-window deltas = 1).
+static std::vector<uint16_t> MakeSawtooth16(size_t n) {
+  std::vector<uint16_t> v(n);
+  for (size_t i = 0; i < n; ++i) v[i] = static_cast<uint16_t>(i & 15);
+  return v;
 }
 
 // Constant block (all same value).
@@ -324,4 +333,87 @@ TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Random) {
 TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_FixedBlock) {
   FastPForFusedCorrectedDeltaCarryCodecU16 c;
   CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── Compression-ratio tests ───────────────────────────────────────────────────
+//
+// Verify that the delta variants actually achieve better compression than the
+// non-delta baseline on data that clearly favours delta coding.
+//
+// simdcomp uses maxbits of the transformed stream, so:
+//   • CARRY on [0,1,...,n-1]: transform = [zigzag(0), zigzag(1), zigzag(1), ...]
+//     = [0, 2, 2, ...] → maxbits=2  (non-delta: max=n-1 → 10 bits for n=1024)
+//   • LOCAL on sawtooth [0..15]: every anchor sees in[16k]=0, delta=0, zigzag=0;
+//     intra-window delta=1, zigzag=2 → maxbits=2  (non-delta: max=15 → 4 bits)
+//
+// PFor is exception-based so [0,1,...,n-1] works for LOCAL too:
+// ~64 anchor exceptions vs 960 values of zigzag=2 << 10-bit non-delta.
+
+static void CheckCompressionRatio(const std::vector<uint16_t>& data,
+                                  StatefulIntegerCodec<uint16_t>& base,
+                                  StatefulIntegerCodec<uint16_t>& delta) {
+  base.clear();
+  base.AllocEncoded(data.data(), data.size());
+  base.EncodeArray(data.data(), data.size());
+  const size_t base_bytes = base.EncodedNumValues() * base.EncodedSizeValue();
+  base.clear();
+
+  delta.clear();
+  delta.AllocEncoded(data.data(), data.size());
+  delta.EncodeArray(data.data(), data.size());
+  const size_t delta_bytes = delta.EncodedNumValues() * delta.EncodedSizeValue();
+  delta.clear();
+
+  const size_t uncompressed_bytes = data.size() * sizeof(uint16_t);
+  std::printf("  %-52s  %5zu B  (%.2f bpv)\n",
+              base.name().c_str(), base_bytes,
+              8.0 * base_bytes / data.size());
+  std::printf("  %-52s  %5zu B  (%.2f bpv)  ratio vs base: %.2fx\n",
+              delta.name().c_str(), delta_bytes,
+              8.0 * delta_bytes / data.size(),
+              static_cast<double>(base_bytes) / delta_bytes);
+  std::printf("  uncompressed: %zu B  (%.2f bpv)\n\n",
+              uncompressed_bytes, 8.0 * uncompressed_bytes / data.size());
+
+  EXPECT_LT(delta_bytes, base_bytes)
+      << delta.name() << " should compress " << data.size()
+      << " elements to fewer bytes than " << base.name()
+      << " (delta=" << delta_bytes << " B  base=" << base_bytes << " B)";
+}
+
+class CompressionRatioTest : public ::testing::Test {
+ protected:
+  static constexpr size_t kN = 1024;
+};
+
+// simdcomp CARRY: sequential [0..1023], delta→maxbits=2 vs base→maxbits=10.
+TEST_F(CompressionRatioTest, SimdCompCarry_BetterThanBase_Sequential) {
+  SimdCompFusedCodecU16 base;
+  SimdCompFusedDeltaCarryCodecU16 delta;
+  CheckCompressionRatio(MakeSequential(kN), base, delta);
+}
+
+// simdcomp LOCAL: sawtooth [0..15], delta→maxbits=2 vs base→maxbits=4.
+TEST_F(CompressionRatioTest, SimdCompLocal_BetterThanBase_Sawtooth16) {
+  SimdCompFusedCodecU16 base;
+  SimdCompFusedDeltaLocalCodecU16 delta;
+  CheckCompressionRatio(MakeSawtooth16(kN), base, delta);
+}
+
+// PFor CARRY: sequential [0..1023], delta→2-bit base, 0 exceptions.
+TEST_F(CompressionRatioTest, PForCarry_BetterThanBase_Sequential) {
+  FastPForFusedCorrectedCodecU16 base;
+  FastPForFusedCorrectedDeltaCarryCodecU16 delta;
+  CheckCompressionRatio(MakeSequential(kN), base, delta);
+}
+
+// PFor LOCAL: sawtooth [0..15] repeated.
+// Non-delta: 4-bit base, 0 exceptions.  LOCAL: 2-bit base, 0 exceptions → 2x better.
+// (Sequential data does NOT work for LOCAL: anchor deltas grow to zigzag(1008)=2016
+//  and PFor's exception overhead for 64 non-uniform anchors exceeds the 2-bit base
+//  savings. LOCAL is designed for windowed/banded data, not globally sequential.)
+TEST_F(CompressionRatioTest, PForLocal_BetterThanBase_Sawtooth16) {
+  FastPForFusedCorrectedCodecU16 base;
+  FastPForFusedCorrectedDeltaLocalCodecU16 delta;
+  CheckCompressionRatio(MakeSawtooth16(kN), base, delta);
 }

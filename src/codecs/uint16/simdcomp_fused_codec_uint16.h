@@ -8,6 +8,7 @@
 #include "generic_codecs.h"
 #include "predictive_codecs_u16.h"  // ZigzagEnc16
 #include "simdcomp.h"
+#include "delta_scratch_u16.h"
 
 class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  public:
@@ -74,23 +75,19 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
 //        carry __m256i across OutRegs and blocks, scalar tail seeds from it.
 
 class SimdCompFusedDeltaLocalCodecU16 : public StatefulIntegerCodec<uint16_t> {
- private:
-  std::vector<uint16_t> scratch;
-
  public:
   std::vector<uint8_t> compressed;
   uint32_t b;
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    scratch.resize(length);
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       if ((i & 15) == 0) prev = 0;
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
-    __m256i* endofbuf = simdpack_length_u16(scratch.data(), length,
+    __m256i* endofbuf = simdpack_length_u16(s_delta_scratch, length,
                                              (__m256i*)compressed.data(), b);
     int howmanybytes =
         (endofbuf - (__m256i*)compressed.data()) * sizeof(__m256i);
@@ -118,26 +115,21 @@ class SimdCompFusedDeltaLocalCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {
-    // The bit-width is determined by the maxbits of the TRANSFORMED stream,
-    // not the raw input. Compute the transform here to size the buffer
-    // correctly; the encoder will redo it (cheap scalar pre-pass).
-    scratch.resize(length);
+    // Bit-width is determined by maxbits of the TRANSFORMED stream.
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       if ((i & 15) == 0) prev = 0;
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
-    b = maxbits_length_u16(scratch.data(), length);
+    b = maxbits_length_u16(s_delta_scratch, length);
     compressed.resize(simdpack_compressedbytes_u16(length, b));
   };
 
   void clear() override {
     compressed.clear();
     compressed.shrink_to_fit();
-    scratch.clear();
-    scratch.shrink_to_fit();
   }
 
   std::vector<uint16_t>& GetEncoded() override {
@@ -147,22 +139,18 @@ class SimdCompFusedDeltaLocalCodecU16 : public StatefulIntegerCodec<uint16_t> {
 };
 
 class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
- private:
-  std::vector<uint16_t> scratch;
-
  public:
   std::vector<uint8_t> compressed;
   uint32_t b;
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    scratch.resize(length);
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
-    __m256i* endofbuf = simdpack_length_u16(scratch.data(), length,
+    __m256i* endofbuf = simdpack_length_u16(s_delta_scratch, length,
                                              (__m256i*)compressed.data(), b);
     int howmanybytes =
         (endofbuf - (__m256i*)compressed.data()) * sizeof(__m256i);
@@ -190,22 +178,19 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {
-    scratch.resize(length);
     uint16_t prev = 0;
     for (size_t i = 0; i < length; ++i) {
       const uint16_t delta = static_cast<uint16_t>(in[i] - prev);
-      scratch[i] = ZigzagEnc16(delta);
+      s_delta_scratch[i] = ZigzagEnc16(delta);
       prev = in[i];
     }
-    b = maxbits_length_u16(scratch.data(), length);
+    b = maxbits_length_u16(s_delta_scratch, length);
     compressed.resize(simdpack_compressedbytes_u16(length, b));
   };
 
   void clear() override {
     compressed.clear();
     compressed.shrink_to_fit();
-    scratch.clear();
-    scratch.shrink_to_fit();
   }
 
   std::vector<uint16_t>& GetEncoded() override {
