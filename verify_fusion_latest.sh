@@ -1,0 +1,52 @@
+#!/bin/bash
+# Verify fused codecs produce the same per-block TRACE sums as the unfused base.
+# Usage: ./verify_fusion_latest.sh
+
+set -u
+
+TIF=/home/omar/diss/geotiffs/srtm_45_15.tif
+COMMON_ARGS="-b 256 -n 4000 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
+
+# tag         atrans          codec
+# (tag is used for filenames + echo; codec is what gets passed as --icodec/--acodec)
+RUNS=(
+  "base       linearSum       custom_direct_access"
+  "simdcomp   linearSumFused  simdcomp_fused"
+  "pfor       linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
+  "pfor_new   linearSumFused  FastPFor_fused_corrected_SIMDPFor+VariableByte"
+  "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
+  "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
+  "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
+  "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
+)
+
+run_one() {
+  local tag=$1 atrans=$2 codec=$3
+  echo ">>> $tag ($codec)"
+  ./build/bench_pipeline "$TIF" $COMMON_ARGS \
+    --icodec "$codec" --acodec "$codec" --atrans "$atrans" \
+    > "out_${tag}.txt" 2>&1
+  grep "^TRACE" "out_${tag}.txt" > "out_${tag}_trace.txt"
+}
+
+for entry in "${RUNS[@]}"; do
+  # shellcheck disable=SC2086
+  run_one $entry
+done
+
+echo
+echo "=== diffs vs base ==="
+fail=0
+for entry in "${RUNS[@]}"; do
+  tag=${entry%% *}
+  [ "$tag" = "base" ] && continue
+  if diff -q "out_base_trace.txt" "out_${tag}_trace.txt" > /dev/null; then
+    echo "  OK   $tag"
+  else
+    echo "  FAIL $tag"
+    diff "out_base_trace.txt" "out_${tag}_trace.txt" | head -20
+    fail=1
+  fi
+done
+
+exit $fail

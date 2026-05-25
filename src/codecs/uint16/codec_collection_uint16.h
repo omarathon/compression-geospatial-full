@@ -55,8 +55,12 @@ inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
 
