@@ -45,16 +45,17 @@ COLLECTIONS = [
     # ("other_srtm",                          256, [f"{DISS}/others/srtm/*.tif"],                                                                                      [16]),
     ("other_worldcover",                    256, [f"{DISS}/others/worldcover/*.tif"],                                                                                [16]),
     # # original sweep datasets
-    # ("srtm_45_15",                          256, [f"{DISS}/srtm_45_15.tif"],                                                                                        [16]),
-    # ("JRC_TMF",                             256, [f"{DISS}/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif"],                                                      [16]),
-    # ("accessibility",                        64, [f"{DISS}/accessibility.tif"],                                                                                      [32]),
-    # ("slope_srtm",                          256, [f"{DISS}/slope-srtm_35_11.tif"],                                                                                   [32]),
+    ("srtm_45_15",                          256, [f"{DISS}/srtm_45_15.tif"],                                                                                        [16]),
+    ("JRC_TMF",                             256, [f"{DISS}/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif"],                                                      [16]),
+    ("accessibility",                        64, [f"{DISS}/accessibility.tif"],                                                                                      [32]),
+    ("slope_srtm",                          256, [f"{DISS}/slope-srtm_35_11.tif"],                                                                                   [32]),
 ]
 
 CODECS = [
-    ("custom_direct_access",                 "linearSumSimd"),
-    ("simdcomp_fused",                       "linearSumFused"),
-    ("FastPFor_fused_SIMDPFor+VariableByte",  "linearSumFused"),
+    ("custom_direct_access",                            "linearSumSimd"),
+    # ("simdcomp_fused",                                  "linearSumFused"),
+    ("FastPFor_fused_SIMDPFor+VariableByte",             "linearSumFused"),
+    ("FastPFor_fused_corrected_SIMDPFor+VariableByte",   "linearSumFused"),
 ]
 
 # Theoretical uncompressed RSS thresholds

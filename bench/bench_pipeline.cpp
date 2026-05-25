@@ -177,11 +177,11 @@ static void RunOneCombination(
   std::cout << "**BENCHMARK ACCESS**\n";
   std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
-               "sampleaccesspattern={},accesstransformation={}",
+               "sampleaccesspattern={},accesstransformation={},normalize={},globalGCD={}",
                filePath, band->GetBand(), blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
-               ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
+               ToString(accessPattern), ToString(combo.accessTrans), normalize, globalGCD) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
 
@@ -381,11 +381,12 @@ static void RunOneCombinationU16(
   std::cout << "**BENCHMARK ACCESS**\n";
   std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
-               "sampleaccesspattern={},accesstransformation={}",
+               "sampleaccesspattern={},accesstransformation={},normalize={},normMinU16={},normGCDU16={}",
                filePath, band->GetBand(), blockSize, numBlocks, numReps,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
-               ToString(accessPattern), ToString(combo.accessTrans)) << '\n';
+               ToString(accessPattern), ToString(combo.accessTrans),
+               normalize, normMinU16, normGCDU16) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
 
