@@ -164,5 +164,13 @@ BuildAllCodecsU16() {
 
   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
 
+  codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
+  // Cascaded: DeltaCodecU16 -> turbopack
+  codecs.push_back(
+      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+          std::make_unique<DeltaCodecU16>(),
+          std::make_unique<TurboPForCodecU16>(7)));
+
+
   return codecs;
 }
