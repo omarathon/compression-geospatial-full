@@ -92,41 +92,75 @@ InitHeavyPhysicalCodecsU16() {
   return codecs;
 }
 
+// inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
+// BuildAllCodecsU16() {
+//   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
+//
+//   auto lCodecs = InitLogicalCodecsU16();
+//   auto pCodecs = InitPhysicalCodecsU16();
+//   auto hCodecs = InitHeavyPhysicalCodecsU16();
+//
+//   // Non-cascaded logical codecs
+//   for (auto& codec : lCodecs)
+//     codecs.push_back(
+//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+//
+//   // Non-cascaded physical codecs
+//   for (auto& codec : pCodecs)
+//     codecs.push_back(
+//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+//
+//   // Non-cascaded heavy codecs
+//   for (auto& codec : hCodecs)
+//     codecs.push_back(
+//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+//
+//   // Cascaded: each logical + each physical
+//   for (auto& lCodec : lCodecs) {
+//     for (auto& pCodec : pCodecs) {
+//       auto lFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
+//           lCodec->CloneFresh());
+//       auto pFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
+//           pCodec->CloneFresh());
+//       codecs.push_back(
+//           std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+//               std::move(lFresh), std::move(pFresh)));
+//     }
+//   }
+//
+//   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
+//
+//   return codecs;
+// }
+
+// Focused codec set for local delta-fusion testing.
+// Includes: the 4 new fused-delta codecs, plain simdcomp/PFor (fused),
+// and DeltaCodecU16 cascaded with each of simdcomp and PFor for comparison.
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 BuildAllCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
 
-  auto lCodecs = InitLogicalCodecsU16();
-  auto pCodecs = InitPhysicalCodecsU16();
-  auto hCodecs = InitHeavyPhysicalCodecsU16();
+  // Plain physical (no external delta pre-pass)
+  codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());
 
-  // Non-cascaded logical codecs
-  for (auto& codec : lCodecs)
-    codecs.push_back(
-        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+  // Fused delta variants
+  codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
 
-  // Non-cascaded physical codecs
-  for (auto& codec : pCodecs)
-    codecs.push_back(
-        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+  // Cascaded: DeltaCodecU16 -> simdcomp
+  codecs.push_back(
+      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+          std::make_unique<DeltaCodecU16>(),
+          std::make_unique<SimdCompFusedCodecU16>()));
 
-  // Non-cascaded heavy codecs
-  for (auto& codec : hCodecs)
-    codecs.push_back(
-        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
-
-  // Cascaded: each logical + each physical
-  for (auto& lCodec : lCodecs) {
-    for (auto& pCodec : pCodecs) {
-      auto lFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
-          lCodec->CloneFresh());
-      auto pFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
-          pCodec->CloneFresh());
-      codecs.push_back(
-          std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
-              std::move(lFresh), std::move(pFresh)));
-    }
-  }
+  // Cascaded: DeltaCodecU16 -> PFor
+  codecs.push_back(
+      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+          std::make_unique<DeltaCodecU16>(),
+          std::make_unique<FastPForFusedCorrectedCodecU16>()));
 
   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
 
