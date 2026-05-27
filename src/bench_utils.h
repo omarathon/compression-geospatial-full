@@ -412,18 +412,42 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
 
 
 struct RunningStats {
-  std::size_t n = 0;
-  double mean   = 0.0;
-  double M2     = 0.0;
+  std::size_t n  = 0;
+  double mean    = 0.0;
+  double M2      = 0.0;
+  double min_val = std::numeric_limits<double>::max();
+  double max_val = std::numeric_limits<double>::lowest();
 
   void Update(std::size_t x) {
     ++n;
-    double delta = static_cast<double>(x) - mean;
+    double xd = static_cast<double>(x);
+    if (xd < min_val) min_val = xd;
+    if (xd > max_val) max_val = xd;
+    double delta = xd - mean;
     mean += delta / static_cast<double>(n);
-    M2   += delta * (static_cast<double>(x) - mean);
+    M2   += delta * (xd - mean);
   }
   double Variance() const { return n > 1 ? M2 / static_cast<double>(n) : 0.0; }
   double Total()    const { return mean * static_cast<double>(n); }
+  double Min()      const { return n > 0 ? min_val : 0.0; }
+  double Max()      const { return n > 0 ? max_val : 0.0; }
+};
+
+// Collects one value per rep (after warm-up skips) for median computation.
+// Stores median of (per-rep total / numBlocks) — i.e. median mean-block-time
+// across reps, not across blocks. At most numReps entries; negligible memory.
+struct RepMedian {
+  std::vector<double> v;
+  void Push(double repTotal, std::size_t numBlocks) {
+    v.push_back(numBlocks > 0 ? repTotal / static_cast<double>(numBlocks) : 0.0);
+  }
+  double Median() const {
+    if (v.empty()) return 0.0;
+    std::vector<double> s = v;
+    std::sort(s.begin(), s.end());
+    std::size_t mid = s.size() / 2;
+    return s.size() % 2 == 0 ? (s[mid - 1] + s[mid]) / 2.0 : s[mid];
+  }
 };
 
 
