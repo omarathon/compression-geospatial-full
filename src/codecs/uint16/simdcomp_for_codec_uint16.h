@@ -213,19 +213,14 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
         reinterpret_cast<const uint8_t*>(anchors_ptr + num_sb);
     const uint8_t* in_ptr = bs_ptr + num_sb;
 
-    alignas(32) __m256i corrections[kOutRegsPerSub];
-
     __m256i sum = _mm256_setzero_si256();
     for (size_t k = 0; k < num_sb; ++k) {
-      const uint16_t anchor = anchors_ptr[k];
       const __m256i anchor_bcast =
-          _mm256_set1_epi16(static_cast<short>(anchor));
-      for (size_t i = 0; i < kOutRegsPerSub; ++i) {
-        corrections[i] = anchor_bcast;
-      }
+          _mm256_set1_epi16(static_cast<short>(anchors_ptr[k]));
       const uint32_t b_k = bs_ptr[k];
-      simdunpack_u16_corrected(reinterpret_cast<const __m256i*>(in_ptr),
-                               out + k * kSubBlockSize, b_k, corrections, &sum);
+      simdunpack_u16_corrected_uniform(reinterpret_cast<const __m256i*>(in_ptr),
+                                       out + k * kSubBlockSize, b_k,
+                                       anchor_bcast, &sum);
       in_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
 
