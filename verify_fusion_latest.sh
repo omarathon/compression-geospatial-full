@@ -5,19 +5,25 @@
 set -u
 
 TIF=/home/omar/diss/geotiffs/slope-srtm_35_11.tif
-COMMON_ARGS="-b 256 -n 4000 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
+COMMON_ARGS="-b 256 -n 500 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
 
 # tag         atrans          codec
 # (tag is used for filenames + echo; codec is what gets passed as --icodec/--acodec)
 RUNS=(
   "base       linearSum       custom_direct_access"
   "simdcomp   linearSumFused  simdcomp_fused"
-  "pfor       linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
-  "pfor_new   linearSumFused  FastPFor_fused_corrected_SIMDPFor+VariableByte"
-  "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
-  "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
-  "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
-  "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
+  # "pfor_old       linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
+  "pfor   linearSumFused  FastPFor_fused_corrected_SIMDPFor+VariableByte"
+  # "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
+  # "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
+  # "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
+  # "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
+
+  # "simdcomp_fl linearSumFused simdcomp_fused_for_local"
+  "simdcomp_fg linearSumFused simdcomp_fused_for_global"
+  # "simdcomp_fh linearSumFused simdcomp_fused_for_hierarchical"
+
+  "pfor_fg   linearSumFused  FastPFor_fused_corrected_for_global"
 )
 
 run_one() {
