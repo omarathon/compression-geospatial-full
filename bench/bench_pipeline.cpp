@@ -168,22 +168,23 @@ struct BenchCombo {
 
 static void RunOneCombination(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
-    int blockSize, int numBlocks, int numReps, int32_t min,
+    int blockSize, int numBlocks, int numReps, int numSkip, int32_t min,
     bool hasNoData, int32_t nodata32,
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<int32_t>& baseCodec,
     StatefulIntegerCodec<int32_t>& accessCodec,
     bool normalize, int32_t globalGCD) {
   std::cout << "**BENCHMARK ACCESS**\n";
-  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},numskip={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={},normalize={},globalGCD={}",
-               filePath, band->GetBand(), blockSize, numBlocks, numReps,
+               filePath, band->GetBand(), blockSize, numBlocks, numReps, numSkip,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
                ToString(accessPattern), ToString(combo.accessTrans), normalize, globalGCD) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
+  RepMedian medDec, medTrans, medEnc;
 
   for (int rep = 0; rep < numReps; rep++) {
     std::unique_ptr<StatefulIntegerCodec<int32_t>> expBase(
@@ -200,21 +201,31 @@ static void RunOneCombination(
       return;
     }
 
-    BenchmarkAccess(codecGrid, std::move(expAccess), blockSize, accessPattern,
-                    combo.accessTrans, statsDec, statsTrans, statsEnc);
+    if (rep < numSkip) {
+      RunningStats dummy1, dummy2, dummy3;
+      BenchmarkAccess(codecGrid, std::move(expAccess), blockSize, accessPattern,
+                      combo.accessTrans, dummy1, dummy2, dummy3);
+    } else {
+      double prevDec = statsDec.Total(), prevTrans = statsTrans.Total(), prevEnc = statsEnc.Total();
+      BenchmarkAccess(codecGrid, std::move(expAccess), blockSize, accessPattern,
+                      combo.accessTrans, statsDec, statsTrans, statsEnc);
+      medDec.Push(statsDec.Total()   - prevDec,   codecGrid.size());
+      medTrans.Push(statsTrans.Total() - prevTrans, codecGrid.size());
+      medEnc.Push(statsEnc.Total()   - prevEnc,   codecGrid.size());
+    }
   }
 
-  std::cout << std::format("tottimedec:{},meantimedec:{},vartimedec:{},"
-               "tottimetrans:{},meantimetrans:{},vartimetrans:{},"
-               "tottimeenc:{},meantimeenc:{},vartimeenc:{}",
-               statsDec.Total(),  statsDec.mean,  statsDec.Variance(),
-               statsTrans.Total(), statsTrans.mean, statsTrans.Variance(),
-               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance()) << '\n';
+  std::cout << std::format("tottimedec:{},meantimedec:{},medtimedec:{},mintimedec:{},maxtimedec:{},vartimedec:{},"
+               "tottimetrans:{},meantimetrans:{},medtimetrans:{},mintimetrans:{},maxtimetrans:{},vartimetrans:{},"
+               "tottimeenc:{},meantimeenc:{},medtimeenc:{},mintimeenc:{},maxtimeenc:{},vartimeenc:{}",
+               statsDec.Total(),   statsDec.mean,   medDec.Median(),   statsDec.Min(),   statsDec.Max(),   statsDec.Variance(),
+               statsTrans.Total(), statsTrans.mean, medTrans.Median(), statsTrans.Min(), statsTrans.Max(), statsTrans.Variance(),
+               statsEnc.Total(),   statsEnc.mean,   medEnc.Median(),   statsEnc.Min(),   statsEnc.Max(),   statsEnc.Variance()) << '\n';
 }
 
 static void RunAllBenchmarks(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
-    int blockSize, int numBlocks, int numReps, int32_t min,
+    int blockSize, int numBlocks, int numReps, int numSkip, int32_t min,
     bool hasNoData, int32_t nodata32,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& baseCodecs,
     std::vector<std::unique_ptr<StatefulIntegerCodec<int32_t>>>& accessCodecs,
@@ -235,7 +246,7 @@ static void RunAllBenchmarks(
       for (auto& accessCodec : accessCodecs)
         for (auto& pattern : sampleAccessPatterns)
           RunOneCombination(band, nXSize, nYSize, filePath, blockSize,
-                            numBlocks, numReps, min, hasNoData, nodata32,
+                            numBlocks, numReps, numSkip, min, hasNoData, nodata32,
                             combo, ParseAccessPattern(pattern), *baseCodec,
                             *accessCodec, normalize, globalGCD);
 }
@@ -372,23 +383,24 @@ static void BenchmarkAccessU16(
 
 static void RunOneCombinationU16(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
-    int blockSize, int numBlocks, int numReps, int16_t minShift,
+    int blockSize, int numBlocks, int numReps, int numSkip, int16_t minShift,
     bool hasNoData, int16_t nodata16, uint16_t nodataU16,
     const BenchCombo& combo, AccessPattern accessPattern,
     StatefulIntegerCodec<uint16_t>& baseCodec,
     StatefulIntegerCodec<uint16_t>& accessCodec,
     bool normalize, uint16_t normMinU16, uint16_t normGCDU16) {
   std::cout << "**BENCHMARK ACCESS**\n";
-  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},basecodec={},"
+  std::cout << std::format("file={},band={},blocksize={},numblocks={},numreps={},numskip={},basecodec={},"
                "accesscodec={},ordering={},initialtransformation={},"
                "sampleaccesspattern={},accesstransformation={},normalize={},normMinU16={},normGCDU16={}",
-               filePath, band->GetBand(), blockSize, numBlocks, numReps,
+               filePath, band->GetBand(), blockSize, numBlocks, numReps, numSkip,
                baseCodec.name(), accessCodec.name(),
                ToString(combo.ordering), ToString(combo.initTrans),
                ToString(accessPattern), ToString(combo.accessTrans),
                normalize, normMinU16, normGCDU16) << '\n';
 
   RunningStats statsDec, statsTrans, statsEnc;
+  RepMedian medDec, medTrans, medEnc;
 
   for (int rep = 0; rep < numReps; rep++) {
     std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(
@@ -405,21 +417,31 @@ static void RunOneCombinationU16(
       return;
     }
 
-    BenchmarkAccessU16(codecGrid, std::move(expAccess), blockSize, accessPattern,
-                       combo.accessTrans, statsDec, statsTrans, statsEnc);
+    if (rep < numSkip) {
+      RunningStats dummy1, dummy2, dummy3;
+      BenchmarkAccessU16(codecGrid, std::move(expAccess), blockSize, accessPattern,
+                         combo.accessTrans, dummy1, dummy2, dummy3);
+    } else {
+      double prevDec = statsDec.Total(), prevTrans = statsTrans.Total(), prevEnc = statsEnc.Total();
+      BenchmarkAccessU16(codecGrid, std::move(expAccess), blockSize, accessPattern,
+                         combo.accessTrans, statsDec, statsTrans, statsEnc);
+      medDec.Push(statsDec.Total()     - prevDec,   codecGrid.size());
+      medTrans.Push(statsTrans.Total() - prevTrans, codecGrid.size());
+      medEnc.Push(statsEnc.Total()     - prevEnc,   codecGrid.size());
+    }
   }
 
-  std::cout << std::format("tottimedec:{},meantimedec:{},vartimedec:{},"
-               "tottimetrans:{},meantimetrans:{},vartimetrans:{},"
-               "tottimeenc:{},meantimeenc:{},vartimeenc:{}",
-               statsDec.Total(),  statsDec.mean,  statsDec.Variance(),
-               statsTrans.Total(), statsTrans.mean, statsTrans.Variance(),
-               statsEnc.Total(),  statsEnc.mean,  statsEnc.Variance()) << '\n';
+  std::cout << std::format("tottimedec:{},meantimedec:{},medtimedec:{},mintimedec:{},maxtimedec:{},vartimedec:{},"
+               "tottimetrans:{},meantimetrans:{},medtimetrans:{},mintimetrans:{},maxtimetrans:{},vartimetrans:{},"
+               "tottimeenc:{},meantimeenc:{},medtimeenc:{},mintimeenc:{},maxtimeenc:{},vartimeenc:{}",
+               statsDec.Total(),   statsDec.mean,   medDec.Median(),   statsDec.Min(),   statsDec.Max(),   statsDec.Variance(),
+               statsTrans.Total(), statsTrans.mean, medTrans.Median(), statsTrans.Min(), statsTrans.Max(), statsTrans.Variance(),
+               statsEnc.Total(),   statsEnc.mean,   medEnc.Median(),   statsEnc.Min(),   statsEnc.Max(),   statsEnc.Variance()) << '\n';
 }
 
 static void RunAllBenchmarksU16(
     GDALRasterBand* band, int nXSize, int nYSize, const char* filePath,
-    int blockSize, int numBlocks, int numReps, int16_t minShift,
+    int blockSize, int numBlocks, int numReps, int numSkip, int16_t minShift,
     bool hasNoData, int16_t nodata16, uint16_t nodataU16,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& baseCodecs,
     std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>& accessCodecs,
@@ -440,7 +462,7 @@ static void RunAllBenchmarksU16(
       for (auto& accessCodec : accessCodecs)
         for (auto& pattern : sampleAccessPatterns)
           RunOneCombinationU16(band, nXSize, nYSize, filePath, blockSize,
-                              numBlocks, numReps, minShift,
+                              numBlocks, numReps, numSkip, minShift,
                               hasNoData, nodata16, nodataU16, combo,
                               ParseAccessPattern(pattern), *baseCodec,
                               *accessCodec, normalize, normMinU16, normGCDU16);
@@ -450,7 +472,7 @@ int main(int argc, char* argv[]) {
   CLI::App app{"Benchmark codec access-pattern performance on a GeoTIFF raster"};
 
   std::string filePath;
-  int blockSize{}, numBlocks{}, numReps{};
+  int blockSize{}, numBlocks{}, numReps{}, numSkip{0};
   std::vector<std::string> initialCodecNames = {"all"};
   std::vector<std::string> accessCodecNames = {"all"};
   std::vector<std::string> orderings = {"default"};
@@ -468,6 +490,7 @@ int main(int argc, char* argv[]) {
       ->required();
   app.add_option("--numreps,-r", numReps, "Repetitions per combination")
       ->required();
+  app.add_option("--runskip,-rs", numSkip, "Warm-up reps to skip in statistics (default: 0)");
   app.add_option("--icodec", initialCodecNames,
                  "Initial codec name(s), or 'all'");
   app.add_option("--acodec", accessCodecNames,
@@ -600,7 +623,7 @@ int main(int argc, char* argv[]) {
         SelectCodecsByName(allCodecsU16_access, accessCodecNames);
 
     RunAllBenchmarksU16(band, nXSize, nYSize, filePath.c_str(), blockSize,
-                        numBlocks, numReps, minShift, hasNoData != 0, nodata16,
+                        numBlocks, numReps, numSkip, minShift, hasNoData != 0, nodata16,
                         nodataU16, baseCodecs, accessCodecs, orderings,
                         initialTransformations, accessTransformations,
                         sampleAccessPatterns, normalize, normMinU16, normGCDU16);
@@ -645,7 +668,7 @@ int main(int argc, char* argv[]) {
     auto accessCodecs = SelectCodecsByName(allCodecs_access, accessCodecNames);
 
     RunAllBenchmarks(band, nXSize, nYSize, filePath.c_str(), blockSize,
-                     numBlocks, numReps, min, hasNoData32 != 0, nodata32,
+                     numBlocks, numReps, numSkip, min, hasNoData32 != 0, nodata32,
                      baseCodecs, accessCodecs, orderings,
                      initialTransformations, accessTransformations,
                      sampleAccessPatterns, normalize, globalGCD);
