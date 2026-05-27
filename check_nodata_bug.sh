@@ -63,7 +63,7 @@ check_file() {
             has_nodata=0
         elif [[ "$line" =~ Type=([A-Za-z0-9]+) ]]; then
             band_type="${BASH_REMATCH[1]}"
-        elif [[ "$line" =~ NoData\ Value=([^[:space:]]+) ]]; then
+        elif [[ "$line" =~ "NoData Value="([^[:space:]]+) ]]; then
             band_nodata="${BASH_REMATCH[1]}"
             has_nodata=1
         fi
