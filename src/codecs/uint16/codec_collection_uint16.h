@@ -65,6 +65,7 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
 
@@ -158,6 +159,9 @@ BuildAllCodecsU16() {
   codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
+
+  // Fused FoR variants (FastPFor)
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());
 
   // Cascaded: DeltaCodecU16 -> simdcomp
   codecs.push_back(
