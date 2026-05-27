@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_for_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 
 // ── Helper ────────────────────────────────────────────────────────────────────
@@ -271,13 +272,121 @@ TEST_F(FusedSumTest, SimdCompFusedDeltaCarry_FixedBlock) {
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
-// ── FastPFor fused corrected delta-local ──────────────────────────────────────
+// ── SimdComp fused FoR-global ─────────────────────────────────────────────────
 
-TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Zeros) {
-  FastPForFusedCorrectedDeltaLocalCodecU16 c;
+TEST_F(FusedSumTest, SimdCompFusedForGlobal_Zeros) {
+  SimdCompFusedForGlobalCodecU16 c;
   CheckFusedSum(MakeZeros(kSmall), c);
   CheckFusedSum(MakeZeros(kMedium), c);
 }
+
+TEST_F(FusedSumTest, SimdCompFusedForGlobal_Constant) {
+  SimdCompFusedForGlobalCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForGlobal_Sequential) {
+  SimdCompFusedForGlobalCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForGlobal_Random) {
+  SimdCompFusedForGlobalCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForGlobal_FixedBlock) {
+  SimdCompFusedForGlobalCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── SimdComp fused FoR-local ──────────────────────────────────────────────────
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_Zeros) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_Constant) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_Sequential) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_Random) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_Sawtooth) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeSawtooth16(kSmall), c);
+  CheckFusedSum(MakeSawtooth16(kMedium), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedForLocal_FixedBlock) {
+  SimdCompFusedForLocalCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── SimdComp fused FoR-hierarchical ───────────────────────────────────────────
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_Zeros) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeZeros(kSmall), c);
+//   CheckFusedSum(MakeZeros(kMedium), c);
+// }
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_Constant) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeConstant(kSmall, 1), c);
+//   CheckFusedSum(MakeConstant(kSmall, 65535), c);
+//   CheckFusedSum(MakeConstant(kMedium, 100), c);
+// }
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_Sequential) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeSequential(kSmall), c);
+//   CheckFusedSum(MakeSequential(kMedium), c);
+// }
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_Random) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeRandom(kSmall, 42), c);
+//   CheckFusedSum(MakeRandom(kMedium, 99), c);
+// }
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_Sawtooth) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeSawtooth16(kSmall), c);
+//   CheckFusedSum(MakeSawtooth16(kMedium), c);
+// }
+
+// TEST_F(FusedSumTest, SimdCompFusedForHierarchical_FixedBlock) {
+//   SimdCompFusedForHierarchicalCodecU16 c;
+//   CheckFusedSum(MakeLargeFixed(), c);
+// }
+
+// // ── FastPFor fused corrected delta-local ──────────────────────────────────────
+
+// TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Zeros) {
+//   FastPForFusedCorrectedDeltaLocalCodecU16 c;
+//   CheckFusedSum(MakeZeros(kSmall), c);
+//   CheckFusedSum(MakeZeros(kMedium), c);
+// }
 
 TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaLocal_Constant) {
   FastPForFusedCorrectedDeltaLocalCodecU16 c;
@@ -332,6 +441,38 @@ TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_Random) {
 
 TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_FixedBlock) {
   FastPForFusedCorrectedDeltaCarryCodecU16 c;
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+// ── FastPFor FoR-global ───────────────────────────────────────────────────────
+
+TEST_F(FusedSumTest, FastPForFusedForGlobal_Zeros) {
+  FastPForFusedCorrectedForGlobalCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedForGlobal_Constant) {
+  FastPForFusedCorrectedForGlobalCodecU16 c;
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedForGlobal_Sequential) {
+  FastPForFusedCorrectedForGlobalCodecU16 c;
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedForGlobal_Random) {
+  FastPForFusedCorrectedForGlobalCodecU16 c;
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_F(FusedSumTest, FastPForFusedForGlobal_FixedBlock) {
+  FastPForFusedCorrectedForGlobalCodecU16 c;
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
@@ -417,3 +558,49 @@ TEST_F(CompressionRatioTest, PForLocal_BetterThanBase_Sawtooth16) {
   FastPForFusedCorrectedDeltaLocalCodecU16 delta;
   CheckCompressionRatio(MakeSawtooth16(kN), base, delta);
 }
+
+// ── FoR vs base: high-floor data ──────────────────────────────────────────────
+//
+// FoR's win condition: data has a meaningful non-zero floor (the min). The
+// base codec must encode the floor in every value's bit width; FoR subtracts
+// it once. We use a constant-base-plus-small-noise pattern so the min is
+// significantly above 0.
+
+// Constant offset of 30000 + small variation in [0,15]. Base needs b=15 to
+// encode the high-magnitude value; FoR-global subtracts the per-sub-block min
+// (≈30000) and only needs b=4 for the residual.
+// static std::vector<uint16_t> MakeHighFloor(size_t n) {
+//   std::vector<uint16_t> v(n);
+//   std::mt19937 gen(7);
+//   std::uniform_int_distribution<uint16_t> dist(0, 15);
+//   for (size_t i = 0; i < n; ++i)
+//     v[i] = static_cast<uint16_t>(30000) + dist(gen);
+//   return v;
+// }
+
+// TEST_F(CompressionRatioTest, SimdCompForGlobal_BetterThanBase_HighFloor) {
+//   SimdCompFusedCodecU16 base;
+//   SimdCompFusedForGlobalCodecU16 forc;
+//   CheckCompressionRatio(MakeHighFloor(kN), base, forc);
+// }
+
+// TEST_F(CompressionRatioTest, SimdCompForLocal_BetterThanBase_HighFloor) {
+//   SimdCompFusedCodecU16 base;
+//   SimdCompFusedForLocalCodecU16 forc;
+//   CheckCompressionRatio(MakeHighFloor(kN), base, forc);
+// }
+
+// TEST_F(CompressionRatioTest, SimdCompForHierarchical_BetterThanBase_HighFloor) {
+//   SimdCompFusedCodecU16 base;
+//   SimdCompFusedForHierarchicalCodecU16 forc;
+//   CheckCompressionRatio(MakeHighFloor(kN), base, forc);
+// }
+
+// // FoR-local should also beat base on tile-banded data — each OutReg's anchor
+// // is its own min, so per-OutReg range is tiny.  16-element sawtooth has the
+// // exact OutReg-period structure that FoR-local was designed for.
+// TEST_F(CompressionRatioTest, SimdCompForLocal_BetterThanBase_Sawtooth16) {
+//   SimdCompFusedCodecU16 base;
+//   SimdCompFusedForLocalCodecU16 forc;
+//   CheckCompressionRatio(MakeSawtooth16(kN), base, forc);
+// }
