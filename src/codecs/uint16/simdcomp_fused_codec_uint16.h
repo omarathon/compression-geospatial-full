@@ -42,6 +42,7 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
       out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -149,6 +150,7 @@ class SimdCompFusedDeltaLocalCodecU16 : public StatefulIntegerCodec<uint16_t> {
       out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -240,6 +242,7 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
       out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
