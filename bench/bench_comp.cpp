@@ -248,7 +248,7 @@ static void RunBenchConfigU16(
     std::vector<uint16_t> blockData(blockSize * blockSize);
     int nodataCount = 0;
 
-    if (minShift < 0 || (hasNoData && nodata16 < 0)) {
+    if (minShift < 0) {
       std::vector<int16_t> signed_buf(blockSize * blockSize);
       band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
                      signed_buf.data(), blockSize, blockSize, GDT_Int16, 0, 0);
