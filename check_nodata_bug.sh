@@ -52,17 +52,15 @@ check_file() {
     local has_nodata=0
 
     while IFS= read -r line; do
-        if [[ "$line" =~ ^Band[[:space:]]+([0-9]+) ]]; then
+        if [[ "$line" =~ ^Band[[:space:]]+([0-9]+)[[:space:]].*Type=([A-Za-z0-9]+) ]]; then
             # Flush previous band (if any)
             if (( band_num > 0 )); then
                 _report_band "$tif" "$band_num" "$band_type" "$has_nodata" "$band_nodata"
             fi
             band_num="${BASH_REMATCH[1]}"
-            band_type=""
+            band_type="${BASH_REMATCH[2]}"
             band_nodata=""
             has_nodata=0
-        elif [[ "$line" =~ Type=([A-Za-z0-9]+) ]]; then
-            band_type="${BASH_REMATCH[1]}"
         elif [[ "$line" =~ "NoData Value="([^[:space:]]+) ]]; then
             band_nodata="${BASH_REMATCH[1]}"
             has_nodata=1
