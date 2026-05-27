@@ -13,6 +13,7 @@
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
 #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_for_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 
 #include "custom_vec_logic_codecs.h"
@@ -57,6 +58,9 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
@@ -149,6 +153,11 @@ BuildAllCodecsU16() {
   codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
+
+  // Fused FoR variants (SimdComp)
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
 
   // Cascaded: DeltaCodecU16 -> simdcomp
   codecs.push_back(
