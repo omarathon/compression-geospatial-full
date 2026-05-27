@@ -31,7 +31,7 @@ run_level() {
     cmake -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --target bench_pipeline -j32
 
-    ./build/bench_pipeline "$TIF" -b 256 -n "$N" -r 10 \
+    ./build/bench_pipeline "$TIF" -b 256 -n "$N" -r 10 --rs 3 \
         --icodec "simdcomp_fused_delta_carry" \
         --acodec "simdcomp_fused_delta_carry" \
         --ordering default --itrans none --pattern linear \
