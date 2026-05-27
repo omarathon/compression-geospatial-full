@@ -194,6 +194,7 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
 
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -322,6 +323,7 @@ class SimdCompFusedForLocalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
 
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -509,6 +511,7 @@ class SimdCompFusedForHierarchicalCodecU16
     }
 
     compressed.resize(out_ptr - compressed.data());
+    compressed.shrink_to_fit();
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
