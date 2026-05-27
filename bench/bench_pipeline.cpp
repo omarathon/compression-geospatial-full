@@ -490,7 +490,7 @@ int main(int argc, char* argv[]) {
       ->required();
   app.add_option("--numreps,-r", numReps, "Repetitions per combination")
       ->required();
-  app.add_option("--runskip,-rs", numSkip, "Warm-up reps to skip in statistics (default: 0)");
+  app.add_option("--rs", numSkip, "Warm-up reps to skip in statistics (default: 0)");
   app.add_option("--icodec", initialCodecNames,
                  "Initial codec name(s), or 'all'");
   app.add_option("--acodec", accessCodecNames,
