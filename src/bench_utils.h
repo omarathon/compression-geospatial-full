@@ -523,21 +523,62 @@ struct BlockOffset {
   int y;  // pixel y offset (block row * blockSize)
 };
 
-// Returns numBlocks evenly-spaced block pixel offsets across the raster grid.
+// Returns numBlocks block-pixel offsets.
+//
+// If numBlocks <= totalBlocks: evenly sample numBlocks across the raster
+// (no repetition; same as before).
+//
+// If numBlocks > totalBlocks: wrap around the raster.
+//   - Each "full wrap" emits every block in raster order.
+//   - The final partial wrap (if any) is evenly sampled across the raster
+//     so that the over-visit pattern is uniformly spread rather than
+//     concentrated at the start of the raster.
+//
+// This lets bench_pipeline build working sets larger than the raster itself,
+// so RSS / cache behaviour reflects the *requested* grid size rather than
+// the raster's available block count.
 inline std::vector<BlockOffset> SampleBlockOffsets(int blocksInWidth,
                                                     int blocksInHeight,
                                                     int blockSize,
                                                     int numBlocks) {
   std::vector<BlockOffset> offsets;
   offsets.reserve(numBlocks);
-  int totalBlocks = blocksInWidth * blocksInHeight;
-  numBlocks = std::min(numBlocks, totalBlocks);
-  int sampleInterval = std::max(1, totalBlocks / numBlocks);
-  for (int blockNum = 0, sampled = 0; sampled < numBlocks;
-       blockNum += sampleInterval, sampled++) {
-    int blockIndex = blockNum % totalBlocks;
+  const int totalBlocks = blocksInWidth * blocksInHeight;
+
+  auto push = [&](int blockIndex) {
     offsets.push_back({(blockIndex % blocksInWidth) * blockSize,
                        (blockIndex / blocksInWidth) * blockSize});
+  };
+
+  if (numBlocks <= totalBlocks) {
+    const int sampleInterval = std::max(1, totalBlocks / numBlocks);
+    for (int blockNum = 0, sampled = 0; sampled < numBlocks;
+         blockNum += sampleInterval, sampled++) {
+      push(blockNum % totalBlocks);
+    }
+    return offsets;
   }
+
+  // Wrap-around case.
+  const int fullWraps = numBlocks / totalBlocks;
+  const int remainder = numBlocks - fullWraps * totalBlocks;
+
+  // Full wraps: every block, in raster order.
+  for (int wrap = 0; wrap < fullWraps; ++wrap) {
+    for (int i = 0; i < totalBlocks; ++i) {
+      push(i);
+    }
+  }
+
+  // Partial wrap: evenly sample `remainder` blocks across the raster
+  // (so the over-visit is spread, not concentrated at indices 0..remainder-1).
+  if (remainder > 0) {
+    const int sampleInterval = std::max(1, totalBlocks / remainder);
+    for (int blockNum = 0, sampled = 0; sampled < remainder;
+         blockNum += sampleInterval, sampled++) {
+      push(blockNum % totalBlocks);
+    }
+  }
+
   return offsets;
 }
