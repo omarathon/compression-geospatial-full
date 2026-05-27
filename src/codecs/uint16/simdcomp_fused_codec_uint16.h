@@ -32,8 +32,12 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     assert(length % kFusedSubBlockSize == 0);
     const size_t num_sb = length / kFusedSubBlockSize;
 
-    uint8_t* bs = compressed.data();
-    uint8_t* out_ptr = compressed.data() + num_sb;
+    // Encode into shared thread-local scratch; assign exact bytes into
+    // `compressed`. No worst-case heap allocation for `compressed` ever
+    // occurs, so glibc's freelist doesn't bloat per codec instance.
+    auto& scratch = GetPackScratch();
+    uint8_t* bs = scratch.data();
+    uint8_t* out_ptr = scratch.data() + num_sb;
     for (size_t k = 0; k < num_sb; ++k) {
       const uint16_t* sb = in + k * kFusedSubBlockSize;
       const uint32_t b_k = maxbits_length_u16(sb, kFusedSubBlockSize);
@@ -41,8 +45,9 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
       simdpack_u16(sb, reinterpret_cast<__m256i*>(out_ptr), b_k);
       out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
-    compressed.resize(out_ptr - compressed.data());
-    compressed.shrink_to_fit();
+    const size_t actual = static_cast<size_t>(out_ptr - scratch.data());
+    assert(actual <= scratch.size());
+    compressed.assign(scratch.data(), scratch.data() + actual);
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -85,11 +90,9 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     return new SimdCompFusedCodecU16();
   }
 
-  void AllocEncoded(const uint16_t* in, size_t length) override {
-    // Worst case: every sub-block needs b=16.
-    const size_t num_sb = length / kFusedSubBlockSize;
-    compressed.resize(num_sb + num_sb * 16 * sizeof(__m256i));
-    (void)in;
+  void AllocEncoded(const uint16_t*, size_t) override {
+    // No-op: EncodeArray writes through the shared scratch and `compressed`
+    // is sized exactly via assign() at encode time.
   };
 
   void clear() override {
@@ -227,12 +230,13 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
       prev = in[i];
     }
 
-    // 2. Per-sub-block bit-pack with its own b. The first sub-block holds
-    //    delta[0] (the giant) and gets a big b; subsequent sub-blocks see
-    //    only small deltas and get a small b.
+    // 2. Per-sub-block bit-pack into shared thread-local scratch; assign
+    //    exact bytes into `compressed` at the end. No worst-case alloc on
+    //    `compressed`, so glibc's freelist stays small per codec instance.
     const size_t num_sb = length / kFusedSubBlockSize;
-    uint8_t* bs = compressed.data();
-    uint8_t* out_ptr = compressed.data() + num_sb;
+    auto& scratch = GetPackScratch();
+    uint8_t* bs = scratch.data();
+    uint8_t* out_ptr = scratch.data() + num_sb;
     for (size_t k = 0; k < num_sb; ++k) {
       uint16_t* sb_deltas = s_delta_scratch + k * kFusedSubBlockSize;
       const uint32_t b_k =
@@ -241,8 +245,9 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
       simdpack_u16(sb_deltas, reinterpret_cast<__m256i*>(out_ptr), b_k);
       out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
     }
-    compressed.resize(out_ptr - compressed.data());
-    compressed.shrink_to_fit();
+    const size_t actual = static_cast<size_t>(out_ptr - scratch.data());
+    assert(actual <= scratch.size());
+    compressed.assign(scratch.data(), scratch.data() + actual);
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
@@ -285,10 +290,9 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
     return new SimdCompFusedDeltaCarryCodecU16();
   }
 
-  void AllocEncoded(const uint16_t* in, size_t length) override {
-    const size_t num_sb = length / kFusedSubBlockSize;
-    compressed.resize(num_sb + num_sb * 16 * sizeof(__m256i));
-    (void)in;
+  void AllocEncoded(const uint16_t*, size_t) override {
+    // No-op: EncodeArray writes through shared scratch and sizes `compressed`
+    // exactly via assign() — no worst-case allocation on `compressed`.
   };
 
   void clear() override {
