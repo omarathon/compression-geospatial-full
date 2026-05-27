@@ -16,7 +16,7 @@ done
 
 mkdir -p "$OUTDIR"
 
-TIF=/maps/omsst2/diss/papers/zalipynis/2018_2/landsat/landsat8_path190_row031_stack.tif
+TIF=/maps/omsst2/diss/others/worldclim/WorldClim_temp_sahara.tif
 
 run_level() {
     local name=$1
