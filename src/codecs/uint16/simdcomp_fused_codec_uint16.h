@@ -258,7 +258,7 @@ class SimdCompFusedDeltaCarryCodecU16 : public StatefulIntegerCodec<uint16_t> {
     const uint8_t* in_ptr = compressed.data() + num_sb;
 
     __m256i sum = _mm256_setzero_si256();
-    __m256i carry = _mm256_setzero_si256();  // threaded across sub-blocks
+    uint16_t carry = 0;  // threaded across sub-blocks
     for (size_t k = 0; k < num_sb; ++k) {
       const uint32_t b_k = bs[k];
       simdunpack_u16_delta_carry(
