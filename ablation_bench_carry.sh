@@ -17,11 +17,25 @@ run_level() {
     cmake -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --target bench_pipeline -j32
 
-    ./build/bench_pipeline "$TIF" -b 256 -n 500 -r 5 \
+    ./build/bench_pipeline "$TIF" -b 256 -n 16000 -r 5 \
         --icodec "simdcomp_fused_delta_carry" \
         --acodec "simdcomp_fused_delta_carry" \
         --ordering default --itrans none --pattern linear \
         --atrans linearSumFused --normalize > "ablation_${name}.txt" 2>&1
+
+    # no delta
+    ./build/bench_pipeline "$TIF" -b 256 -n 16000 -r 5 \
+        --icodec "simdcomp_fused" \
+        --acodec "simdcomp_fused" \
+        --ordering default --itrans none --pattern linear \
+        --atrans linearSumFused --normalize > "no_delta.txt" 2>&1
+
+    # raw
+    ./build/bench_pipeline "$TIF" -b 256 -n 16000 -r 5 \
+        --icodec "custom_direct_access" \
+        --acodec "custom_direct_access" \
+        --ordering default --itrans none --pattern linear \
+        --atrans linearSumSimd --normalize > "raw.txt" 2>&1
 }
 
 run_level C0 "-DABLATE_ZIGZAG_CARRY -DABLATE_PREFIXSUM_CARRY -DABLATE_CARRY_ADD -DABLATE_BROADCAST_LANE15"
@@ -30,4 +44,4 @@ run_level C2 "-DABLATE_CARRY_ADD -DABLATE_BROADCAST_LANE15"
 run_level C3 "-DABLATE_BROADCAST_LANE15"
 run_level C4 ""
 
-echo "done. results in ablation_C{0..4}.txt"
+echo "done. results in ablation_C{0..4}.txt, no_delta.txt, raw.txt"
