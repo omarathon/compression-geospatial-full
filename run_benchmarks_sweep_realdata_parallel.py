@@ -87,28 +87,36 @@ COLLECTIONS = [
 #     ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
 # ]
 
+# CODECS = [
+#    ("custom_direct_access",                            "linearSumSimd"),
+#    ("simdcomp_fused",                                  "linearSumFused"),
+#     # ("FastPFor_fused_SIMDPFor+VariableByte",                              "linearSumFused"),
+#    ("FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte",           "linearSumFused"),
+#    ("FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte",         "linearSumFused"),
+#     # ("simdcomp_fused_delta_local",                                        "linearSumFused"),
+#     # ("simdcomp_fused_delta_carry",                                        "linearSumFused"),
+#     # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
+#     # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
+#    ("simdcomp_fused_for_global",                                         "linearSumFused"),
+#    ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
+#    ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_p256",                    "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_p512",                    "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_p1024",                    "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_p2048",                    "linearSumFused"),
+#     # ("FastPFor_fused_corrected_for_global_adaptive_b_p4096",                    "linearSumFused"),
+#     # ("FastPFor_fused_corrected_for_global_adaptive_b_p8192",                    "linearSumFused")
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_w128",                   "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_w64",                    "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b_w32",                    "linearSumFused")
+# ]
+
 CODECS = [
    ("custom_direct_access",                            "linearSumSimd"),
-   ("simdcomp_fused",                                  "linearSumFused"),
-    # ("FastPFor_fused_SIMDPFor+VariableByte",                              "linearSumFused"),
-   ("FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte",           "linearSumFused"),
-   ("FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte",         "linearSumFused"),
-    # ("simdcomp_fused_delta_local",                                        "linearSumFused"),
-    # ("simdcomp_fused_delta_carry",                                        "linearSumFused"),
-    # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
-    # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
    ("simdcomp_fused_for_global",                                         "linearSumFused"),
-   ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
-   ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_p256",                    "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_p512",                    "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_p1024",                    "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_p2048",                    "linearSumFused"),
-    # ("FastPFor_fused_corrected_for_global_adaptive_b_p4096",                    "linearSumFused"),
-    # ("FastPFor_fused_corrected_for_global_adaptive_b_p8192",                    "linearSumFused")
-    ("FastPFor_fused_corrected_for_global_adaptive_b_w128",                   "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_w64",                    "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b_w32",                    "linearSumFused")
+   ("simdcomp_fused_for_global_w128",                                         "linearSumFused"),
+   ("simdcomp_fused_for_global_w64",                                         "linearSumFused"),
+   ("simdcomp_fused_for_global_w32",                                         "linearSumFused"),
 ]
 
 # Theoretical uncompressed RSS thresholds
