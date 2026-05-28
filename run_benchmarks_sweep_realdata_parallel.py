@@ -72,23 +72,44 @@ COLLECTIONS = [
     ("slope_srtm",                          256, [f"{DISS}/slope-srtm_35_11.tif"],                                                                                   [16]),
 ]
 
+# CODECS = [
+#     ("custom_direct_access",                            "linearSumSimd"),
+#     ("simdcomp_fused",                                  "linearSumFused"),
+#     # ("FastPFor_fused_SIMDPFor+VariableByte",                              "linearSumFused"),
+#     ("FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte",           "linearSumFused"),
+#     ("FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte",         "linearSumFused"),
+#     # ("simdcomp_fused_delta_local",                                        "linearSumFused"),
+#     # ("simdcomp_fused_delta_carry",                                        "linearSumFused"),
+#     # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
+#     # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
+#     ("simdcomp_fused_for_global",                                         "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
+#     ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
+# ]
+
 CODECS = [
-    ("custom_direct_access",                            "linearSumSimd"),
-    ("simdcomp_fused",                                  "linearSumFused"),
+#    ("custom_direct_access",                            "linearSumSimd"),
+#    ("simdcomp_fused",                                  "linearSumFused"),
     # ("FastPFor_fused_SIMDPFor+VariableByte",                              "linearSumFused"),
-    ("FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte",           "linearSumFused"),
-    ("FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte",         "linearSumFused"),
+#    ("FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte",           "linearSumFused"),
+#    ("FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte",         "linearSumFused"),
     # ("simdcomp_fused_delta_local",                                        "linearSumFused"),
     # ("simdcomp_fused_delta_carry",                                        "linearSumFused"),
     # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
     # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
-    ("simdcomp_fused_for_global",                                         "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
-    ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
+#    ("simdcomp_fused_for_global",                                         "linearSumFused"),
+#    ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p256",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p512",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p1024",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p2048",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p4096",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_p8192",                    "linearSumFused")
 ]
 
 # Theoretical uncompressed RSS thresholds
-RSS_THRESHOLDS_MB = [1, 4, 8, 16, 64, 256, 512, 1024]
+# RSS_THRESHOLDS_MB = [1, 4, 8, 16, 64, 256, 512, 1024]
+RSS_THRESHOLDS_MB = [8, 16]
 
 # Cores to pin workers to. Stride 4 places each worker on a distinct CCX
 # (Zen 2: 4 cores per CCX share 16 MiB L3). All cores 0–63 are on NUMA 0.
@@ -158,18 +179,23 @@ def run_one(tif_path, blocksize, numblocks, codec, atrans, force_int32=False,
         band_m  = re.search(r"band=(\d+)",                  block)
         dec_m   = re.search(r"meantimedec:([\d.]+)",        block)
         trans_m = re.search(r"meantimetrans:([\d.]+)",      block)
-        cr_m    = re.search(r"meancompratio:([\d.]+)",      block)
+        cr_m     = re.search(r"meancompratio:([\d.]+)",         block)
+        excpt_m  = re.search(r"meanexceptperblock:([-\d.]+)",   block)
 
-        band     = int(band_m.group(1))   if band_m   else None
-        dec_ns   = float(dec_m.group(1))  if dec_m    else None
-        trans_ns = float(trans_m.group(1))if trans_m  else None
+        band     = int(band_m.group(1))    if band_m    else None
+        dec_ns   = float(dec_m.group(1))   if dec_m     else None
+        trans_ns = float(trans_m.group(1)) if trans_m   else None
         sum_ns   = dec_ns + trans_ns if (dec_ns is not None and trans_ns is not None) else None
-        comp_ratio = float(cr_m.group(1)) if cr_m     else None
+        comp_ratio = float(cr_m.group(1))  if cr_m      else None
+        # -1.0 means the codec doesn't support exception counting; store as None.
+        _ep = float(excpt_m.group(1)) if excpt_m else None
+        except_per_block = None if (_ep is None or _ep < 0) else _ep
 
         results.append({
             "tif": tif_path, "band": band,
             "dec_ns": dec_ns, "trans_ns": trans_ns, "sum_ns": sum_ns,
             "rss_kb": rss_kb, "comp_ratio": comp_ratio,
+            "mean_except_per_block": except_per_block,
         })
     return results
 
@@ -182,25 +208,29 @@ def aggregate_band_results(band_results):
             return None, None
         return statistics.mean(clean), statistics.pstdev(clean)
 
-    dec_vals   = [r["dec_ns"]     for r in band_results]
-    trans_vals = [r["trans_ns"]   for r in band_results]
-    sum_vals   = [r["sum_ns"]     for r in band_results]
-    cr_vals    = [r["comp_ratio"] for r in band_results]
+    dec_vals    = [r["dec_ns"]               for r in band_results]
+    trans_vals  = [r["trans_ns"]             for r in band_results]
+    sum_vals    = [r["sum_ns"]               for r in band_results]
+    cr_vals     = [r["comp_ratio"]           for r in band_results]
+    excpt_vals  = [r.get("mean_except_per_block") for r in band_results]
 
-    mean_dec,   std_dec   = stats(dec_vals)
-    mean_trans, std_trans = stats(trans_vals)
-    mean_sum,   std_sum   = stats(sum_vals)
-    mean_cr,    std_cr    = stats(cr_vals)
+    mean_dec,    std_dec    = stats(dec_vals)
+    mean_trans,  std_trans  = stats(trans_vals)
+    mean_sum,    std_sum    = stats(sum_vals)
+    mean_cr,     std_cr     = stats(cr_vals)
+    mean_excpt,  std_excpt  = stats(excpt_vals)
 
     return {
-        "mean_dec_ns":   mean_dec,   "std_dec_ns":   std_dec,
-        "mean_trans_ns": mean_trans, "std_trans_ns": std_trans,
-        "mean_sum_ns":   mean_sum,   "std_sum_ns":   std_sum,
-        "mean_comp_ratio": mean_cr,  "std_comp_ratio": std_cr,
+        "mean_dec_ns":          mean_dec,   "std_dec_ns":          std_dec,
+        "mean_trans_ns":        mean_trans, "std_trans_ns":        std_trans,
+        "mean_sum_ns":          mean_sum,   "std_sum_ns":          std_sum,
+        "mean_comp_ratio":      mean_cr,    "std_comp_ratio":      std_cr,
+        "mean_except_per_block": mean_excpt, "std_except_per_block": std_excpt,
         "per_tif": [
             {"tif": r["tif"], "dec_ns": r["dec_ns"],
              "trans_ns": r["trans_ns"], "sum_ns": r["sum_ns"],
-             "rss_kb": r["rss_kb"], "comp_ratio": r["comp_ratio"]}
+             "rss_kb": r["rss_kb"], "comp_ratio": r["comp_ratio"],
+             "mean_except_per_block": r.get("mean_except_per_block")}
             for r in band_results
         ],
     }
