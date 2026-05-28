@@ -509,8 +509,14 @@ INSTANTIATE_TEST_SUITE_P(
         ForGlobalParam{true,  16.0},   // global_b
         ForGlobalParam{false, 16.0},   // adaptive_b p16
         ForGlobalParam{false, 32.0},   // adaptive_b p32
-        ForGlobalParam{false, 64.0},   // adaptive_b p64
-        ForGlobalParam{false, 128.0}   // adaptive_b p128
+        ForGlobalParam{false, 64.0},    // adaptive_b p64
+        ForGlobalParam{false, 128.0},   // adaptive_b p128
+        ForGlobalParam{false, 256.0},   // adaptive_b p256
+        ForGlobalParam{false, 512.0},   // adaptive_b p512
+        ForGlobalParam{false, 1024.0},  // adaptive_b p1024
+        ForGlobalParam{false, 2048.0},  // adaptive_b p2048
+        ForGlobalParam{false, 4096.0},  // adaptive_b p4096
+        ForGlobalParam{false, 8192.0}   // adaptive_b p8192
     ),
     [](const ::testing::TestParamInfo<ForGlobalParam>& info) -> std::string {
       if (info.param.first) return "GlobalB";
