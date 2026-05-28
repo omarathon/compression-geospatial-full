@@ -97,7 +97,7 @@ CODECS = [
     # ("simdcomp_fused_delta_carry",                                        "linearSumFused"),
     # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
     # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
-#    ("simdcomp_fused_for_global",                                         "linearSumFused"),
+   ("simdcomp_fused_for_global",                                         "linearSumFused"),
 #    ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p256",                    "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p512",                    "linearSumFused"),
