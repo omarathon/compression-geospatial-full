@@ -401,6 +401,7 @@ static void RunOneCombinationU16(
 
   RunningStats statsDec, statsTrans, statsEnc;
   RepMedian medDec, medTrans, medEnc;
+  double meanCompRatio = 0.0;
 
   for (int rep = 0; rep < numReps; rep++) {
     std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(
@@ -415,6 +416,15 @@ static void RunOneCombinationU16(
     if (codecGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID.\n";
       return;
+    }
+
+    if (rep == 0) {
+      const double uncompBytes =
+          static_cast<double>(blockSize) * blockSize * sizeof(uint16_t);
+      double sumRatio = 0.0;
+      for (const auto& c : codecGrid)
+        sumRatio += (c->EncodedNumValues() * c->EncodedSizeValue()) / uncompBytes;
+      meanCompRatio = sumRatio / static_cast<double>(codecGrid.size());
     }
 
     if (rep < numSkip) {
@@ -433,10 +443,12 @@ static void RunOneCombinationU16(
 
   std::cout << std::format("tottimedec:{},meantimedec:{},medtimedec:{},mintimedec:{},maxtimedec:{},vartimedec:{},"
                "tottimetrans:{},meantimetrans:{},medtimetrans:{},mintimetrans:{},maxtimetrans:{},vartimetrans:{},"
-               "tottimeenc:{},meantimeenc:{},medtimeenc:{},mintimeenc:{},maxtimeenc:{},vartimeenc:{}",
+               "tottimeenc:{},meantimeenc:{},medtimeenc:{},mintimeenc:{},maxtimeenc:{},vartimeenc:{},"
+               "meancompratio:{:.6f}",
                statsDec.Total(),   statsDec.mean,   medDec.Median(),   statsDec.Min(),   statsDec.Max(),   statsDec.Variance(),
                statsTrans.Total(), statsTrans.mean, medTrans.Median(), statsTrans.Min(), statsTrans.Max(), statsTrans.Variance(),
-               statsEnc.Total(),   statsEnc.mean,   medEnc.Median(),   statsEnc.Min(),   statsEnc.Max(),   statsEnc.Variance()) << '\n';
+               statsEnc.Total(),   statsEnc.mean,   medEnc.Median(),   statsEnc.Min(),   statsEnc.Max(),   statsEnc.Variance(),
+               meanCompRatio) << '\n';
 }
 
 static void RunAllBenchmarksU16(
