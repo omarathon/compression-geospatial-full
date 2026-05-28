@@ -12,8 +12,9 @@ COMMON_ARGS="-b 256 -n 500 -r 1 --itrans none --pattern linear --ordering defaul
 RUNS=(
   "base       linearSum       custom_direct_access"
   "simdcomp   linearSumFused  simdcomp_fused"
-  # "pfor_old       linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
-  "pfor   linearSumFused  FastPFor_fused_corrected_SIMDPFor+VariableByte"
+  # "pfor_old         linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
+  "pfor_global_b    linearSumFused  FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte"
+  "pfor_adaptive_b  linearSumFused  FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte"
   # "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
   # "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
   # "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
@@ -23,7 +24,8 @@ RUNS=(
   "simdcomp_fg linearSumFused simdcomp_fused_for_global"
   # "simdcomp_fh linearSumFused simdcomp_fused_for_hierarchical"
 
-  "pfor_fg   linearSumFused  FastPFor_fused_corrected_for_global"
+  "pfor_fg_global_b   linearSumFused  FastPFor_fused_corrected_for_global_global_b"
+  "pfor_fg_adaptive_b linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b"
 )
 
 run_one() {

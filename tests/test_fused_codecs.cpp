@@ -176,37 +176,50 @@ TEST_F(FusedSumTest, FastPForFused_FixedBlock) {
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
-// ── FastPFor fused (corrected decode path) ────────────────────────────────────
+// ── FastPFor fused (corrected decode path) — parameterized on useGlobalB ─────
 
-TEST_F(FusedSumTest, FastPForFusedCorrected_Zeros) {
-  FastPForFusedCorrectedCodecU16 c;
+class FastPForFusedCorrectedTest : public ::testing::TestWithParam<bool> {
+ protected:
+  static constexpr size_t kSmall  = 256;
+  static constexpr size_t kMedium = 1024;
+};
+
+TEST_P(FastPForFusedCorrectedTest, Zeros) {
+  FastPForFusedCorrectedCodecU16 c(GetParam());
   CheckFusedSum(MakeZeros(kSmall), c);
   CheckFusedSum(MakeZeros(kMedium), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedCorrected_Constant) {
-  FastPForFusedCorrectedCodecU16 c;
+TEST_P(FastPForFusedCorrectedTest, Constant) {
+  FastPForFusedCorrectedCodecU16 c(GetParam());
   CheckFusedSum(MakeConstant(kSmall,  1), c);
   CheckFusedSum(MakeConstant(kSmall,  65535), c);
   CheckFusedSum(MakeConstant(kMedium, 100), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedCorrected_Sequential) {
-  FastPForFusedCorrectedCodecU16 c;
+TEST_P(FastPForFusedCorrectedTest, Sequential) {
+  FastPForFusedCorrectedCodecU16 c(GetParam());
   CheckFusedSum(MakeSequential(kSmall), c);
   CheckFusedSum(MakeSequential(kMedium), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedCorrected_Random) {
-  FastPForFusedCorrectedCodecU16 c;
+TEST_P(FastPForFusedCorrectedTest, Random) {
+  FastPForFusedCorrectedCodecU16 c(GetParam());
   CheckFusedSum(MakeRandom(kSmall,  42), c);
   CheckFusedSum(MakeRandom(kMedium, 99), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedCorrected_FixedBlock) {
-  FastPForFusedCorrectedCodecU16 c;
+TEST_P(FastPForFusedCorrectedTest, FixedBlock) {
+  FastPForFusedCorrectedCodecU16 c(GetParam());
   CheckFusedSum(MakeLargeFixed(), c);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    GlobalAndAdaptiveB, FastPForFusedCorrectedTest,
+    ::testing::Values(true, false),
+    [](const ::testing::TestParamInfo<bool>& info) {
+      return info.param ? "GlobalB" : "AdaptiveB";
+    });
 
 // ── SimdComp fused delta-local ────────────────────────────────────────────────
 
@@ -444,37 +457,50 @@ TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_FixedBlock) {
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
-// ── FastPFor FoR-global ───────────────────────────────────────────────────────
+// ── FastPFor FoR-global — parameterized on useGlobalB ────────────────────────
 
-TEST_F(FusedSumTest, FastPForFusedForGlobal_Zeros) {
-  FastPForFusedCorrectedForGlobalCodecU16 c;
+class FastPForFusedForGlobalTest : public ::testing::TestWithParam<bool> {
+ protected:
+  static constexpr size_t kSmall  = 256;
+  static constexpr size_t kMedium = 1024;
+};
+
+TEST_P(FastPForFusedForGlobalTest, Zeros) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
   CheckFusedSum(MakeZeros(kSmall), c);
   CheckFusedSum(MakeZeros(kMedium), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedForGlobal_Constant) {
-  FastPForFusedCorrectedForGlobalCodecU16 c;
+TEST_P(FastPForFusedForGlobalTest, Constant) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
   CheckFusedSum(MakeConstant(kSmall, 1), c);
   CheckFusedSum(MakeConstant(kSmall, 65535), c);
   CheckFusedSum(MakeConstant(kMedium, 100), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedForGlobal_Sequential) {
-  FastPForFusedCorrectedForGlobalCodecU16 c;
+TEST_P(FastPForFusedForGlobalTest, Sequential) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
   CheckFusedSum(MakeSequential(kSmall), c);
   CheckFusedSum(MakeSequential(kMedium), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedForGlobal_Random) {
-  FastPForFusedCorrectedForGlobalCodecU16 c;
+TEST_P(FastPForFusedForGlobalTest, Random) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
   CheckFusedSum(MakeRandom(kSmall, 42), c);
   CheckFusedSum(MakeRandom(kMedium, 99), c);
 }
 
-TEST_F(FusedSumTest, FastPForFusedForGlobal_FixedBlock) {
-  FastPForFusedCorrectedForGlobalCodecU16 c;
+TEST_P(FastPForFusedForGlobalTest, FixedBlock) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
   CheckFusedSum(MakeLargeFixed(), c);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    GlobalAndAdaptiveB, FastPForFusedForGlobalTest,
+    ::testing::Values(true, false),
+    [](const ::testing::TestParamInfo<bool>& info) {
+      return info.param ? "GlobalB" : "AdaptiveB";
+    });
 
 // ── Compression-ratio tests ───────────────────────────────────────────────────
 //

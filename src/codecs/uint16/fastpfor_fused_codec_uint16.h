@@ -218,10 +218,20 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
     return (n_blocks + 1) / 2;  // two uint16 anchors packed per uint32 word
   }
 
+  static size_t chunkSizeFor(bool useGlobalB) {
+    return useGlobalB
+        ? (1U << (32 - FastPForLib::SIMDPForU16::blocksizeinbits - 1))
+        : FastPForLib::SIMDPForU16::BlockSize;
+  }
+
   FastPForLib::CompositeCodecU16 codec;
+  bool useGlobalB_;
 
  public:
   std::vector<uint32_t> compressed;
+
+  explicit FastPForFusedCorrectedForGlobalCodecU16(bool useGlobalB = true)
+      : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB) {}
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     const size_t n_blocks = length / kBlockSize;
@@ -287,12 +297,15 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   std::size_t EncodedSizeValue() override { return sizeof(uint32_t); }
   virtual ~FastPForFusedCorrectedForGlobalCodecU16() {}
 
-  std::string name() const override { return "FastPFor_fused_corrected_for_global"; }
+  std::string name() const override {
+    return "FastPFor_fused_corrected_for_global_" +
+           std::string(useGlobalB_ ? "global_b" : "adaptive_b");
+  }
 
   std::size_t GetOverflowSize(size_t) const override { return 64; }
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FastPForFusedCorrectedForGlobalCodecU16();
+    return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_);
   }
 
   void AllocEncoded(const uint16_t*, size_t) override {
@@ -319,9 +332,19 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
 class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  private:
   FastPForLib::CompositeCodecU16 codec;
+  bool useGlobalB_;
+
+  static size_t chunkSizeFor(bool useGlobalB) {
+    return useGlobalB
+        ? (1U << (32 - FastPForLib::SIMDPForU16::blocksizeinbits - 1))
+        : FastPForLib::SIMDPForU16::BlockSize;
+  }
 
  public:
   std::vector<uint32_t> compressed;
+
+  explicit FastPForFusedCorrectedCodecU16(bool useGlobalB = true)
+      : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB) {}
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     size_t compressed_size = compressed.size();
@@ -345,7 +368,9 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
   virtual ~FastPForFusedCorrectedCodecU16() {}
 
   std::string name() const override {
-    return "FastPFor_fused_corrected_" + codec.name();
+    return "FastPFor_fused_corrected_" +
+           std::string(useGlobalB_ ? "global_b" : "adaptive_b") + "_" +
+           codec.name();
   }
 
   std::size_t GetOverflowSize(size_t) const override {
@@ -353,7 +378,7 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FastPForFusedCorrectedCodecU16();
+    return new FastPForFusedCorrectedCodecU16(useGlobalB_);
   }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {
