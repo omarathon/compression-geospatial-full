@@ -50,6 +50,9 @@ class FastPForFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
     return new FastPForFusedCodecU16();
   }
+  double MeanExceptionsPerInnerBlock() const override {
+    return codec.codec1.MeanExceptionsPerBlock();
+  }
 
   void AllocEncoded(const uint16_t*, size_t) override {
     // No-op: EncodeArray writes through shared scratch and sizes `compressed`
@@ -121,6 +124,9 @@ class FastPForFusedCorrectedDeltaLocalCodecU16
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
     return new FastPForFusedCorrectedDeltaLocalCodecU16();
   }
+  double MeanExceptionsPerInnerBlock() const override {
+    return codec.codec1.MeanExceptionsPerBlock();
+  }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {
     compressed.resize(length * 2);
@@ -181,6 +187,9 @@ class FastPForFusedCorrectedDeltaCarryCodecU16
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
     return new FastPForFusedCorrectedDeltaCarryCodecU16();
+  }
+  double MeanExceptionsPerInnerBlock() const override {
+    return codec.codec1.MeanExceptionsPerBlock();
   }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {
@@ -307,6 +316,9 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
     return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_);
   }
+  double MeanExceptionsPerInnerBlock() const override {
+    return codec.codec1.MeanExceptionsPerBlock();
+  }
 
   void AllocEncoded(const uint16_t*, size_t) override {
     // No-op: EncodeArray writes through shared scratch and sizes `compressed`
@@ -379,6 +391,9 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
     return new FastPForFusedCorrectedCodecU16(useGlobalB_);
+  }
+  double MeanExceptionsPerInnerBlock() const override {
+    return codec.codec1.MeanExceptionsPerBlock();
   }
 
   void AllocEncoded(const uint16_t* in, size_t length) override {

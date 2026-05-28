@@ -401,7 +401,8 @@ static void RunOneCombinationU16(
 
   RunningStats statsDec, statsTrans, statsEnc;
   RepMedian medDec, medTrans, medEnc;
-  double meanCompRatio = 0.0;
+  double meanCompRatio      = 0.0;
+  double meanExceptPerBlock = -1.0;
 
   for (int rep = 0; rep < numReps; rep++) {
     std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(
@@ -421,10 +422,15 @@ static void RunOneCombinationU16(
     if (rep == 0) {
       const double uncompBytes =
           static_cast<double>(blockSize) * blockSize * sizeof(uint16_t);
-      double sumRatio = 0.0;
-      for (const auto& c : codecGrid)
-        sumRatio += (c->EncodedNumValues() * c->EncodedSizeValue()) / uncompBytes;
-      meanCompRatio = sumRatio / static_cast<double>(codecGrid.size());
+      double sumRatio  = 0.0;
+      double sumExcept = 0.0;
+      for (const auto& c : codecGrid) {
+        sumRatio  += (c->EncodedNumValues() * c->EncodedSizeValue()) / uncompBytes;
+        sumExcept += c->MeanExceptionsPerInnerBlock();
+      }
+      const double n   = static_cast<double>(codecGrid.size());
+      meanCompRatio      = sumRatio  / n;
+      meanExceptPerBlock = sumExcept / n;
     }
 
     if (rep < numSkip) {
@@ -444,11 +450,11 @@ static void RunOneCombinationU16(
   std::cout << std::format("tottimedec:{},meantimedec:{},medtimedec:{},mintimedec:{},maxtimedec:{},vartimedec:{},"
                "tottimetrans:{},meantimetrans:{},medtimetrans:{},mintimetrans:{},maxtimetrans:{},vartimetrans:{},"
                "tottimeenc:{},meantimeenc:{},medtimeenc:{},mintimeenc:{},maxtimeenc:{},vartimeenc:{},"
-               "meancompratio:{:.6f}",
+               "meancompratio:{:.6f},meanexceptperblock:{:.3f}",
                statsDec.Total(),   statsDec.mean,   medDec.Median(),   statsDec.Min(),   statsDec.Max(),   statsDec.Variance(),
                statsTrans.Total(), statsTrans.mean, medTrans.Median(), statsTrans.Min(), statsTrans.Max(), statsTrans.Variance(),
                statsEnc.Total(),   statsEnc.mean,   medEnc.Median(),   statsEnc.Min(),   statsEnc.Max(),   statsEnc.Variance(),
-               meanCompRatio) << '\n';
+               meanCompRatio, meanExceptPerBlock) << '\n';
 }
 
 static void RunAllBenchmarksU16(

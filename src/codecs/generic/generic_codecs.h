@@ -42,6 +42,10 @@ class StatefulIntegerCodec {
 
   virtual std::size_t EncodedSizeValue() = 0;
 
+  // Returns mean exceptions per inner 256-element block after the last
+  // EncodeArray call. Returns -1 for codecs that don't use PFor exceptions.
+  virtual double MeanExceptionsPerInnerBlock() const { return -1.0; }
+
   virtual ~StatefulIntegerCodec() {}
 
   virtual std::string name() const = 0;
