@@ -267,11 +267,17 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
 
     // 2. Encode residuals into shared scratch, leaving space for anchor words
     //    at the front. scratch-then-assign: no worst-case alloc on `compressed`.
+    //    adaptive_b uses flat format to break the per-block b pointer chain.
     auto& scratch = GetFastPForScratch();
     const size_t naw = n_anchor_words(n_blocks);
     size_t data_capacity = scratch.size() - naw;
-    codec.encodeArray(s_delta_scratch, length,
-                      scratch.data() + naw, data_capacity);
+    if (useGlobalB_) {
+      codec.encodeArray(s_delta_scratch, length,
+                        scratch.data() + naw, data_capacity);
+    } else {
+      codec.encodeArrayFlat(s_delta_scratch, length,
+                            scratch.data() + naw, data_capacity);
+    }
 
     // 3. Write anchors packed 2 per uint32 (low 16 = even block, high 16 = odd).
     for (size_t k = 0; k < n_blocks; ++k) {
@@ -297,10 +303,17 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
           static_cast<uint16_t>(compressed[k / 2] >> (16 * (k & 1)));
 
     // 2. Decode residuals via FoR-corrected path (adds anchor per block).
+    //    adaptive_b uses flat format (no data-dep pointer chain on decode).
     size_t recovered_size = length;
-    codec.decodeArrayCorrectedFor(compressed.data() + naw,
-                                   compressed.size() - naw, out,
-                                   recovered_size, s_anchor_scratch);
+    if (useGlobalB_) {
+      codec.decodeArrayCorrectedFor(compressed.data() + naw,
+                                     compressed.size() - naw, out,
+                                     recovered_size, s_anchor_scratch);
+    } else {
+      codec.decodeArrayFlatCorrectedFor(compressed.data() + naw,
+                                         compressed.size() - naw, out,
+                                         recovered_size, s_anchor_scratch);
+    }
     assert(recovered_size == length);
     // Sum stored in out[length] and out[length+1] by the codec.
   }
@@ -365,18 +378,30 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
       : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB) {}
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    size_t compressed_size = compressed.size();
-    codec.encodeArray(in, length, compressed.data(), compressed_size);
-    compressed.resize(compressed_size);
-    compressed.shrink_to_fit();
+    if (useGlobalB_) {
+      size_t compressed_size = compressed.size();
+      codec.encodeArray(in, length, compressed.data(), compressed_size);
+      compressed.resize(compressed_size);
+      compressed.shrink_to_fit();
+    } else {
+      // adaptive_b: flat format (no data-dep pointer chain) + scratch-assign
+      auto& scratch = GetFastPForScratch();
+      size_t nvalue = scratch.size();
+      codec.encodeArrayFlat(in, length, scratch.data(), nvalue);
+      compressed.assign(scratch.data(), scratch.data() + nvalue);
+    }
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
     size_t recovered_size = length;
-    codec.decodeArrayCorrected(compressed.data(), compressed.size(), out,
-                                recovered_size);
+    if (useGlobalB_) {
+      codec.decodeArrayCorrected(compressed.data(), compressed.size(), out,
+                                  recovered_size);
+    } else {
+      codec.decodeArrayFlatCorrected(compressed.data(), compressed.size(), out,
+                                      recovered_size);
+    }
     assert(recovered_size == length);
-    // Sum is already stored in out[length] and out[length+1] by the codec
   }
 
   std::size_t EncodedNumValues() override { return compressed.size(); }
@@ -402,8 +427,9 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     return codec.codec1.MeanExceptionsPerBlock();
   }
 
-  void AllocEncoded(const uint16_t* in, size_t length) override {
-    compressed.resize(length * 2);
+  void AllocEncoded(const uint16_t*, size_t length) override {
+    if (useGlobalB_) compressed.resize(length * 2);
+    // adaptive_b: no-op — EncodeArray uses scratch+assign
   };
 
   void clear() override {
