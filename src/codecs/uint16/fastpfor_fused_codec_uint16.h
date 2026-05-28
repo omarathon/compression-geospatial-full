@@ -234,13 +234,16 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   }
 
   FastPForLib::CompositeCodecU16 codec;
-  bool useGlobalB_;
+  bool   useGlobalB_;
+  double exceptionPenalty_;
 
  public:
   std::vector<uint32_t> compressed;
 
-  explicit FastPForFusedCorrectedForGlobalCodecU16(bool useGlobalB = true)
-      : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB) {}
+  explicit FastPForFusedCorrectedForGlobalCodecU16(bool useGlobalB = true,
+                                                    double exceptionPenalty = 16.0)
+      : codec(chunkSizeFor(useGlobalB), exceptionPenalty),
+        useGlobalB_(useGlobalB), exceptionPenalty_(exceptionPenalty) {}
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     const size_t n_blocks = length / kBlockSize;
@@ -307,14 +310,17 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   virtual ~FastPForFusedCorrectedForGlobalCodecU16() {}
 
   std::string name() const override {
-    return "FastPFor_fused_corrected_for_global_" +
-           std::string(useGlobalB_ ? "global_b" : "adaptive_b");
+    std::string n = "FastPFor_fused_corrected_for_global_" +
+                    std::string(useGlobalB_ ? "global_b" : "adaptive_b");
+    if (exceptionPenalty_ != 16.0)
+      n += "_p" + std::to_string(static_cast<int>(exceptionPenalty_));
+    return n;
   }
 
   std::size_t GetOverflowSize(size_t) const override { return 64; }
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_);
+    return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_, exceptionPenalty_);
   }
   double MeanExceptionsPerInnerBlock() const override {
     return codec.codec1.MeanExceptionsPerBlock();

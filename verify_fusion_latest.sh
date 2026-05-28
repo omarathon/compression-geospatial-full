@@ -26,6 +26,9 @@ RUNS=(
 
   "pfor_fg_global_b   linearSumFused  FastPFor_fused_corrected_for_global_global_b"
   "pfor_fg_adaptive_b linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b"
+  "pfor_fg_adaptive_b_p32 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p32"
+  "pfor_fg_adaptive_b_p64 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p64"
+  "pfor_fg_adaptive_b_p128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p128"
 )
 
 run_one() {

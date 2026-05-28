@@ -66,8 +66,11 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));   // adaptive_b
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());       // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));  // adaptive_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());          // global_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));     // adaptive_b, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
 
@@ -164,8 +167,11 @@ BuildAllCodecsU16() {
   codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
 
   // Fused FoR variants (FastPFor)
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());       // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));  // adaptive_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());          // global_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));     // adaptive_b, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
 
   // Cascaded: DeltaCodecU16 -> simdcomp
   codecs.push_back(

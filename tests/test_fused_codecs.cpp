@@ -457,49 +457,64 @@ TEST_F(FusedSumTest, FastPForFusedCorrectedDeltaCarry_FixedBlock) {
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
-// ── FastPFor FoR-global — parameterized on useGlobalB ────────────────────────
+// ── FastPFor FoR-global — parameterized on (useGlobalB, exceptionPenalty) ────
 
-class FastPForFusedForGlobalTest : public ::testing::TestWithParam<bool> {
+using ForGlobalParam = std::pair<bool, double>;
+
+class FastPForFusedForGlobalTest
+    : public ::testing::TestWithParam<ForGlobalParam> {
  protected:
   static constexpr size_t kSmall  = 256;
   static constexpr size_t kMedium = 1024;
 };
 
 TEST_P(FastPForFusedForGlobalTest, Zeros) {
-  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
+  auto [useGlobalB, penalty] = GetParam();
+  FastPForFusedCorrectedForGlobalCodecU16 c(useGlobalB, penalty);
   CheckFusedSum(MakeZeros(kSmall), c);
   CheckFusedSum(MakeZeros(kMedium), c);
 }
 
 TEST_P(FastPForFusedForGlobalTest, Constant) {
-  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
+  auto [useGlobalB, penalty] = GetParam();
+  FastPForFusedCorrectedForGlobalCodecU16 c(useGlobalB, penalty);
   CheckFusedSum(MakeConstant(kSmall, 1), c);
   CheckFusedSum(MakeConstant(kSmall, 65535), c);
   CheckFusedSum(MakeConstant(kMedium, 100), c);
 }
 
 TEST_P(FastPForFusedForGlobalTest, Sequential) {
-  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
+  auto [useGlobalB, penalty] = GetParam();
+  FastPForFusedCorrectedForGlobalCodecU16 c(useGlobalB, penalty);
   CheckFusedSum(MakeSequential(kSmall), c);
   CheckFusedSum(MakeSequential(kMedium), c);
 }
 
 TEST_P(FastPForFusedForGlobalTest, Random) {
-  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
+  auto [useGlobalB, penalty] = GetParam();
+  FastPForFusedCorrectedForGlobalCodecU16 c(useGlobalB, penalty);
   CheckFusedSum(MakeRandom(kSmall, 42), c);
   CheckFusedSum(MakeRandom(kMedium, 99), c);
 }
 
 TEST_P(FastPForFusedForGlobalTest, FixedBlock) {
-  FastPForFusedCorrectedForGlobalCodecU16 c(GetParam());
+  auto [useGlobalB, penalty] = GetParam();
+  FastPForFusedCorrectedForGlobalCodecU16 c(useGlobalB, penalty);
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    GlobalAndAdaptiveB, FastPForFusedForGlobalTest,
-    ::testing::Values(true, false),
-    [](const ::testing::TestParamInfo<bool>& info) {
-      return info.param ? "GlobalB" : "AdaptiveB";
+    Variants, FastPForFusedForGlobalTest,
+    ::testing::Values(
+        ForGlobalParam{true,  16.0},   // global_b
+        ForGlobalParam{false, 16.0},   // adaptive_b p16
+        ForGlobalParam{false, 32.0},   // adaptive_b p32
+        ForGlobalParam{false, 64.0},   // adaptive_b p64
+        ForGlobalParam{false, 128.0}   // adaptive_b p128
+    ),
+    [](const ::testing::TestParamInfo<ForGlobalParam>& info) -> std::string {
+      if (info.param.first) return "GlobalB";
+      return "AdaptiveB_p" + std::to_string(static_cast<int>(info.param.second));
     });
 
 // ── Compression-ratio tests ───────────────────────────────────────────────────
