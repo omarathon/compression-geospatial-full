@@ -8,10 +8,10 @@
 // different threads don't race; zero heap allocation, zero fragmentation.
 static thread_local uint16_t s_delta_scratch[256 * 256];
 
-// Per-block anchor scratch for FoR codecs. Covers up to 256 blocks (= max for
-// a 65,536-element inner block at kFusedSubBlockSize=256). thread_local so
+// Per-block anchor scratch for FoR codecs. Covers up to 2048 blocks (= max for
+// a 65,536-element inner block at forWindowSize=32). thread_local so
 // parallel encodes from different threads don't race.
-static thread_local uint16_t s_anchor_scratch[256];
+static thread_local uint16_t s_anchor_scratch[2048];
 
 // Shared scratch buffer for the bit-packed encoder output of SimdComp /
 // SimdComp-FoR codecs. Codecs encode into this buffer first, then

@@ -317,6 +317,52 @@ TEST_F(FusedSumTest, SimdCompFusedForGlobal_FixedBlock) {
   CheckFusedSum(MakeLargeFixed(), c);
 }
 
+// ── SimdComp fused FoR-global (sub-block window sizes) ───────────────────────
+
+class SimdCompFusedForGlobalWinTest
+    : public ::testing::TestWithParam<size_t> {
+ protected:
+  static constexpr size_t kSmall  = 256;
+  static constexpr size_t kMedium = 1024;
+};
+
+TEST_P(SimdCompFusedForGlobalWinTest, Zeros) {
+  SimdCompFusedForGlobalCodecU16 c(GetParam());
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_P(SimdCompFusedForGlobalWinTest, Constant) {
+  SimdCompFusedForGlobalCodecU16 c(GetParam());
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_P(SimdCompFusedForGlobalWinTest, Sequential) {
+  SimdCompFusedForGlobalCodecU16 c(GetParam());
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_P(SimdCompFusedForGlobalWinTest, Random) {
+  SimdCompFusedForGlobalCodecU16 c(GetParam());
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_P(SimdCompFusedForGlobalWinTest, FixedBlock) {
+  SimdCompFusedForGlobalCodecU16 c(GetParam());
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    WindowSizes, SimdCompFusedForGlobalWinTest,
+    ::testing::Values(32u, 64u, 128u),
+    [](const ::testing::TestParamInfo<size_t>& info) {
+      return "w" + std::to_string(info.param);
+    });
+
 // ── SimdComp fused FoR-local ──────────────────────────────────────────────────
 
 TEST_F(FusedSumTest, SimdCompFusedForLocal_Zeros) {
@@ -521,6 +567,52 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<ForGlobalParam>& info) -> std::string {
       if (info.param.first) return "GlobalB";
       return "AdaptiveB_p" + std::to_string(static_cast<int>(info.param.second));
+    });
+
+// ── FastPFor FoR-global (adaptive_b, sub-block window sizes) ─────────────────
+
+class FastPForFusedForGlobalWinTest
+    : public ::testing::TestWithParam<size_t> {
+ protected:
+  static constexpr size_t kSmall  = 256;
+  static constexpr size_t kMedium = 1024;
+};
+
+TEST_P(FastPForFusedForGlobalWinTest, Zeros) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(false, 16.0, GetParam());
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_P(FastPForFusedForGlobalWinTest, Constant) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(false, 16.0, GetParam());
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_P(FastPForFusedForGlobalWinTest, Sequential) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(false, 16.0, GetParam());
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_P(FastPForFusedForGlobalWinTest, Random) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(false, 16.0, GetParam());
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_P(FastPForFusedForGlobalWinTest, FixedBlock) {
+  FastPForFusedCorrectedForGlobalCodecU16 c(false, 16.0, GetParam());
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    WindowSizes, FastPForFusedForGlobalWinTest,
+    ::testing::Values(32u, 64u, 128u),
+    [](const ::testing::TestParamInfo<size_t>& info) {
+      return "w" + std::to_string(info.param);
     });
 
 // ── Compression-ratio tests ───────────────────────────────────────────────────

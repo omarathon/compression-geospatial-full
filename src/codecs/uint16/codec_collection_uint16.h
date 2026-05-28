@@ -58,7 +58,10 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
   codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
@@ -66,8 +69,11 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));   // adaptive_b
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());          // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));     // adaptive_b, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
@@ -168,13 +174,19 @@ BuildAllCodecsU16() {
   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
 
   // Fused FoR variants (SimdComp)
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
+  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
   codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
   codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
 
   // Fused FoR variants (FastPFor)
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());           // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));      // adaptive_b, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));

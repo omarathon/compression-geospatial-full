@@ -29,6 +29,14 @@ RUNS=(
   "pfor_fg_adaptive_b_p32 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p32"
   "pfor_fg_adaptive_b_p64 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p64"
   "pfor_fg_adaptive_b_p128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p128"
+
+  "simdcomp_fg_w128 linearSumFused simdcomp_fused_for_global_w128"
+  "simdcomp_fg_w64  linearSumFused simdcomp_fused_for_global_w64"
+  "simdcomp_fg_w32  linearSumFused simdcomp_fused_for_global_w32"
+
+  "pfor_fg_adaptive_b_w128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w128"
+  "pfor_fg_adaptive_b_w64  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w64"
+  "pfor_fg_adaptive_b_w32  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w32"
 )
 
 run_one() {

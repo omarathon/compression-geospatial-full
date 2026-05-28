@@ -209,17 +209,19 @@ class FastPForFusedCorrectedDeltaCarryCodecU16
 
 // ── FastPFor FoR-global ──────────────────────────────────────────────────────
 //
-// Frame-of-Reference codec using FastPFor bitpacking. Per-block (256-element)
-// anchor = min; encoder subtracts anchor → unsigned residuals → FastPFor.
+// Frame-of-Reference codec using FastPFor bitpacking. Per-block anchor = min;
+// encoder subtracts anchor → unsigned residuals → FastPFor.
 // Decoder reads the stored anchor array from the front of `compressed`, then
-// routes each block through the FoR-corrected SIMD unpack path:
-//   pre-fill corrections[i] = anchor  →  + (exc_val - gap) at exception positions
-//   → usimdunpack_u16_corrected → sum fused.
+// routes each block through the FoR-corrected SIMD unpack path.
 //
 // Encoded layout: [n_anchor_words uint32 words | FastPFor(residuals)]
 //   n_anchor_words = (n_blocks + 1) / 2   (2 uint16 anchors packed per uint32)
 //
-// REQUIREMENT: length % 256 == 0 (bench_pipeline -b 256 satisfies this).
+// `forWindowSize_` (32/64/128/256) applies to the adaptive_b path only and
+// controls both the FoR anchor scope and the bitpacking window size (they are
+// always equal). The global_b path always uses kBlockSize = 256.
+//
+// REQUIREMENT: length % effectiveBlockSize() == 0.
 class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
   static constexpr size_t kBlockSize = FastPForLib::SIMDPForU16::BlockSize;
 
@@ -233,35 +235,46 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
         : FastPForLib::SIMDPForU16::BlockSize;
   }
 
+  size_t effectiveBlockSize() const {
+    return useGlobalB_ ? kBlockSize : forWindowSize_;
+  }
+
   FastPForLib::CompositeCodecU16 codec;
   bool   useGlobalB_;
   double exceptionPenalty_;
+  size_t forWindowSize_;
 
  public:
   std::vector<uint32_t> compressed;
 
   explicit FastPForFusedCorrectedForGlobalCodecU16(bool useGlobalB = true,
-                                                    double exceptionPenalty = 16.0)
+                                                    double exceptionPenalty = 16.0,
+                                                    size_t forWindowSize = 256)
       : codec(chunkSizeFor(useGlobalB), exceptionPenalty),
-        useGlobalB_(useGlobalB), exceptionPenalty_(exceptionPenalty) {}
+        useGlobalB_(useGlobalB), exceptionPenalty_(exceptionPenalty),
+        forWindowSize_(forWindowSize) {
+    assert(forWindowSize == 32 || forWindowSize == 64 ||
+           forWindowSize == 128 || forWindowSize == 256);
+  }
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
-    const size_t n_blocks = length / kBlockSize;
-    assert(n_blocks <= 256 && "too many blocks for s_anchor_scratch");
+    const size_t blk = effectiveBlockSize();
+    const size_t n_blocks = length / blk;
+    assert(n_blocks <= 2048 && "too many blocks for s_anchor_scratch");
 
     // 1. Compute per-block anchors (= min) and write residuals into
     //    s_delta_scratch. Tail elements (if any) are copied as-is.
     for (size_t k = 0; k < n_blocks; ++k) {
-      const uint16_t* blk = in + k * kBlockSize;
-      uint16_t anchor = blk[0];
-      for (size_t i = 1; i < kBlockSize; ++i)
-        if (blk[i] < anchor) anchor = blk[i];
+      const uint16_t* blk_in = in + k * blk;
+      uint16_t anchor = blk_in[0];
+      for (size_t i = 1; i < blk; ++i)
+        if (blk_in[i] < anchor) anchor = blk_in[i];
       s_anchor_scratch[k] = anchor;
-      for (size_t i = 0; i < kBlockSize; ++i)
-        s_delta_scratch[k * kBlockSize + i] =
-            static_cast<uint16_t>(blk[i] - anchor);
+      for (size_t i = 0; i < blk; ++i)
+        s_delta_scratch[k * blk + i] =
+            static_cast<uint16_t>(blk_in[i] - anchor);
     }
-    const size_t rounded = n_blocks * kBlockSize;
+    const size_t rounded = n_blocks * blk;
     for (size_t i = rounded; i < length; ++i)
       s_delta_scratch[i] = in[i];  // tail: no anchor subtraction
 
@@ -276,7 +289,7 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
                         scratch.data() + naw, data_capacity);
     } else {
       codec.encodeArrayFlat(s_delta_scratch, length,
-                            scratch.data() + naw, data_capacity);
+                            scratch.data() + naw, data_capacity, forWindowSize_);
     }
 
     // 3. Write anchors packed 2 per uint32 (low 16 = even block, high 16 = odd).
@@ -293,8 +306,9 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   }
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
-    const size_t n_blocks = length / kBlockSize;
-    assert(n_blocks <= 256 && "too many blocks for s_anchor_scratch");
+    const size_t blk = effectiveBlockSize();
+    const size_t n_blocks = length / blk;
+    assert(n_blocks <= 2048 && "too many blocks for s_anchor_scratch");
     const size_t naw = n_anchor_words(n_blocks);
 
     // 1. Unpack anchors from front (2 per uint32: low 16 = even, high 16 = odd).
@@ -312,7 +326,8 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
     } else {
       codec.decodeArrayFlatCorrectedFor(compressed.data() + naw,
                                          compressed.size() - naw, out,
-                                         recovered_size, s_anchor_scratch);
+                                         recovered_size, s_anchor_scratch,
+                                         forWindowSize_);
     }
     assert(recovered_size == length);
     // Sum stored in out[length] and out[length+1] by the codec.
@@ -325,6 +340,8 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   std::string name() const override {
     std::string n = "FastPFor_fused_corrected_for_global_" +
                     std::string(useGlobalB_ ? "global_b" : "adaptive_b");
+    if (!useGlobalB_ && forWindowSize_ != 256)
+      n += "_w" + std::to_string(forWindowSize_);
     if (exceptionPenalty_ != 16.0)
       n += "_p" + std::to_string(static_cast<int>(exceptionPenalty_));
     return n;
@@ -333,7 +350,9 @@ class FastPForFusedCorrectedForGlobalCodecU16 : public StatefulIntegerCodec<uint
   std::size_t GetOverflowSize(size_t) const override { return 64; }
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_, exceptionPenalty_);
+    return new FastPForFusedCorrectedForGlobalCodecU16(useGlobalB_,
+                                                        exceptionPenalty_,
+                                                        forWindowSize_);
   }
   double MeanExceptionsPerInnerBlock() const override {
     return codec.codec1.MeanExceptionsPerBlock();

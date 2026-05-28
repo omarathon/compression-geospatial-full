@@ -98,18 +98,22 @@ CODECS = [
     # ("FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte",        "linearSumFused"),
     # ("FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte",        "linearSumFused"),
    ("simdcomp_fused_for_global",                                         "linearSumFused"),
-#    ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
+   ("FastPFor_fused_corrected_for_global_global_b",                      "linearSumFused"),
+   ("FastPFor_fused_corrected_for_global_adaptive_b",                    "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p256",                    "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p512",                    "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p1024",                    "linearSumFused"),
     ("FastPFor_fused_corrected_for_global_adaptive_b_p2048",                    "linearSumFused"),
     # ("FastPFor_fused_corrected_for_global_adaptive_b_p4096",                    "linearSumFused"),
     # ("FastPFor_fused_corrected_for_global_adaptive_b_p8192",                    "linearSumFused")
+    ("FastPFor_fused_corrected_for_global_adaptive_b_w128",                   "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_w64",                    "linearSumFused"),
+    ("FastPFor_fused_corrected_for_global_adaptive_b_w32",                    "linearSumFused")
 ]
 
 # Theoretical uncompressed RSS thresholds
 # RSS_THRESHOLDS_MB = [1, 4, 8, 16, 64, 256, 512, 1024]
-RSS_THRESHOLDS_MB = [8, 16]
+RSS_THRESHOLDS_MB = [8, 16, 32]
 
 # Cores to pin workers to. Stride 4 places each worker on a distinct CCX
 # (Zen 2: 4 cores per CCX share 16 MiB L3). All cores 0–63 are on NUMA 0.

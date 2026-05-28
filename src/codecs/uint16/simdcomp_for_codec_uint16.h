@@ -118,7 +118,7 @@ static thread_local uint16_t s_for_scratch[256 * 256];
 
 }  // namespace simdcomp_for_detail
 
-// ── FoR-global: one anchor per 256-element sub-block ─────────────────────────
+// ── FoR-global: one anchor per W-element sub-block (W ∈ {32,64,128,256}) ─────
 //
 // Layout:
 //   [num_sb : uint32]
@@ -127,20 +127,28 @@ static thread_local uint16_t s_for_scratch[256 * 256];
 //   [payload_0][payload_1] … [payload_{num_sb-1}]
 //
 // Per sub-block:
-//   anchor_k = min over 256 elements of sub-block k
+//   anchor_k = min over W elements of sub-block k
 //   residual_i = value_i − anchor_k (always >= 0)
 //   b_k = bit width needed for max residual within sub-block k
 //
-// Decode prefills `corrections[0..15] = broadcast(anchor_k)` (all same value
-// for a global-FoR sub-block) before calling simdunpack_u16_corrected.
+// Payload words per sub-block: ceil(W * b_k / 256) __m256i.
+// FoR window == b window (both = forWindowSize_) by construction.
 class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
  public:
   std::vector<uint8_t> compressed;
+  size_t forWindowSize_;
+
+  explicit SimdCompFusedForGlobalCodecU16(size_t forWindowSize = 256)
+      : forWindowSize_(forWindowSize) {
+    assert(forWindowSize == 32 || forWindowSize == 64 ||
+           forWindowSize == 128 || forWindowSize == 256);
+  }
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     using namespace simdcomp_for_detail;
-    assert(length % kSubBlockSize == 0);
-    const size_t num_sb = length / kSubBlockSize;
+    const size_t W = forWindowSize_;
+    assert(length % W == 0);
+    const size_t num_sb = length / W;
 
     // Encode into the shared thread-local scratch; assign exact bytes into
     // `compressed`. No worst-case alloc on `compressed` itself.
@@ -153,10 +161,10 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     uint8_t* out_ptr = bs_ptr + num_sb;
 
     for (size_t k = 0; k < num_sb; ++k) {
-      const uint16_t* sb_in = in + k * kSubBlockSize;
-      // Find min over 256 elements via SIMD reduction.
+      const uint16_t* sb_in = in + k * W;
+      // Find min over W elements via SIMD reduction.
       __m256i acc = _mm256_set1_epi16(static_cast<short>(0xFFFFu));
-      for (size_t i = 0; i < kSubBlockSize; i += 16) {
+      for (size_t i = 0; i < W; i += 16) {
         __m256i v = _mm256_loadu_si256(
             reinterpret_cast<const __m256i*>(sb_in + i));
         acc = _mm256_min_epu16(acc, v);
@@ -165,10 +173,10 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
       anchors_ptr[k] = anchor;
 
       // residuals = values - anchor; track max for b.
-      uint16_t* dst = s_for_scratch + k * kSubBlockSize;
+      uint16_t* dst = s_for_scratch + k * W;
       __m256i anchor_v = _mm256_set1_epi16(static_cast<short>(anchor));
       __m256i max_acc = _mm256_setzero_si256();
-      for (size_t i = 0; i < kSubBlockSize; i += 16) {
+      for (size_t i = 0; i < W; i += 16) {
         __m256i v = _mm256_loadu_si256(
             reinterpret_cast<const __m256i*>(sb_in + i));
         __m256i r = _mm256_sub_epi16(v, anchor_v);
@@ -189,8 +197,14 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
       }
       bs_ptr[k] = static_cast<uint8_t>(b_k);
 
-      simdpack_u16(dst, reinterpret_cast<__m256i*>(out_ptr), b_k);
-      out_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
+      auto* out_regs = reinterpret_cast<__m256i*>(out_ptr);
+      switch (W) {
+        case 32:  simdpack_u16_n32(dst, out_regs, b_k);  break;
+        case 64:  simdpack_u16_n64(dst, out_regs, b_k);  break;
+        case 128: simdpack_u16_n128(dst, out_regs, b_k); break;
+        default:  simdpack_u16(dst, out_regs, b_k);       break;
+      }
+      out_ptr += ((W * b_k + 255) / 256) * sizeof(__m256i);
     }
 
     const size_t actual = static_cast<size_t>(out_ptr - scratch.data());
@@ -200,8 +214,9 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
 
   void DecodeArray(uint16_t* out, const std::size_t length) override {
     using namespace simdcomp_for_detail;
-    assert(length % kSubBlockSize == 0);
-    const size_t num_sb = length / kSubBlockSize;
+    const size_t W = forWindowSize_;
+    assert(length % W == 0);
+    const size_t num_sb = length / W;
 
     const uint8_t* hdr = compressed.data();
     const uint32_t got_num_sb = *reinterpret_cast<const uint32_t*>(hdr);
@@ -218,10 +233,27 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
       const __m256i anchor_bcast =
           _mm256_set1_epi16(static_cast<short>(anchors_ptr[k]));
       const uint32_t b_k = bs_ptr[k];
-      simdunpack_u16_corrected_uniform(reinterpret_cast<const __m256i*>(in_ptr),
-                                       out + k * kSubBlockSize, b_k,
-                                       anchor_bcast, &sum);
-      in_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
+      const auto* in_regs = reinterpret_cast<const __m256i*>(in_ptr);
+      uint16_t* sb_out = out + k * W;
+      switch (W) {
+        case 32:
+          simdunpack_u16_corrected_uniform_n32(in_regs, sb_out, b_k,
+                                               anchor_bcast, &sum);
+          break;
+        case 64:
+          simdunpack_u16_corrected_uniform_n64(in_regs, sb_out, b_k,
+                                               anchor_bcast, &sum);
+          break;
+        case 128:
+          simdunpack_u16_corrected_uniform_n128(in_regs, sb_out, b_k,
+                                                anchor_bcast, &sum);
+          break;
+        default:
+          simdunpack_u16_corrected_uniform(in_regs, sb_out, b_k,
+                                           anchor_bcast, &sum);
+          break;
+      }
+      in_ptr += ((W * b_k + 255) / 256) * sizeof(__m256i);
     }
 
     const uint32_t total = hsum_epi32_m256(sum);
@@ -232,10 +264,15 @@ class SimdCompFusedForGlobalCodecU16 : public StatefulIntegerCodec<uint16_t> {
   std::size_t EncodedNumValues() override { return compressed.size(); }
   std::size_t EncodedSizeValue() override { return sizeof(uint8_t); }
   virtual ~SimdCompFusedForGlobalCodecU16() {}
-  std::string name() const override { return "simdcomp_fused_for_global"; }
+  std::string name() const override {
+    std::string n = "simdcomp_fused_for_global";
+    if (forWindowSize_ != 256)
+      n += "_w" + std::to_string(forWindowSize_);
+    return n;
+  }
   std::size_t GetOverflowSize(size_t) const override { return 2; }
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new SimdCompFusedForGlobalCodecU16();
+    return new SimdCompFusedForGlobalCodecU16(forWindowSize_);
   }
   void AllocEncoded(const uint16_t*, size_t) override {
     // No-op: EncodeArray writes through shared scratch and sizes `compressed`
