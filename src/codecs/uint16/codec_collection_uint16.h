@@ -36,6 +36,8 @@ InitLogicalCodecsU16() {
   // wfull outputs length+1 elements (65537 for a 256x256 block), which is not
   // divisible by kFusedSubBlockSize=256 and crashes fused second-stage codecs.
   // codecs.push_back(std::make_unique<FORCodecU16>());
+  codecs.push_back(std::make_unique<FORCodecU16>(8));
+  codecs.push_back(std::make_unique<FORCodecU16>(16));
   codecs.push_back(std::make_unique<FORCodecU16>(32));
   codecs.push_back(std::make_unique<FORCodecU16>(64));
   codecs.push_back(std::make_unique<FORCodecU16>(128));
