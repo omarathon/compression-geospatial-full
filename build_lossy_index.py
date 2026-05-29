@@ -39,7 +39,7 @@ gdal.UseExceptions()
 gdal.SetCacheMax(512 * 1024 * 1024)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from lossy_transform_tiff import detect_layout_creation_options
+from lossy_transform_tiff import detect_layout_creation_options, median_filter_transform
 
 # ---------------------------------------------------------------------------
 # Dataset inventory (same as run_benchmarks_sweep_realdata_parallel.py)
@@ -86,8 +86,9 @@ COLLECTIONS = [
     ("slope_srtm",                          256, [f"{DISS}/slope-srtm_35_11.tif"],                                                                                   [16]),
 ]
 
-NRMSE_TARGETS   = [0.05, 0.10, 0.15]
+NRMSE_TARGETS    = [0.05, 0.10, 0.15, 0.30]
 SEARCH_TOLERANCE = 1.0  # binary search stops when high - low ≤ this (DN)
+MEDIAN_KERNELS   = [3, 5, 7]
 
 WORKER_CORES_NODE0 = [0, 4, 8, 12, 16, 20, 24, 28]
 WORKER_CORES_NODE1 = [64, 68, 72, 76, 80, 84, 88, 92]
@@ -96,6 +97,7 @@ _WORKER_CORE      = None
 _WORKER_NUMA_NODE = None
 _DO_FORMULA       = True
 _DO_SEARCH        = False
+_DO_MEDIAN        = False
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -186,6 +188,30 @@ def nrmse_windowed(orig_band, recon_band, nodata, windows):
     var  = max(0.0, sum_orig_sq / count - mean * mean)
     std  = math.sqrt(var)
     return (rmse / std) if std > 0.0 else None
+
+
+def do_median_nrmse(tif_path, kernel, orig_ds, windows):
+    """Apply median_filter_transform and compute NRMSE over sampled windows.
+
+    Uses lossy_transform_tiff.median_filter_transform for the filtering step,
+    matching the same code path as the benchmark script.
+    Returns NRMSE_std (float) or None on failure.
+    """
+    tmp = f"/scratch/omsst2/diss/temp/median_idx_{os.getpid()}_{uuid.uuid4().hex[:12]}.tif"
+    os.makedirs(os.path.dirname(tmp), exist_ok=True)
+    creation_opts = detect_layout_creation_options(orig_ds)
+    try:
+        median_filter_transform(tmp, kernel, creation_opts, orig_ds)
+        filt_ds = gdal.Open(tmp, gdal.GA_ReadOnly)
+        if filt_ds is None:
+            return None
+        nodata = orig_ds.GetRasterBand(1).GetNoDataValue()
+        result = nrmse_windowed(orig_ds.GetRasterBand(1), filt_ds.GetRasterBand(1), nodata, windows)
+        filt_ds = None
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+    return result
 
 
 def do_lerc_roundtrip(tif_path, maxz, orig_ds, n_bands, windows):
@@ -328,10 +354,18 @@ def process_tif(tif_path):
 
             targets_out[str(target)] = entry
 
+        median_out = {}
+        if _DO_MEDIAN:
+            for kernel in MEDIAN_KERNELS:
+                print(f"  [{os.getpid()}] {fname} median k={kernel}", flush=True)
+                nrmse = do_median_nrmse(tif_path, kernel, orig_ds, windows)
+                median_out[str(kernel)] = nrmse
+
         bands_out[str(b)] = {
-            "std":   std,
-            "range": rng,
-            "nrmse_targets": targets_out,
+            "std":            std,
+            "range":          rng,
+            "nrmse_targets":  targets_out,
+            **({"median_filter_nrmse": median_out} if _DO_MEDIAN else {}),
         }
 
     orig_ds = None
@@ -346,8 +380,8 @@ def _worker_run(tif_path):
     return tif_path, process_tif(tif_path)
 
 
-def _init_worker(cores_list, numa_node, counter, do_formula, do_search):
-    global _WORKER_CORE, _WORKER_NUMA_NODE, _DO_FORMULA, _DO_SEARCH
+def _init_worker(cores_list, numa_node, counter, do_formula, do_search, do_median):
+    global _WORKER_CORE, _WORKER_NUMA_NODE, _DO_FORMULA, _DO_SEARCH, _DO_MEDIAN
     with counter.get_lock():
         idx = counter.value
         counter.value += 1
@@ -355,6 +389,7 @@ def _init_worker(cores_list, numa_node, counter, do_formula, do_search):
     _WORKER_NUMA_NODE = numa_node
     _DO_FORMULA       = do_formula
     _DO_SEARCH        = do_search
+    _DO_MEDIAN        = do_median
     try:
         os.sched_setaffinity(0, {_WORKER_CORE})
     except (AttributeError, OSError):
@@ -378,10 +413,12 @@ def main():
                         help="Compute maxZError = std * target for each threshold (default: on).")
     parser.add_argument("--search", action=argparse.BooleanOptionalAction, default=False,
                         help="Binary-search for maxZError achieving exact NRMSE target (default: off).")
+    parser.add_argument("--median", action=argparse.BooleanOptionalAction, default=False,
+                        help="Compute NRMSE for median filter kernels 3x3, 5x5, 7x7 (default: off).")
     args = parser.parse_args()
 
-    if not args.formula and not args.search:
-        parser.error("at least one of --formula / --search must be enabled")
+    if not args.formula and not args.search and not args.median:
+        parser.error("at least one of --formula / --search / --median must be enabled")
 
     pool = WORKER_CORES_NODE0 if args.node == 0 else WORKER_CORES_NODE1
     if args.workers > len(pool):
@@ -398,15 +435,16 @@ def main():
     total = len(tif_paths)
     print(f"TIFs to index: {total}")
     print(f"workers={args.workers}  node={args.node}  cores={worker_cores}")
-    print(f"formula={args.formula}  search={args.search}", flush=True)
+    print(f"formula={args.formula}  search={args.search}  median={args.median}", flush=True)
 
     index = {}
     done  = 0
 
     if args.workers == 1:
-        global _DO_FORMULA, _DO_SEARCH
+        global _DO_FORMULA, _DO_SEARCH, _DO_MEDIAN
         _DO_FORMULA = args.formula
         _DO_SEARCH  = args.search
+        _DO_MEDIAN  = args.median
         for path in tif_paths:
             _, result = _worker_run(path)
             index[path] = result
@@ -417,7 +455,7 @@ def main():
         with ProcessPoolExecutor(
             max_workers=args.workers,
             initializer=_init_worker,
-            initargs=(worker_cores, args.node, counter, args.formula, args.search),
+            initargs=(worker_cores, args.node, counter, args.formula, args.search, args.median),
         ) as ex:
             futures = {ex.submit(_worker_run, p): p for p in tif_paths}
             for fut in as_completed(futures):
