@@ -149,7 +149,7 @@ static void RunBenchConfig(
   std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
 
   for (auto& offset :
-       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks)) {
+       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks, /*allow_wrap=*/false)) {
     auto blockData = ReadGeoTiffBlock(band, offset.x, offset.y, blockSize,
                                       rasterWidth, rasterHeight);
     if (static_cast<int>(blockData.size()) != blockSize * blockSize) continue;
@@ -244,7 +244,7 @@ static void RunBenchConfigU16(
   std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
 
   for (auto& offset :
-       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks)) {
+       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks, /*allow_wrap=*/false)) {
     std::vector<uint16_t> blockData(blockSize * blockSize);
     int nodataCount = 0;
 
@@ -346,7 +346,7 @@ static void RunBenchConfigU8(
   std::vector<std::vector<CodecStats>> codecWindowStats(codecs.size());
 
   for (auto& offset :
-       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks)) {
+       SampleBlockOffsets(blocksInWidth, blocksInHeight, blockSize, nBlocks, /*allow_wrap=*/false)) {
     std::vector<uint8_t> blockData(blockSize * blockSize);
     band->RasterIO(GF_Read, offset.x, offset.y, blockSize, blockSize,
                    blockData.data(), blockSize, blockSize, GDT_Byte, 0, 0);

@@ -564,10 +564,12 @@ struct BlockOffset {
 inline std::vector<BlockOffset> SampleBlockOffsets(int blocksInWidth,
                                                     int blocksInHeight,
                                                     int blockSize,
-                                                    int numBlocks) {
+                                                    int numBlocks,
+                                                    bool allow_wrap = true) {
   std::vector<BlockOffset> offsets;
-  offsets.reserve(numBlocks);
   const int totalBlocks = blocksInWidth * blocksInHeight;
+  if (!allow_wrap) numBlocks = std::min(numBlocks, totalBlocks);
+  offsets.reserve(numBlocks);
 
   auto push = [&](int blockIndex) {
     offsets.push_back({(blockIndex % blocksInWidth) * blockSize,
