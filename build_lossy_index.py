@@ -90,8 +90,8 @@ NRMSE_TARGETS    = [0.05, 0.10, 0.15, 0.30]
 SEARCH_TOLERANCE = 1.0  # binary search stops when high - low ≤ this (DN)
 MEDIAN_KERNELS   = [3, 5, 7]
 
-WORKER_CORES_NODE0 = [0, 4, 8, 12, 16, 20, 24, 28]
-WORKER_CORES_NODE1 = [64, 68, 72, 76, 80, 84, 88, 92]
+WORKER_CORES_NODE0 = list(range(0, 64))
+WORKER_CORES_NODE1 = list(range(64, 128))
 
 _WORKER_CORE      = None
 _WORKER_NUMA_NODE = None
