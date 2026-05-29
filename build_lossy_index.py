@@ -107,46 +107,91 @@ def expand_globs(patterns):
     return paths
 
 
-def _valid_pixels(arr, nodata):
-    """Return 1-D float64 array of valid (non-nodata) pixels."""
-    flat = arr.ravel()
-    if nodata is not None:
-        flat = flat[flat != nodata]
-    return flat.astype(np.float64)
+STATS_BLOCK_SIZE = 256
+MAX_STATS_BLOCKS = 2000
 
 
-def band_stats(arr, nodata):
-    """Return (std, range, mean) for valid pixels, or (None, None, None)."""
-    v = _valid_pixels(arr, nodata)
-    if len(v) == 0:
+def generate_windows(xsize, ysize):
+    nx = math.ceil(xsize / STATS_BLOCK_SIZE)
+    ny = math.ceil(ysize / STATS_BLOCK_SIZE)
+    total = nx * ny
+    indices = np.arange(total, dtype=np.int64)
+    if total > MAX_STATS_BLOCKS:
+        indices = np.linspace(0, total - 1, num=MAX_STATS_BLOCKS, dtype=np.int64)
+    windows = []
+    for idx in indices:
+        by = int(idx) // nx
+        bx = int(idx) % nx
+        x = bx * STATS_BLOCK_SIZE
+        y = by * STATS_BLOCK_SIZE
+        windows.append((x, y, min(STATS_BLOCK_SIZE, xsize - x), min(STATS_BLOCK_SIZE, ysize - y)))
+    return windows
+
+
+def band_stats_windowed(band, nodata, windows):
+    """Population std, range, mean over sampled windows, nodata excluded."""
+    sum_x = sum_x2 = 0.0
+    vmin = float("inf")
+    vmax = float("-inf")
+    count = 0
+    for x, y, cols, rows in windows:
+        arr = band.ReadAsArray(x, y, cols, rows)
+        if arr is None:
+            continue
+        flat = arr.ravel().astype(np.float64)
+        if nodata is not None:
+            flat = flat[arr.ravel() != nodata]
+        if len(flat) == 0:
+            continue
+        sum_x  += float(flat.sum())
+        sum_x2 += float((flat * flat).sum())
+        vmin    = min(vmin, float(flat.min()))
+        vmax    = max(vmax, float(flat.max()))
+        count  += len(flat)
+    if count == 0:
         return None, None, None
-    mean = float(v.mean())
-    std  = float(v.std())           # population std
-    rng  = float(v.max() - v.min())
-    return std, rng, mean
+    mean = sum_x / count
+    var  = max(0.0, sum_x2 / count - mean * mean)
+    return math.sqrt(var), vmax - vmin, mean
 
 
-def nrmse_from_arrays(orig_arr, recon_arr, nodata):
-    """NRMSE_std between orig and recon for the valid pixels."""
-    if nodata is not None:
-        mask = orig_arr.ravel() != nodata 
-    else:
-        mask = np.ones(orig_arr.size, dtype=bool)
-    if not mask.any():
+def nrmse_windowed(orig_band, recon_band, nodata, windows):
+    """NRMSE_std computed over sampled windows."""
+    sum_sq = sum_orig = sum_orig_sq = 0.0
+    count = 0
+    for x, y, cols, rows in windows:
+        o = orig_band.ReadAsArray(x, y, cols, rows)
+        r = recon_band.ReadAsArray(x, y, cols, rows)
+        if o is None or r is None:
+            continue
+        valid = (o != nodata) if nodata is not None else np.ones(o.shape, dtype=bool)
+        vc = int(valid.sum())
+        if vc == 0:
+            continue
+        if np.issubdtype(o.dtype, np.integer):
+            diff = r.astype(np.int64) - o.astype(np.int64)
+        else:
+            diff = r.astype(np.float64) - o.astype(np.float64)
+        o_f = o.astype(np.float64)
+        sum_sq      += float(np.sum(diff * diff, where=valid, dtype=np.float64))
+        sum_orig    += float(np.sum(o_f,         where=valid, dtype=np.float64))
+        sum_orig_sq += float(np.sum(o_f * o_f,  where=valid, dtype=np.float64))
+        count += vc
+    if count == 0:
         return None
-    o = orig_arr.ravel().astype(np.float64)[mask]
-    r = recon_arr.ravel().astype(np.float64)[mask]
-    rmse = math.sqrt(float(((r - o) ** 2).mean()))
-    std  = float(o.std())
+    rmse = math.sqrt(sum_sq / count)
+    mean = sum_orig / count
+    var  = max(0.0, sum_orig_sq / count - mean * mean)
+    std  = math.sqrt(var)
     return (rmse / std) if std > 0.0 else None
 
 
-def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, n_bands):
-    """Call lossy_transform_tiff.lerc_roundtrip, read back all band arrays.
+def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, orig_ds, n_bands, windows):
+    """Call lossy_transform_tiff.lerc_roundtrip and compute per-band NRMSE over sampled windows.
 
     Uses the same code path as the lossy_transform_tiff script (two-step
     translate + metadata copy), so pixel values are guaranteed consistent.
-    Returns dict: band_num (1-based) -> numpy array, or None on failure.
+    Returns dict: band_num (1-based) -> nrmse float, or None on failure.
     """
     tmp = f"/scratch/omsst2/diss/temp/lerc_idx_{os.getpid()}_{uuid.uuid4().hex[:12]}.tif"
     os.makedirs(os.path.dirname(tmp), exist_ok=True)
@@ -155,12 +200,17 @@ def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, n_bands):
         recon_ds = gdal.Open(tmp, gdal.GA_ReadOnly)
         if recon_ds is None:
             return None
-        arrays = {b: recon_ds.GetRasterBand(b).ReadAsArray() for b in range(1, n_bands + 1)}
+        result = {}
+        for b in range(1, n_bands + 1):
+            nodata = orig_ds.GetRasterBand(b).GetNoDataValue()
+            result[b] = nrmse_windowed(
+                orig_ds.GetRasterBand(b), recon_ds.GetRasterBand(b), nodata, windows
+            )
         recon_ds = None
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
-    return arrays
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -168,28 +218,26 @@ def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, n_bands):
 # ---------------------------------------------------------------------------
 
 def process_tif(tif_path):
+    print(f"  [{os.getpid()}] start {os.path.basename(tif_path)}", flush=True)
     orig_ds = gdal.Open(tif_path, gdal.GA_ReadOnly)
     if orig_ds is None:
         return {"error": f"cannot open {tif_path}"}
 
     n_bands = orig_ds.RasterCount
+    windows = generate_windows(orig_ds.RasterXSize, orig_ds.RasterYSize)
 
-    # Read all original arrays and compute per-band stats upfront.
-    orig_arrays = {}
-    nodatas     = {}
-    stds        = {}
-    ranges      = {}
+    # Compute per-band stats over sampled windows (no full ReadAsArray).
+    stds   = {}
+    ranges = {}
 
     for b in range(1, n_bands + 1):
-        band       = orig_ds.GetRasterBand(b)
-        nodata     = band.GetNoDataValue()
-        arr        = band.ReadAsArray()
-        std, rng, _mean = band_stats(arr, nodata)
-        orig_arrays[b] = arr
-        nodatas[b]     = nodata
-        stds[b]        = std
-        ranges[b]      = rng
+        band   = orig_ds.GetRasterBand(b)
+        nodata = band.GetNoDataValue()
+        std, rng, _ = band_stats_windowed(band, nodata, windows)
+        stds[b]   = std
+        ranges[b] = rng
 
+    print(f"  [{os.getpid()}] stats done {os.path.basename(tif_path)}, starting binary search", flush=True)
     # Keep orig_ds open — lerc_roundtrip needs it for metadata copying.
     creation_opts = detect_layout_creation_options(orig_ds)
 
@@ -198,14 +246,8 @@ def process_tif(tif_path):
 
     def get_nrmse(b, maxz):
         if maxz not in roundtrip_cache:
-            recon = do_lerc_roundtrip(tif_path, maxz, creation_opts, orig_ds, n_bands)
-            if recon is None:
-                roundtrip_cache[maxz] = {}
-            else:
-                roundtrip_cache[maxz] = {
-                    bk: nrmse_from_arrays(orig_arrays[bk], recon[bk], nodatas[bk])
-                    for bk in range(1, n_bands + 1)
-                }
+            result = do_lerc_roundtrip(tif_path, maxz, creation_opts, orig_ds, orig_ds, n_bands, windows)
+            roundtrip_cache[maxz] = result or {}
         return roundtrip_cache[maxz].get(b)
 
     # Binary search per (band, target).
