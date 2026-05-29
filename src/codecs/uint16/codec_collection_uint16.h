@@ -139,9 +139,9 @@ BuildAllCodecsU16() {
         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
 
   // Non-cascaded heavy codecs
-  for (auto& codec : hCodecs)
-    codecs.push_back(
-        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+  // for (auto& codec : hCodecs)
+  //   codecs.push_back(
+  //       std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
 
   // Cascaded: each logical + each physical
   for (auto& lCodec : lCodecs) {
