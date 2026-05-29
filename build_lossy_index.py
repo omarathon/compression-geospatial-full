@@ -39,7 +39,7 @@ gdal.UseExceptions()
 gdal.SetCacheMax(512 * 1024 * 1024)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from lossy_transform_tiff import lerc_roundtrip, detect_layout_creation_options
+from lossy_transform_tiff import detect_layout_creation_options
 
 # ---------------------------------------------------------------------------
 # Dataset inventory (same as run_benchmarks_sweep_realdata_parallel.py)
@@ -92,8 +92,10 @@ SEARCH_TOLERANCE = 1.0  # binary search stops when high - low ≤ this (DN)
 WORKER_CORES_NODE0 = [0, 4, 8, 12, 16, 20, 24, 28]
 WORKER_CORES_NODE1 = [64, 68, 72, 76, 80, 84, 88, 92]
 
-_WORKER_CORE     = None
+_WORKER_CORE      = None
 _WORKER_NUMA_NODE = None
+_DO_FORMULA       = True
+_DO_SEARCH        = False
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -186,17 +188,22 @@ def nrmse_windowed(orig_band, recon_band, nodata, windows):
     return (rmse / std) if std > 0.0 else None
 
 
-def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, orig_ds, n_bands, windows):
-    """Call lossy_transform_tiff.lerc_roundtrip and compute per-band NRMSE over sampled windows.
+def do_lerc_roundtrip(tif_path, maxz, orig_ds, n_bands, windows):
+    """Compress to LERC and compute per-band NRMSE over sampled windows.
 
-    Uses the same code path as the lossy_transform_tiff script (two-step
-    translate + metadata copy), so pixel values are guaranteed consistent.
+    Reads directly from the LERC-compressed file (one gdal.Translate, not two).
+    Pixel values are identical to a full lerc_roundtrip decompress step — LERC
+    quantises on write; reading the compressed file back gives the same values.
     Returns dict: band_num (1-based) -> nrmse float, or None on failure.
     """
     tmp = f"/scratch/omsst2/diss/temp/lerc_idx_{os.getpid()}_{uuid.uuid4().hex[:12]}.tif"
     os.makedirs(os.path.dirname(tmp), exist_ok=True)
     try:
-        lerc_roundtrip(tif_path, tmp, maxz, creation_opts, src_ds)
+        gdal.Translate(
+            tmp, tif_path,
+            format="GTiff",
+            creationOptions=["COMPRESS=LERC", f"MAX_Z_ERROR={maxz}"],
+        )
         recon_ds = gdal.Open(tmp, gdal.GA_ReadOnly)
         if recon_ds is None:
             return None
@@ -218,18 +225,22 @@ def do_lerc_roundtrip(tif_path, maxz, creation_opts, src_ds, orig_ds, n_bands, w
 # ---------------------------------------------------------------------------
 
 def process_tif(tif_path):
-    print(f"  [{os.getpid()}] start {os.path.basename(tif_path)}", flush=True)
+    fname = os.path.basename(tif_path)
+    print(f"  [{os.getpid()}] start {fname}", flush=True)
+
     orig_ds = gdal.Open(tif_path, gdal.GA_ReadOnly)
     if orig_ds is None:
         return {"error": f"cannot open {tif_path}"}
 
     n_bands = orig_ds.RasterCount
+    if n_bands > 1:
+        orig_ds = None
+        return {"error": f"multi-band TIF ({n_bands} bands) skipped"}
+
     windows = generate_windows(orig_ds.RasterXSize, orig_ds.RasterYSize)
 
-    # Compute per-band stats over sampled windows (no full ReadAsArray).
     stds   = {}
     ranges = {}
-
     for b in range(1, n_bands + 1):
         band   = orig_ds.GetRasterBand(b)
         nodata = band.GetNoDataValue()
@@ -237,20 +248,31 @@ def process_tif(tif_path):
         stds[b]   = std
         ranges[b] = rng
 
-    print(f"  [{os.getpid()}] stats done {os.path.basename(tif_path)}, starting binary search", flush=True)
-    # Keep orig_ds open — lerc_roundtrip needs it for metadata copying.
-    creation_opts = detect_layout_creation_options(orig_ds)
+    # Formula needs only std — no LERC at all.
+    # Search needs orig_ds open for nrmse_windowed reads during binary search.
+    if not _DO_SEARCH:
+        orig_ds = None
 
-    # Cache: maxZError -> {band -> nrmse}  (one full-TIF roundtrip serves all bands)
-    roundtrip_cache = {}
+    if _DO_SEARCH:
+        print(f"  [{os.getpid()}] stats done {fname}, starting binary search", flush=True)
+        roundtrip_cache = {}
+        iteration_count = [0]
 
-    def get_nrmse(b, maxz):
-        if maxz not in roundtrip_cache:
-            result = do_lerc_roundtrip(tif_path, maxz, creation_opts, orig_ds, orig_ds, n_bands, windows)
-            roundtrip_cache[maxz] = result or {}
-        return roundtrip_cache[maxz].get(b)
+        def get_nrmse(b, maxz):
+            if maxz not in roundtrip_cache:
+                iteration_count[0] += 1
+                result = do_lerc_roundtrip(tif_path, maxz, orig_ds, n_bands, windows)
+                roundtrip_cache[maxz] = result or {}
+                nrmse_val = roundtrip_cache[maxz].get(b)
+                print(
+                    f"  [{os.getpid()}] {fname} iter={iteration_count[0]}"
+                    f" maxz={maxz:.2f} nrmse={nrmse_val:.4f}" if nrmse_val is not None else
+                    f"  [{os.getpid()}] {fname} iter={iteration_count[0]}"
+                    f" maxz={maxz:.2f} nrmse=None",
+                    flush=True,
+                )
+            return roundtrip_cache[maxz].get(b)
 
-    # Binary search per (band, target).
     bands_out = {}
     for b in range(1, n_bands + 1):
         std = stds[b]
@@ -262,49 +284,49 @@ def process_tif(tif_path):
 
         targets_out = {}
         for target in NRMSE_TARGETS:
-            formula_maxz = std * target
+            entry = {}
 
-            low  = 1.0
-            high = rng
+            if _DO_FORMULA:
+                entry["maxZError_formula"] = std * target
 
-            # Verify the upper bound actually exceeds the target.
-            nrmse_high = get_nrmse(b, high)
-            if nrmse_high is None:
-                targets_out[str(target)] = {
-                    "maxZError_formula": formula_maxz,
-                    "error": "LERC roundtrip failed at upper bound",
-                }
-                continue
-            if nrmse_high <= target:
-                targets_out[str(target)] = {
-                    "maxZError_formula": formula_maxz,
-                    "error": (
-                        f"NRMSE({rng:.1f}) = {nrmse_high:.4f} ≤ target {target}; "
-                        "range is not a sufficient upper bound for this band"
-                    ),
-                }
-                continue
+            if _DO_SEARCH:
+                low  = 1.0
+                high = max(std, 2.0)
 
-            last_valid_maxz  = 0.0
-            last_valid_nrmse = 0.0
-
-            while high - low > SEARCH_TOLERANCE:
-                mid   = (low + high) / 2.0
-                nrmse = get_nrmse(b, mid)
-                if nrmse is None:
-                    break
-                if nrmse <= target:
-                    last_valid_maxz  = mid
-                    last_valid_nrmse = nrmse
-                    low = mid
+                for _ in range(5):
+                    nrmse_high = get_nrmse(b, high)
+                    if nrmse_high is not None and nrmse_high > target:
+                        break
+                    high *= 3.0
                 else:
-                    high = mid
+                    entry["search_error"] = f"could not find upper bound where NRMSE > {target}"
+                    targets_out[str(target)] = entry
+                    continue
 
-            targets_out[str(target)] = {
-                "maxZError_formula": formula_maxz,
-                "maxZError_search":  last_valid_maxz,
-                "nrmse_achieved":    last_valid_nrmse,
-            }
+                last_valid_maxz  = 0.0
+                last_valid_nrmse = 0.0
+
+                while high - low > SEARCH_TOLERANCE:
+                    mid   = (low + high) / 2.0
+                    nrmse = get_nrmse(b, mid)
+                    if nrmse is None:
+                        break
+                    if nrmse <= target:
+                        last_valid_maxz  = mid
+                        last_valid_nrmse = nrmse
+                        low = mid
+                    else:
+                        high = mid
+
+                entry["maxZError_search"] = last_valid_maxz
+                entry["nrmse_achieved"]   = last_valid_nrmse
+                print(
+                    f"  [{os.getpid()}] {fname} target={target} done:"
+                    f" maxZError_search={last_valid_maxz:.2f} nrmse={last_valid_nrmse:.4f}",
+                    flush=True,
+                )
+
+            targets_out[str(target)] = entry
 
         bands_out[str(b)] = {
             "std":   std,
@@ -324,13 +346,15 @@ def _worker_run(tif_path):
     return tif_path, process_tif(tif_path)
 
 
-def _init_worker(cores_list, numa_node, counter):
-    global _WORKER_CORE, _WORKER_NUMA_NODE
+def _init_worker(cores_list, numa_node, counter, do_formula, do_search):
+    global _WORKER_CORE, _WORKER_NUMA_NODE, _DO_FORMULA, _DO_SEARCH
     with counter.get_lock():
         idx = counter.value
         counter.value += 1
     _WORKER_CORE      = cores_list[idx]
     _WORKER_NUMA_NODE = numa_node
+    _DO_FORMULA       = do_formula
+    _DO_SEARCH        = do_search
     try:
         os.sched_setaffinity(0, {_WORKER_CORE})
     except (AttributeError, OSError):
@@ -350,7 +374,14 @@ def main():
                         help="NUMA node to bind workers to (default 0).")
     parser.add_argument("--output", default="lossy_index.json",
                         help="Output JSON path (default lossy_index.json).")
+    parser.add_argument("--formula", action=argparse.BooleanOptionalAction, default=True,
+                        help="Compute maxZError = std * target for each threshold (default: on).")
+    parser.add_argument("--search", action=argparse.BooleanOptionalAction, default=False,
+                        help="Binary-search for maxZError achieving exact NRMSE target (default: off).")
     args = parser.parse_args()
+
+    if not args.formula and not args.search:
+        parser.error("at least one of --formula / --search must be enabled")
 
     pool = WORKER_CORES_NODE0 if args.node == 0 else WORKER_CORES_NODE1
     if args.workers > len(pool):
@@ -366,12 +397,16 @@ def main():
 
     total = len(tif_paths)
     print(f"TIFs to index: {total}")
-    print(f"workers={args.workers}  node={args.node}  cores={worker_cores}", flush=True)
+    print(f"workers={args.workers}  node={args.node}  cores={worker_cores}")
+    print(f"formula={args.formula}  search={args.search}", flush=True)
 
     index = {}
     done  = 0
 
     if args.workers == 1:
+        global _DO_FORMULA, _DO_SEARCH
+        _DO_FORMULA = args.formula
+        _DO_SEARCH  = args.search
         for path in tif_paths:
             _, result = _worker_run(path)
             index[path] = result
@@ -382,7 +417,7 @@ def main():
         with ProcessPoolExecutor(
             max_workers=args.workers,
             initializer=_init_worker,
-            initargs=(worker_cores, args.node, counter),
+            initargs=(worker_cores, args.node, counter, args.formula, args.search),
         ) as ex:
             futures = {ex.submit(_worker_run, p): p for p in tif_paths}
             for fut in as_completed(futures):
