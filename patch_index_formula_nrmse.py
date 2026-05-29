@@ -79,8 +79,12 @@ def compute_nrmse_at_maxz(tif_path, band_num, maxz, orig_ds, windows):
     os.makedirs(TEMP_DIR, exist_ok=True)
     tmp = os.path.join(TEMP_DIR, f"patch_nrmse_{os.getpid()}_{uuid.uuid4().hex[:12]}.tif")
     try:
-        gdal.Translate(tmp, tif_path, format="GTiff",
-                       creationOptions=["COMPRESS=LERC", f"MAX_Z_ERROR={maxz}"])
+        try:
+            gdal.Translate(tmp, tif_path, format="GTiff",
+                           creationOptions=["COMPRESS=LERC", f"MAX_Z_ERROR={maxz}"])
+        except RuntimeError as e:
+            print(f"  SKIP LERC (unsupported type): {os.path.basename(tif_path)}: {e}", flush=True)
+            return None
         recon_ds = gdal.Open(tmp, gdal.GA_ReadOnly)
         if recon_ds is None:
             return None
