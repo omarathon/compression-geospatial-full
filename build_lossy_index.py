@@ -275,8 +275,8 @@ def process_tif(tif_path):
         ranges[b] = rng
 
     # Formula needs only std — no LERC at all.
-    # Search needs orig_ds open for nrmse_windowed reads during binary search.
-    if not _DO_SEARCH:
+    # Search and median both need orig_ds open.
+    if not _DO_SEARCH and not _DO_MEDIAN:
         orig_ds = None
 
     if _DO_SEARCH:
