@@ -128,9 +128,10 @@ BuildAllCodecsU16() {
   auto hCodecs = InitHeavyPhysicalCodecsU16();
 
   // Non-cascaded logical codecs
-  for (auto& codec : lCodecs)
-    codecs.push_back(
-        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+  // for (auto& codec : lCodecs)
+    // codecs.push_back(
+        // std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
+  codecs.push_back(std::make_unique<RLECodecU16>());
 
   // Non-cascaded physical codecs
   for (auto& codec : pCodecs)
