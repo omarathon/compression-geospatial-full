@@ -274,13 +274,14 @@ def process_tif(tif_path):
         stds[b]   = std
         ranges[b] = rng
 
-    # Formula needs only std — no LERC at all.
-    # Search and median both need orig_ds open.
-    if not _DO_SEARCH and not _DO_MEDIAN:
+    # Formula now also measures NRMSE at the formula maxZError (one roundtrip per target).
+    # Search and median also need orig_ds open.
+    if not _DO_FORMULA and not _DO_SEARCH and not _DO_MEDIAN:
         orig_ds = None
 
-    if _DO_SEARCH:
-        print(f"  [{os.getpid()}] stats done {fname}, starting binary search", flush=True)
+    if _DO_FORMULA or _DO_SEARCH:
+        if _DO_SEARCH:
+            print(f"  [{os.getpid()}] stats done {fname}, starting binary search", flush=True)
         roundtrip_cache = {}
         iteration_count = [0]
 
@@ -313,7 +314,9 @@ def process_tif(tif_path):
             entry = {}
 
             if _DO_FORMULA:
-                entry["maxZError_formula"] = std * target
+                formula_maxz = std * target
+                entry["maxZError_formula"] = formula_maxz
+                entry["nrmse_at_formula_maxz"] = get_nrmse(b, formula_maxz)
 
             if _DO_SEARCH:
                 low  = 1.0
