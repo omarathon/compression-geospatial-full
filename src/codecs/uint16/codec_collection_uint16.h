@@ -33,13 +33,18 @@ InitLogicalCodecsU16() {
   // Scalar logical codecs
   codecs.push_back(std::make_unique<DeltaCodecU16>());
   codecs.push_back(std::make_unique<DoubleDeltaCodecU16>());
-  codecs.push_back(std::make_unique<FORCodecU16>());
+  // wfull outputs length+1 elements (65537 for a 256x256 block), which is not
+  // divisible by kFusedSubBlockSize=256 and crashes fused second-stage codecs.
+  // codecs.push_back(std::make_unique<FORCodecU16>());
   codecs.push_back(std::make_unique<FORCodecU16>(32));
   codecs.push_back(std::make_unique<FORCodecU16>(64));
   codecs.push_back(std::make_unique<FORCodecU16>(128));
   codecs.push_back(std::make_unique<FORCodecU16>(256));
-  codecs.push_back(std::make_unique<FORCodecU16>(512));
-  codecs.push_back(std::make_unique<RLECodecU16>());
+  // w512: output = 65536+128 = 65664, 65664%256=128 != 0 → crashes fused codecs.
+  // codecs.push_back(std::make_unique<FORCodecU16>(512));
+  // RLE outputs 2*num_runs elements — arbitrary size, not guaranteed divisible
+  // by kFusedSubBlockSize=256, crashes fused second-stage codecs.
+  // codecs.push_back(std::make_unique<RLECodecU16>());
 
   // Lossless JPEG predictors (2D, stride = sqrt(length))
   codecs.push_back(std::make_unique<JpegPred1CodecU16>());
