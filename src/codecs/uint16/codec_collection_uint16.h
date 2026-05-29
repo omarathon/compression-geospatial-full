@@ -34,6 +34,11 @@ InitLogicalCodecsU16() {
   codecs.push_back(std::make_unique<DeltaCodecU16>());
   codecs.push_back(std::make_unique<DoubleDeltaCodecU16>());
   codecs.push_back(std::make_unique<FORCodecU16>());
+  codecs.push_back(std::make_unique<FORCodecU16>(32));
+  codecs.push_back(std::make_unique<FORCodecU16>(64));
+  codecs.push_back(std::make_unique<FORCodecU16>(128));
+  codecs.push_back(std::make_unique<FORCodecU16>(256));
+  codecs.push_back(std::make_unique<FORCodecU16>(512));
   codecs.push_back(std::make_unique<RLECodecU16>());
 
   // Lossless JPEG predictors (2D, stride = sqrt(length))
@@ -56,35 +61,35 @@ inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
-  codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
+  // codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
+  // codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
+  // codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
+  // codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
+  // codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
+  // codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
+  // codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
+  // codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
+  // codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());        // global_b
   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));   // adaptive_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 256.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 512.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 1024.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 2048.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 4096.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
-  codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
-  codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 256.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 512.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 1024.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 2048.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 4096.0));
+  // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
+  // codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
+  // codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
 
   return codecs;
 }
@@ -114,110 +119,110 @@ InitHeavyPhysicalCodecsU16() {
   return codecs;
 }
 
-// inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
-// BuildAllCodecsU16() {
-//   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
-//
-//   auto lCodecs = InitLogicalCodecsU16();
-//   auto pCodecs = InitPhysicalCodecsU16();
-//   auto hCodecs = InitHeavyPhysicalCodecsU16();
-//
-//   // Non-cascaded logical codecs
-//   for (auto& codec : lCodecs)
-//     codecs.push_back(
-//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
-//
-//   // Non-cascaded physical codecs
-//   for (auto& codec : pCodecs)
-//     codecs.push_back(
-//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
-//
-//   // Non-cascaded heavy codecs
-//   for (auto& codec : hCodecs)
-//     codecs.push_back(
-//         std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
-//
-//   // Cascaded: each logical + each physical
-//   for (auto& lCodec : lCodecs) {
-//     for (auto& pCodec : pCodecs) {
-//       auto lFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
-//           lCodec->CloneFresh());
-//       auto pFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
-//           pCodec->CloneFresh());
-//       codecs.push_back(
-//           std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
-//               std::move(lFresh), std::move(pFresh)));
-//     }
-//   }
-//
-//   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
-//
-//   return codecs;
-// }
-
-// Focused codec set for local delta-fusion testing.
-// Includes: the 4 new fused-delta codecs, plain simdcomp/PFor (fused),
-// and DeltaCodecU16 cascaded with each of simdcomp and PFor for comparison.
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 BuildAllCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
 
-  // Plain physical (no external delta pre-pass)
-  codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());       // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));  // adaptive_b
+  auto lCodecs = InitLogicalCodecsU16();
+  auto pCodecs = InitPhysicalCodecsU16();
+  auto hCodecs = InitHeavyPhysicalCodecsU16();
 
-  // Fused delta variants
-  codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
+  // Non-cascaded logical codecs
+  for (auto& codec : lCodecs)
+    codecs.push_back(
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
 
-  // Fused FoR variants (SimdComp)
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
-  codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
-  codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
-  codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
+  // Non-cascaded physical codecs
+  for (auto& codec : pCodecs)
+    codecs.push_back(
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
 
-  // Fused FoR variants (FastPFor)
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 256.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 512.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 1024.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 2048.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 4096.0));
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
+  // Non-cascaded heavy codecs
+  for (auto& codec : hCodecs)
+    codecs.push_back(
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
 
-  // Cascaded: DeltaCodecU16 -> simdcomp
-  codecs.push_back(
-      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
-          std::make_unique<DeltaCodecU16>(),
-          std::make_unique<SimdCompFusedCodecU16>()));
-
-  // Cascaded: DeltaCodecU16 -> PFor
-  codecs.push_back(
-      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
-          std::make_unique<DeltaCodecU16>(),
-          std::make_unique<FastPForFusedCorrectedCodecU16>()));
+  // Cascaded: each logical + each physical
+  for (auto& lCodec : lCodecs) {
+    for (auto& pCodec : pCodecs) {
+      auto lFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
+          lCodec->CloneFresh());
+      auto pFresh = std::unique_ptr<StatefulIntegerCodec<uint16_t>>(
+          pCodec->CloneFresh());
+      codecs.push_back(
+          std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+              std::move(lFresh), std::move(pFresh)));
+    }
+  }
 
   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
 
-  codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
-  // Cascaded: DeltaCodecU16 -> turbopack
-  codecs.push_back(
-      std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
-          std::make_unique<DeltaCodecU16>(),
-          std::make_unique<TurboPForCodecU16>(7)));
-
-
   return codecs;
 }
+
+// Focused codec set for local delta-fusion testing.
+// Includes: the 4 new fused-delta codecs, plain simdcomp/PFor (fused),
+// and DeltaCodecU16 cascaded with each of simdcomp and PFor for comparison.
+// inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
+// BuildAllCodecsU16() {
+//   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
+
+//   // Plain physical (no external delta pre-pass)
+//   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());       // global_b
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));  // adaptive_b
+
+//   // Fused delta variants
+//   codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
+//   codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
+
+//   // Fused FoR variants (SimdComp)
+//   codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
+//   codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(128));    // w128
+//   codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(64));     // w64
+//   codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>(32));     // w32
+//   codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
+//   codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
+
+//   // Fused FoR variants (FastPFor)
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false));          // adaptive_b, w256, p16
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 128)); // adaptive_b, w128
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 64));  // adaptive_b, w64
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 16.0, 32));  // adaptive_b, w32
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 32.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 64.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 128.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 256.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 512.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 1024.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 2048.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 4096.0));
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
+
+//   // Cascaded: DeltaCodecU16 -> simdcomp
+//   codecs.push_back(
+//       std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+//           std::make_unique<DeltaCodecU16>(),
+//           std::make_unique<SimdCompFusedCodecU16>()));
+
+//   // Cascaded: DeltaCodecU16 -> PFor
+//   codecs.push_back(
+//       std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+//           std::make_unique<DeltaCodecU16>(),
+//           std::make_unique<FastPForFusedCorrectedCodecU16>()));
+
+//   codecs.push_back(std::make_unique<DirectAccessCodecU16>());
+
+//   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
+//   // Cascaded: DeltaCodecU16 -> turbopack
+//   codecs.push_back(
+//       std::make_unique<CompositeStatefulIntegerCodec<uint16_t>>(
+//           std::make_unique<DeltaCodecU16>(),
+//           std::make_unique<TurboPForCodecU16>(7)));
+
+
+//   return codecs;
+// }
