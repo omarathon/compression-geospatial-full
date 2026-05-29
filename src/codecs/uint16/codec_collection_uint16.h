@@ -62,6 +62,16 @@ InitLogicalCodecsU16() {
   return codecs;
 }
 
+// inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
+// InitPhysicalCodecsU16Compressibility() {
+//   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
+//   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+//    codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());        // global_b
+//   codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));   // adaptive_b
+//   return codecs;
+// }
+
+
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
@@ -93,8 +103,8 @@ InitPhysicalCodecsU16() {
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 2048.0));
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 4096.0));
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
-  // codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
-  // codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
+  codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
+  codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
 
   return codecs;
 }
