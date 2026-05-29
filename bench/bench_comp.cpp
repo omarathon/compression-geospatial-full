@@ -106,6 +106,7 @@ static CodecStats BenchAndVerify(std::vector<T>& data,
       std::chrono::duration_cast<std::chrono::nanoseconds>(endEncode - startEncode).count());
   stats.tdec = static_cast<float>(
       std::chrono::duration_cast<std::chrono::nanoseconds>(endDecode - startDecode).count());
+  stats.exc = static_cast<float>(codec->MeanExceptionsPerInnerBlock());
 
   codec = std::unique_ptr<StatefulIntegerCodec<T>>(codec->CloneFresh());
   return stats;
@@ -188,22 +189,25 @@ static void RunBenchConfig(
 
   for (std::size_t ci = 0; ci < codecs.size(); ++ci) {
     auto& sv = codecWindowStats[ci];
-    std::vector<float> cfs, bpis, tencs, tdecs;
+    std::vector<float> cfs, bpis, tencs, tdecs, excs;
     cfs.reserve(sv.size());
     bpis.reserve(sv.size());
     tencs.reserve(sv.size());
     tdecs.reserve(sv.size());
+    excs.reserve(sv.size());
     std::ranges::transform(sv, std::back_inserter(cfs),   &CodecStats::cf);
     std::ranges::transform(sv, std::back_inserter(bpis),  &CodecStats::bpi);
     std::ranges::transform(sv, std::back_inserter(tencs), &CodecStats::tenc);
     std::ranges::transform(sv, std::back_inserter(tdecs), &CodecStats::tdec);
+    std::ranges::transform(sv, std::back_inserter(excs),  &CodecStats::exc);
     float cfm = Mean(cfs),   cfv  = Variance(cfs,   cfm);
     float bpim = Mean(bpis), bpiv = Variance(bpis,  bpim);
     float tem  = Mean(tencs), tev = Variance(tencs,  tem);
     float tdm  = Mean(tdecs), tdv = Variance(tdecs,  tdm);
+    float excm = Mean(excs);
     std::cout << std::format("c:{},n:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
-                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{}",
-                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv) << '\n';
+                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{},excmean:{}",
+                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv, excm) << '\n';
   }
 }
 
@@ -292,22 +296,25 @@ static void RunBenchConfigU16(
 
   for (std::size_t ci = 0; ci < codecs.size(); ++ci) {
     auto& sv = codecWindowStats[ci];
-    std::vector<float> cfs, bpis, tencs, tdecs;
+    std::vector<float> cfs, bpis, tencs, tdecs, excs;
     cfs.reserve(sv.size());
     bpis.reserve(sv.size());
     tencs.reserve(sv.size());
     tdecs.reserve(sv.size());
+    excs.reserve(sv.size());
     std::ranges::transform(sv, std::back_inserter(cfs),   &CodecStats::cf);
     std::ranges::transform(sv, std::back_inserter(bpis),  &CodecStats::bpi);
     std::ranges::transform(sv, std::back_inserter(tencs), &CodecStats::tenc);
     std::ranges::transform(sv, std::back_inserter(tdecs), &CodecStats::tdec);
+    std::ranges::transform(sv, std::back_inserter(excs),  &CodecStats::exc);
     float cfm = Mean(cfs),   cfv  = Variance(cfs,   cfm);
     float bpim = Mean(bpis), bpiv = Variance(bpis,  bpim);
     float tem  = Mean(tencs), tev = Variance(tencs,  tem);
     float tdm  = Mean(tdecs), tdv = Variance(tdecs,  tdm);
+    float excm = Mean(excs);
     std::cout << std::format("c:{},n:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
-                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{}",
-                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv) << '\n';
+                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{},excmean:{}",
+                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv, excm) << '\n';
   }
 }
 
@@ -369,22 +376,25 @@ static void RunBenchConfigU8(
 
   for (std::size_t ci = 0; ci < codecs.size(); ++ci) {
     auto& sv = codecWindowStats[ci];
-    std::vector<float> cfs, bpis, tencs, tdecs;
+    std::vector<float> cfs, bpis, tencs, tdecs, excs;
     cfs.reserve(sv.size());
     bpis.reserve(sv.size());
     tencs.reserve(sv.size());
     tdecs.reserve(sv.size());
+    excs.reserve(sv.size());
     std::ranges::transform(sv, std::back_inserter(cfs),   &CodecStats::cf);
     std::ranges::transform(sv, std::back_inserter(bpis),  &CodecStats::bpi);
     std::ranges::transform(sv, std::back_inserter(tencs), &CodecStats::tenc);
     std::ranges::transform(sv, std::back_inserter(tdecs), &CodecStats::tdec);
+    std::ranges::transform(sv, std::back_inserter(excs),  &CodecStats::exc);
     float cfm = Mean(cfs),   cfv  = Variance(cfs,   cfm);
     float bpim = Mean(bpis), bpiv = Variance(bpis,  bpim);
     float tem  = Mean(tencs), tev = Variance(tencs,  tem);
     float tdm  = Mean(tdecs), tdv = Variance(tdecs,  tdm);
+    float excm = Mean(excs);
     std::cout << std::format("c:{},n:{},cfmean:{},cfvar:{},bpimean:{},bpivar:{},"
-                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{}",
-                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv) << '\n';
+                 "tencmean:{},tencvar:{},tdecmean:{},tdecvar:{},excmean:{}",
+                 ci, sv.size(), cfm, cfv, bpim, bpiv, tem, tev, tdm, tdv, excm) << '\n';
   }
 }
 
