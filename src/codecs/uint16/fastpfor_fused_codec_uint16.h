@@ -383,6 +383,7 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  private:
   FastPForLib::CompositeCodecU16 codec;
   bool useGlobalB_;
+  size_t windowSize_;  // adaptive_b sub-block width (32/64/128/256); ignored for global_b
 
   static size_t chunkSizeFor(bool useGlobalB) {
     return useGlobalB
@@ -393,8 +394,13 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  public:
   std::vector<uint32_t> compressed;
 
-  explicit FastPForFusedCorrectedCodecU16(bool useGlobalB = true)
-      : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB) {}
+  explicit FastPForFusedCorrectedCodecU16(bool useGlobalB = true,
+                                          size_t windowSize = 256)
+      : codec(chunkSizeFor(useGlobalB)), useGlobalB_(useGlobalB),
+        windowSize_(windowSize) {
+    assert(windowSize == 32 || windowSize == 64 ||
+           windowSize == 128 || windowSize == 256);
+  }
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     if (useGlobalB_) {
@@ -406,7 +412,7 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
       // adaptive_b: flat format (no data-dep pointer chain) + scratch-assign
       auto& scratch = GetFastPForScratch();
       size_t nvalue = scratch.size();
-      codec.encodeArrayFlat(in, length, scratch.data(), nvalue);
+      codec.encodeArrayFlat(in, length, scratch.data(), nvalue, windowSize_);
       compressed.assign(scratch.data(), scratch.data() + nvalue);
     }
   }
@@ -418,7 +424,7 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
                                   recovered_size);
     } else {
       codec.decodeArrayFlatCorrected(compressed.data(), compressed.size(), out,
-                                      recovered_size);
+                                      recovered_size, windowSize_);
     }
     assert(recovered_size == length);
   }
@@ -430,9 +436,11 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
   virtual ~FastPForFusedCorrectedCodecU16() {}
 
   std::string name() const override {
-    return "FastPFor_fused_corrected_" +
-           std::string(useGlobalB_ ? "global_b" : "adaptive_b") + "_" +
-           codec.name();
+    std::string n = "FastPFor_fused_corrected_" +
+                    std::string(useGlobalB_ ? "global_b" : "adaptive_b");
+    if (!useGlobalB_ && windowSize_ != 256)
+      n += "_w" + std::to_string(windowSize_);
+    return n + "_" + codec.name();
   }
 
   std::size_t GetOverflowSize(size_t) const override {
@@ -440,7 +448,7 @@ class FastPForFusedCorrectedCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
 
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FastPForFusedCorrectedCodecU16(useGlobalB_);
+    return new FastPForFusedCorrectedCodecU16(useGlobalB_, windowSize_);
   }
   double MeanExceptionsPerInnerBlock() const override {
     return codec.codec1.MeanExceptionsPerBlock();

@@ -615,6 +615,54 @@ INSTANTIATE_TEST_SUITE_P(
       return "w" + std::to_string(info.param);
     });
 
+// ── FastPFor corrected (adaptive_b, sub-block window sizes) ─────────────────
+// Exercises the flat-format windowed decode and the uint16-packed exception
+// stream (Random/kMedium produces exceptions).
+
+class FastPForFusedCorrectedWinTest
+    : public ::testing::TestWithParam<size_t> {
+ protected:
+  static constexpr size_t kSmall  = 256;
+  static constexpr size_t kMedium = 1024;
+};
+
+TEST_P(FastPForFusedCorrectedWinTest, Zeros) {
+  FastPForFusedCorrectedCodecU16 c(false, GetParam());
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+TEST_P(FastPForFusedCorrectedWinTest, Constant) {
+  FastPForFusedCorrectedCodecU16 c(false, GetParam());
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+}
+
+TEST_P(FastPForFusedCorrectedWinTest, Sequential) {
+  FastPForFusedCorrectedCodecU16 c(false, GetParam());
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+}
+
+TEST_P(FastPForFusedCorrectedWinTest, Random) {
+  FastPForFusedCorrectedCodecU16 c(false, GetParam());
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+}
+
+TEST_P(FastPForFusedCorrectedWinTest, FixedBlock) {
+  FastPForFusedCorrectedCodecU16 c(false, GetParam());
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    WindowSizes, FastPForFusedCorrectedWinTest,
+    ::testing::Values(32u, 64u, 128u, 256u),
+    [](const ::testing::TestParamInfo<size_t>& info) {
+      return "w" + std::to_string(info.param);
+    });
+
 // ── Compression-ratio tests ───────────────────────────────────────────────────
 //
 // Verify that the delta variants actually achieve better compression than the

@@ -85,8 +85,10 @@ InitPhysicalCodecsU16() {
   // codecs.push_back(std::make_unique<SimdCompFusedForLocalCodecU16>());
   // codecs.push_back(std::make_unique<SimdCompFusedForHierarchicalCodecU16>());
   // codecs.push_back(std::make_unique<FastPForFusedCodecU16>());
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());        // global_b
-  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));   // adaptive_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>());            // global_b
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false));       // adaptive_b, w256
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false, 128));  // adaptive_b, w128
+  codecs.push_back(std::make_unique<FastPForFusedCorrectedCodecU16>(false, 64));   // adaptive_b, w64
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaLocalCodecU16>());
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedDeltaCarryCodecU16>());
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>());               // global_b

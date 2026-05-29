@@ -456,7 +456,6 @@ struct CodecStats {
   float bpi = 0;   // encoded bytes per element
   float tenc = 0;  // encode time (ns)
   float tdec = 0;  // decode time (ns)
-  float exc = -1.0f; // mean exceptions per inner block (-1 = not applicable)
 };
 
 
