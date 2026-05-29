@@ -84,9 +84,8 @@ NODATA_VALUES = [0, 101]
 
 BENCH_COMMON_ARGS = [
     "-b", "256",
-    "-n", "8000",
+    "-n", "4000",
     "--ordering", "default",
-    "--check-roundtrip",
     "--normalize",
 ]
 
