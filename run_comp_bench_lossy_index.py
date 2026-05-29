@@ -79,7 +79,7 @@ COLLECTIONS = [
 # Benchmark parameters
 # ---------------------------------------------------------------------------
 
-NRMSE_TARGETS = [0.05, 0.10, 0.15]
+NRMSE_TARGETS = [0.05, 0.10, 0.15, 0.3]
 NODATA_VALUES = [0, 101]
 
 BENCH_COMMON_ARGS = [
@@ -258,6 +258,40 @@ def process_tif(tif_path, exp_name, tif_idx, index, env):
                 run_bench(lossy_tif, label, log, env)
 
                 shutil.rmtree(variant_dir, ignore_errors=True)
+
+    # ---- median filter variants --------------------------------------------
+    for kernel in [3, 5, 7]:
+        label = f"median_k{kernel}"
+        variant_dir = os.path.join(work_dir, label)
+        os.makedirs(variant_dir, exist_ok=True)
+
+        print(f"\n>>> VARIANT: {label} | kernel={kernel}x{kernel}", file=log)
+        gen = subprocess.run(
+            [
+                "python3", LOSSY_SCRIPT,
+                tif_path,
+                "--median-kernel", str(kernel),
+                "--output-dir", variant_dir,
+                "--json-name", "stats.json",
+            ],
+            capture_output=True, text=True, env=env,
+        )
+        log.write(gen.stdout)
+        log.write(gen.stderr)
+
+        if gen.returncode != 0:
+            print(f">>> ERROR: median generation failed (rc={gen.returncode})", file=log)
+            shutil.rmtree(variant_dir, ignore_errors=True)
+            continue
+
+        median_tifs = glob_module.glob(os.path.join(variant_dir, "*.tif"))
+        if not median_tifs:
+            print(">>> ERROR: no output TIF found after median generation", file=log)
+            shutil.rmtree(variant_dir, ignore_errors=True)
+            continue
+
+        run_bench(median_tifs[0], label, log, env)
+        shutil.rmtree(variant_dir, ignore_errors=True)
 
     shutil.rmtree(work_dir, ignore_errors=True)
 
