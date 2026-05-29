@@ -50,6 +50,15 @@ MEDIAN_KERNEL = {
     "median_k7": "7",
 }
 
+# Maps each LERC formula variant to the target key used in nrmse_targets in the index.
+# Keys match Python's str() of the float targets used in build_lossy_index.py.
+LERC_TARGET = {
+    "lerc_formula_t05pct": "0.05",
+    "lerc_formula_t10pct": "0.1",
+    "lerc_formula_t15pct": "0.15",
+    "lerc_formula_t30pct": "0.3",
+}
+
 RE_EXPERIMENT  = re.compile(r"^Experiment:\s+(.+)$")
 RE_TIF_PATH    = re.compile(r"^TIF:\s+(.+)$")
 RE_BENCH_START = re.compile(r"^>>> BENCH START:.*\|\s*variant=(\S+)\s*\|\s*nodata=(\d+)")
@@ -179,6 +188,23 @@ def build_median_nrmse(index, collection_tifs):
     return result
 
 
+def build_lerc_nrmse(index, collection_tifs):
+    """Return lerc_nrmse[collection][variant] = mean nrmse_at_formula_maxz across TIFs."""
+    result = defaultdict(dict)
+    for coll, tif_paths in collection_tifs.items():
+        for variant, target_key in LERC_TARGET.items():
+            values = []
+            for tif in tif_paths:
+                entry = index.get(tif, {})
+                t = entry.get("1", {}).get("nrmse_targets", {}).get(target_key, {})
+                nrmse = t.get("nrmse_at_formula_maxz")
+                if nrmse is not None:
+                    values.append(nrmse)
+            if values:
+                result[coll][variant] = sum(values) / len(values)
+    return result
+
+
 def mean(values):
     return sum(values) / len(values) if values else None
 
@@ -199,7 +225,7 @@ def used_codecs_for(data_slice, codec_order):
     return [c for c in codec_order if c in seen]
 
 
-def write_csv(data_slice, codec_order, collections_order, median_nrmse, output_path):
+def write_csv(data_slice, codec_order, collections_order, median_nrmse, lerc_nrmse, output_path):
     codecs = used_codecs_for(data_slice, codec_order)
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
@@ -215,10 +241,11 @@ def write_csv(data_slice, codec_order, collections_order, median_nrmse, output_p
 
             writer.writerow([VARIANT_LABELS[variant]])
 
-            is_median = variant in MEDIAN_VARIANTS
-            kernel    = MEDIAN_KERNEL.get(variant)
+            is_median    = variant in MEDIAN_VARIANTS
+            is_lerc_lossy = variant in LERC_TARGET
+            kernel       = MEDIAN_KERNEL.get(variant)
 
-            if is_median:
+            if is_median or is_lerc_lossy:
                 writer.writerow(["Collection", "Mean NRMSE"] + codecs)
             else:
                 writer.writerow(["Collection"] + codecs)
@@ -229,6 +256,9 @@ def write_csv(data_slice, codec_order, collections_order, median_nrmse, output_p
 
                 if is_median:
                     nrmse_val = median_nrmse.get(coll, {}).get(kernel)
+                    row = [coll, fmt_nrmse(nrmse_val)]
+                elif is_lerc_lossy:
+                    nrmse_val = lerc_nrmse.get(coll, {}).get(variant)
                     row = [coll, fmt_nrmse(nrmse_val)]
                 else:
                     row = [coll]
@@ -263,7 +293,7 @@ def main():
         index = raw.get("tifs", raw)
         print(f"Loaded index: {len(index)} TIFs")
     else:
-        print("No --index provided; median NRMSE column will be empty.")
+        print("No --index provided; Mean NRMSE columns will be empty.")
 
     os.makedirs(args.output_dir, exist_ok=True)
 
@@ -271,6 +301,7 @@ def main():
     data, codec_order, collection_tifs = parse_logs(args.log_dir)
 
     median_nrmse = build_median_nrmse(index, collection_tifs)
+    lerc_nrmse   = build_lerc_nrmse(index, collection_tifs)
 
     all_collections   = sorted({c for key_data in data.values() for c in key_data})
     collections_order = args.collections_order or all_collections
@@ -282,7 +313,7 @@ def main():
     for (ordering, nodata), data_slice in sorted(data.items()):
         fname = f"bench_comp_results_{ordering}_nodata{nodata}.csv"
         out   = os.path.join(args.output_dir, fname)
-        write_csv(data_slice, codec_order, collections_order, median_nrmse, out)
+        write_csv(data_slice, codec_order, collections_order, median_nrmse, lerc_nrmse, out)
         print(f"Written {out}")
 
 
