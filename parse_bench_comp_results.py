@@ -37,7 +37,7 @@ VARIANT_LABELS = {
 }
 
 RE_EXPERIMENT  = re.compile(r"^Experiment:\s+(.+)$")
-RE_BENCH_START = re.compile(r"^>>> BENCH START:.*\|\s*variant=(\S+)\s*\|.*\|\s*nodata=(\d+)")
+RE_BENCH_START = re.compile(r"^>>> BENCH START:.*\|\s*variant=(\S+)\s*\|\s*nodata=(\d+)")
 RE_BENCH_META  = re.compile(r"ordering=(\w+)")
 RE_CODEC_LINE  = re.compile(r"^(\d+)=(.+)$")
 RE_RESULT_LINE = re.compile(r"^c:(\d+),n:\d+,cfmean:([\d.eE+\-]+),")
