@@ -177,7 +177,9 @@ class FORCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
   void clear() override {
     compressed_data.clear(); compressed_data.shrink_to_fit();
-    metadata_.clear(); metadata_.shrink_to_fit();
+    // metadata_ is intentionally NOT cleared: composite codecs call clear()
+    // between encode and decode, and metadata_ must survive for DecodeArray.
+    // AllocEncoded + EncodeArray on the next block will overwrite it.
   }
   std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
 };
@@ -386,7 +388,8 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
   void clear() override {
     compressed_data.clear(); compressed_data.shrink_to_fit();
-    metadata_.clear(); metadata_.shrink_to_fit();
+    // metadata_ is intentionally NOT cleared: composite codecs call clear()
+    // between encode and decode, and metadata_ must survive for DecodeArray.
   }
   std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
 };
