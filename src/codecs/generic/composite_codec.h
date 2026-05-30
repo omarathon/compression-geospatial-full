@@ -114,7 +114,13 @@ class CompositeStatefulIntegerCodec : public StatefulIntegerCodec<T> {
   }
 
   std::size_t EncodedNumValues() override {
-    return secondCodec->EncodedNumValues();
+    // Physical output + any side-channel metadata the logical codec holds
+    // separately (e.g. sep=true FoR anchors not fed to the physical codec).
+    // ExtraEncodedBytes() is in bytes; divide by EncodedSizeValue() to convert
+    // to the physical codec's unit (TurboPFor uses bytes so this is usually /1).
+    const size_t extra = firstCodec->ExtraEncodedBytes();
+    const size_t unit  = secondCodec->EncodedSizeValue();
+    return secondCodec->EncodedNumValues() + (extra + unit - 1) / unit;
   }
 
   std::size_t EncodedSizeValue() override {

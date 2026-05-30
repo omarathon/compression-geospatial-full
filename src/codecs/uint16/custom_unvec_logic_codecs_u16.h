@@ -152,8 +152,9 @@ class FORCodecU16 : public StatefulIntegerCodec<uint16_t> {
       }
     }
   }
-  std::size_t EncodedNumValues() override {
-    return compressed_data.size() + metadata_.size();
+  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+  std::size_t ExtraEncodedBytes() const override {
+    return metadata_.size() * sizeof(uint16_t);
   }
   std::size_t EncodedSizeValue() override { return sizeof(uint16_t); }
   std::string name() const override {
@@ -360,8 +361,9 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
   }
 
-  std::size_t EncodedNumValues() override {
-    return compressed_data.size() + metadata_.size();
+  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+  std::size_t ExtraEncodedBytes() const override {
+    return metadata_.size() * sizeof(uint16_t);
   }
   std::size_t EncodedSizeValue() override { return sizeof(uint16_t); }
   std::string name() const override {

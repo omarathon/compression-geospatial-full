@@ -716,13 +716,15 @@ static void CheckCompressionRatio(const std::vector<uint16_t>& data,
   base.clear();
   base.AllocEncoded(data.data(), data.size());
   base.EncodeArray(data.data(), data.size());
-  const size_t base_bytes = base.EncodedNumValues() * base.EncodedSizeValue();
+  const size_t base_bytes = base.EncodedNumValues() * base.EncodedSizeValue()
+                           + base.ExtraEncodedBytes();
   base.clear();
 
   delta.clear();
   delta.AllocEncoded(data.data(), data.size());
   delta.EncodeArray(data.data(), data.size());
-  const size_t delta_bytes = delta.EncodedNumValues() * delta.EncodedSizeValue();
+  const size_t delta_bytes = delta.EncodedNumValues() * delta.EncodedSizeValue()
+                            + delta.ExtraEncodedBytes();
   delta.clear();
 
   const size_t uncompressed_bytes = data.size() * sizeof(uint16_t);

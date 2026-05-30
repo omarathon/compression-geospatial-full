@@ -42,6 +42,11 @@ class StatefulIntegerCodec {
 
   virtual std::size_t EncodedSizeValue() = 0;
 
+  // Side-channel bytes not included in GetEncoded() / EncodedNumValues().
+  // Composite codecs add this to their reported size so sep=true metadata
+  // is counted in compression-ratio measurements.
+  virtual std::size_t ExtraEncodedBytes() const { return 0; }
+
   // Returns mean exceptions per inner 256-element block after the last
   // EncodeArray call. Returns -1 for codecs that don't use PFor exceptions.
   virtual double MeanExceptionsPerInnerBlock() const { return -1.0; }
