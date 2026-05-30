@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(compression_geospatial CXX)
+project(compression_geospatial CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +43,14 @@ set_target_properties(TurboPFor PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${EXT}/TurboPFor/include
 )
 
+# Fused-sum decode prototype: compiled from a TurboPFor lib/ source so it can
+# use the internal vertical-bitunpack macros + the _shuffle_16 table.
+add_library(TurboPForFused STATIC ${EXT}/TurboPFor/lib/vp4d_fused.c)
+target_include_directories(TurboPForFused PRIVATE
+  ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include)
+target_compile_options(TurboPForFused PRIVATE -O3 -mavx2)
+target_link_libraries(TurboPForFused PUBLIC TurboPFor)
+
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -60,6 +68,7 @@ pkg_check_modules(OpenJPEG REQUIRED libopenjp2)
 
 # ── Common codec link deps ────────────────────────────────────────────────────
 set(CODEC_LIBS
+  TurboPForFused
   FastPFor
   SimdComp
   TurboPFor

@@ -5,38 +5,47 @@
 set -u
 
 TIF=/home/omar/diss/geotiffs/slope-srtm_35_11.tif
+# TIF=/home/omar/diss/geotiffs/srtm_45_15.tif
+# TIF=/home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif
+# TIF=/home/omar/diss/geotiffs/2656.tif
+
 COMMON_ARGS="-b 256 -n 500 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
 
 # tag         atrans          codec
 # (tag is used for filenames + echo; codec is what gets passed as --icodec/--acodec)
 RUNS=(
   "base       linearSum       custom_direct_access"
-  "simdcomp   linearSumFused  simdcomp_fused"
-  # "pfor_old         linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
-  "pfor_global_b    linearSumFused  FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte"
-  "pfor_adaptive_b  linearSumFused  FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte"
-  # "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
-  # "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
-  # "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
-  # "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
+  # "simdcomp   linearSumFused  simdcomp_fused"
+  # # "pfor_old         linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
+  # "pfor_global_b    linearSumFused  FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte"
+  # "pfor_adaptive_b  linearSumFused  FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte"
+  # # "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
+  # # "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
+  # # "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
+  # # "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
 
-  # "simdcomp_fl linearSumFused simdcomp_fused_for_local"
-  "simdcomp_fg linearSumFused simdcomp_fused_for_global"
-  # "simdcomp_fh linearSumFused simdcomp_fused_for_hierarchical"
+  # # "simdcomp_fl linearSumFused simdcomp_fused_for_local"
+  # "simdcomp_fg linearSumFused simdcomp_fused_for_global"
+  # # "simdcomp_fh linearSumFused simdcomp_fused_for_hierarchical"
 
-  "pfor_fg_global_b   linearSumFused  FastPFor_fused_corrected_for_global_global_b"
-  "pfor_fg_adaptive_b linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b"
-  "pfor_fg_adaptive_b_p32 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p32"
-  "pfor_fg_adaptive_b_p64 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p64"
-  "pfor_fg_adaptive_b_p128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p128"
+  # "pfor_fg_global_b   linearSumFused  FastPFor_fused_corrected_for_global_global_b"
+  # "pfor_fg_adaptive_b linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b"
+  # "pfor_fg_adaptive_b_p32 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p32"
+  # "pfor_fg_adaptive_b_p64 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p64"
+  # "pfor_fg_adaptive_b_p128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p128"
 
-  "simdcomp_fg_w128 linearSumFused simdcomp_fused_for_global_w128"
-  "simdcomp_fg_w64  linearSumFused simdcomp_fused_for_global_w64"
-  "simdcomp_fg_w32  linearSumFused simdcomp_fused_for_global_w32"
+  # "simdcomp_fg_w128 linearSumFused simdcomp_fused_for_global_w128"
+  # "simdcomp_fg_w64  linearSumFused simdcomp_fused_for_global_w64"
+  # "simdcomp_fg_w32  linearSumFused simdcomp_fused_for_global_w32"
 
-  "pfor_fg_adaptive_b_w128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w128"
-  "pfor_fg_adaptive_b_w64  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w64"
-  "pfor_fg_adaptive_b_w32  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w32"
+  # "pfor_fg_adaptive_b_w128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w128"
+  # "pfor_fg_adaptive_b_w64  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w64"
+  # "pfor_fg_adaptive_b_w32  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w32"
+
+  # "tpfor_pfor linearSumFused  TurboPFor_TurboPFor256"
+  # "tpfor_pack linearSumFused  TurboPFor_TurboPack256"
+
+  "TurboPFor_fused_128v16_sum   linearSumFused  TurboPFor_fused_128v16_sum"
 )
 
 run_one() {

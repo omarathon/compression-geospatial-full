@@ -1,7 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -132,6 +134,186 @@ class FORCodecU16 : public StatefulIntegerCodec<uint16_t> {
     size_t w = (window_ == 0 || window_ >= length) ? length : window_;
     size_t num_windows = (length + w - 1) / w;
     compressed_data.resize(length + num_windows);
+  }
+  void clear() override { compressed_data.clear(); compressed_data.shrink_to_fit(); }
+  std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
+};
+
+// ── Frame of Reference (FOR) — Hierarchical ──────────────────────────────────
+// Two-level FoR: one global anchor per global_window_ elements, plus per-
+// local_window_ anchor deltas (local_min − global_min, always ≥ 0) bitpacked
+// at b_local bits (ceil(log2(max_delta + 1))). Element residuals are stored as
+// (value − local_min).
+//
+// Constraint: local_window_ must divide global_window_.
+//
+// Layout (flat vector<uint16_t>):
+//   [b_local : 1]
+//   [global_mins : num_gw]      num_gw = ceil(length / global_window_)
+//   [packed_local_deltas : pwords]  pwords = ceil(total_local * b_local / 16)
+//   [residuals : length]
+//
+// With local_window_=8 and Landsat data, b_local is typically 2–4 bits,
+// reducing anchor overhead from 1/8 (12.5%) to ~1/64–1/32 (1.5–3%).
+class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
+  std::vector<uint16_t> compressed_data;
+  size_t global_window_;
+  size_t local_window_;
+
+  // Scalar bitpack helpers (no SIMD dependency).
+  static size_t packed_u16_words(size_t n, uint32_t b) {
+    // ceil(n * b / 8) bytes, rounded up to uint16 boundary
+    return ((n * static_cast<size_t>(b) + 7) / 8 + 1) / 2;
+  }
+  static void pack_u16(const uint16_t* in, size_t n, uint32_t b, uint8_t* out) {
+    if (b == 0) return;
+    const size_t nbytes = (n * static_cast<size_t>(b) + 7) / 8;
+    std::memset(out, 0, nbytes);
+    for (size_t i = 0; i < n; ++i) {
+      const uint32_t v = static_cast<uint32_t>(in[i]) & ((1u << b) - 1u);
+      const size_t bit_pos = i * static_cast<size_t>(b);
+      const uint64_t shifted = static_cast<uint64_t>(v) << (bit_pos % 8);
+      uint8_t* p = out + bit_pos / 8;
+      const size_t nb = (bit_pos % 8 + b + 7) / 8;
+      uint64_t tmp = shifted;
+      for (size_t j = 0; j < nb; ++j) { p[j] |= static_cast<uint8_t>(tmp); tmp >>= 8; }
+    }
+  }
+  static void unpack_u16(const uint8_t* in, size_t n, uint32_t b, uint16_t* out) {
+    if (b == 0) { std::memset(out, 0, n * sizeof(uint16_t)); return; }
+    const uint32_t mask = (b >= 32) ? 0xFFFFFFFFu : ((1u << b) - 1u);
+    for (size_t i = 0; i < n; ++i) {
+      const size_t bit_pos = i * static_cast<size_t>(b);
+      const size_t byte_pos = bit_pos / 8;
+      const uint32_t shift = static_cast<uint32_t>(bit_pos % 8);
+      uint32_t raw = 0;
+      const size_t nb = (shift + b + 7) / 8;
+      for (size_t j = 0; j < nb; ++j)
+        raw |= static_cast<uint32_t>(in[byte_pos + j]) << (j * 8);
+      out[i] = static_cast<uint16_t>((raw >> shift) & mask);
+    }
+  }
+
+  // Effective window sizes (clamp to array length).
+  size_t eff_gw(size_t length) const {
+    return (global_window_ == 0 || global_window_ >= length) ? length : global_window_;
+  }
+  size_t eff_lw(size_t gw) const {
+    return (local_window_ == 0 || local_window_ >= gw) ? gw : local_window_;
+  }
+
+ public:
+  FORHierarchicalCodecU16(size_t global_window, size_t local_window)
+      : global_window_(global_window), local_window_(local_window) {}
+
+  void EncodeArray(const uint16_t* in, const size_t length) override {
+    if (length == 0) return;
+    const size_t gw = eff_gw(length);
+    const size_t lw = eff_lw(gw);
+    assert(gw % lw == 0);
+    const size_t num_gw = (length + gw - 1) / gw;
+    const size_t total_local = (length + lw - 1) / lw;
+
+    // Pass 1: compute global_mins and local_deltas; find max_delta for b_local.
+    std::vector<uint16_t> global_mins(num_gw);
+    std::vector<uint16_t> local_deltas(total_local);
+    uint16_t max_delta = 0;
+    for (size_t g = 0; g < num_gw; ++g) {
+      const size_t gstart = g * gw, gend = std::min(gstart + gw, length);
+      const uint16_t gmin = *std::min_element(in + gstart, in + gend);
+      global_mins[g] = gmin;
+      for (size_t lstart = gstart; lstart < gend; lstart += lw) {
+        const size_t lend = std::min(lstart + lw, gend);
+        const uint16_t lmin = *std::min_element(in + lstart, in + lend);
+        const uint16_t delta = static_cast<uint16_t>(lmin - gmin);
+        local_deltas[lstart / lw] = delta;
+        if (delta > max_delta) max_delta = delta;
+      }
+    }
+
+    // b_local = ceil(log2(max_delta + 1))
+    uint32_t b_local = 0;
+    for (uint16_t tmp = max_delta; tmp > 0; tmp >>= 1) ++b_local;
+
+    const size_t pwords = packed_u16_words(total_local, b_local);
+    const size_t res_off = 1 + num_gw + pwords;
+
+    // Write header
+    compressed_data[0] = static_cast<uint16_t>(b_local);
+    for (size_t g = 0; g < num_gw; ++g) compressed_data[1 + g] = global_mins[g];
+
+    // Bitpack local deltas into the uint16 buffer (treated as byte stream)
+    if (pwords > 0) {
+      uint8_t* pbuf = reinterpret_cast<uint8_t*>(compressed_data.data() + 1 + num_gw);
+      pack_u16(local_deltas.data(), total_local, b_local, pbuf);
+    }
+
+    // Pass 2: write residuals
+    size_t pos = res_off;
+    for (size_t g = 0; g < num_gw; ++g) {
+      const size_t gstart = g * gw, gend = std::min(gstart + gw, length);
+      const uint16_t gmin = global_mins[g];
+      for (size_t lstart = gstart; lstart < gend; lstart += lw) {
+        const size_t lend = std::min(lstart + lw, gend);
+        const uint16_t lmin = static_cast<uint16_t>(gmin + local_deltas[lstart / lw]);
+        for (size_t i = lstart; i < lend; ++i)
+          compressed_data[pos++] = static_cast<uint16_t>(in[i] - lmin);
+      }
+    }
+    // Shrink to actual encoded size so EncodedNumValues() is accurate for CR
+    // measurements. AllocEncoded over-allocated for worst-case b_local=16.
+    compressed_data.resize(res_off + length);
+  }
+
+  void DecodeArray(uint16_t* out, const size_t length) override {
+    if (length == 0) return;
+    const size_t gw = eff_gw(length);
+    const size_t lw = eff_lw(gw);
+    const size_t num_gw = (length + gw - 1) / gw;
+    const size_t total_local = (length + lw - 1) / lw;
+
+    const uint32_t b_local = compressed_data[0];
+    const uint16_t* global_mins_ptr = compressed_data.data() + 1;
+    const size_t pwords = packed_u16_words(total_local, b_local);
+    const size_t res_off = 1 + num_gw + pwords;
+
+    std::vector<uint16_t> local_deltas(total_local);
+    if (pwords > 0) {
+      const uint8_t* pbuf =
+          reinterpret_cast<const uint8_t*>(compressed_data.data() + 1 + num_gw);
+      unpack_u16(pbuf, total_local, b_local, local_deltas.data());
+    }
+
+    size_t pos = res_off;
+    for (size_t g = 0; g < num_gw; ++g) {
+      const size_t gstart = g * gw, gend = std::min(gstart + gw, length);
+      const uint16_t gmin = global_mins_ptr[g];
+      for (size_t lstart = gstart; lstart < gend; lstart += lw) {
+        const size_t lend = std::min(lstart + lw, gend);
+        const uint16_t lmin = static_cast<uint16_t>(gmin + local_deltas[lstart / lw]);
+        for (size_t i = lstart; i < lend; ++i)
+          out[i] = static_cast<uint16_t>(compressed_data[pos++] + lmin);
+      }
+    }
+  }
+
+  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+  std::size_t EncodedSizeValue() override { return sizeof(uint16_t); }
+  std::string name() const override {
+    return "custom_for_hier_unvec_u16_g" + std::to_string(global_window_) +
+           "_l" + std::to_string(local_window_);
+  }
+  std::size_t GetOverflowSize(size_t) const override { return 0; }
+  StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
+    return new FORHierarchicalCodecU16(global_window_, local_window_);
+  }
+  void AllocEncoded(const uint16_t*, size_t length) override {
+    const size_t gw = eff_gw(length);
+    const size_t lw = eff_lw(gw);
+    const size_t num_gw = (length + gw - 1) / gw;
+    const size_t total_local = (length + lw - 1) / lw;
+    // Worst case: b_local = 16 → pwords = total_local
+    compressed_data.resize(1 + num_gw + total_local + length);
   }
   void clear() override { compressed_data.clear(); compressed_data.shrink_to_fit(); }
   std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
