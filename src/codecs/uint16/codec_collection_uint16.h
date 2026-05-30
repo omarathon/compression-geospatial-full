@@ -32,17 +32,19 @@ InitLogicalCodecsU16() {
   // codecs.push_back(std::make_unique<RLECodecSSE42U16>());
 
   // Scalar logical codecs
-  codecs.push_back(std::make_unique<DeltaCodecU16>());
-  codecs.push_back(std::make_unique<DoubleDeltaCodecU16>());
+  // codecs.push_back(std::make_unique<DeltaCodecU16>());
+  // codecs.push_back(std::make_unique<DoubleDeltaCodecU16>());
   // wfull outputs length+1 elements (65537 for a 256x256 block), which is not
   // divisible by kFusedSubBlockSize=256 and crashes fused second-stage codecs.
   // codecs.push_back(std::make_unique<FORCodecU16>());
+  codecs.push_back(std::make_unique<FORCodecU16>(2));
+  codecs.push_back(std::make_unique<FORCodecU16>(4));
   codecs.push_back(std::make_unique<FORCodecU16>(8));
   codecs.push_back(std::make_unique<FORCodecU16>(16));
   codecs.push_back(std::make_unique<FORCodecU16>(32));
-  codecs.push_back(std::make_unique<FORCodecU16>(64));
-  codecs.push_back(std::make_unique<FORCodecU16>(128));
-  codecs.push_back(std::make_unique<FORCodecU16>(256));
+  // codecs.push_back(std::make_unique<FORCodecU16>(64));
+  // codecs.push_back(std::make_unique<FORCodecU16>(128));
+  // codecs.push_back(std::make_unique<FORCodecU16>(256));
   // w512: output = 65536+128 = 65664, 65664%256=128 != 0 → crashes fused codecs.
   // codecs.push_back(std::make_unique<FORCodecU16>(512));
 
@@ -50,6 +52,13 @@ InitLogicalCodecsU16() {
   // where pwords = ceil(total_local * b_local / 16) is data-dependent.
   // Variable output size → NOT safe as logical first-stage for fused physical
   // codecs. Use standalone or with non-fused physical codecs (TurboPFor etc.).
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 2));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 4));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 8));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 16));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 32));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 2));
+  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 4));
   codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 8));
   codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 16));
   codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 32));
@@ -58,17 +67,17 @@ InitLogicalCodecsU16() {
   // codecs.push_back(std::make_unique<RLECodecU16>());
 
   // Lossless JPEG predictors (2D, stride = sqrt(length))
-  codecs.push_back(std::make_unique<JpegPred1CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred2CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred3CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred4CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred5CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred6CodecU16>());
-  codecs.push_back(std::make_unique<JpegPred7CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred1CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred2CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred3CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred4CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred5CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred6CodecU16>());
+  // codecs.push_back(std::make_unique<JpegPred7CodecU16>());
 
   // JPEG-LS / edge-aware predictors
-  codecs.push_back(std::make_unique<JpegLSMedCodecU16>());
-  codecs.push_back(std::make_unique<PaethCodecU16>());
+  // codecs.push_back(std::make_unique<JpegLSMedCodecU16>());
+  // codecs.push_back(std::make_unique<PaethCodecU16>());
 
   return codecs;
 }
@@ -118,7 +127,7 @@ InitPhysicalCodecsU16() {
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
-  codecs.push_back(std::make_unique<TurboPForFusedCodecU16>()); // fused-sum 128v16
+  // codecs.push_back(std::make_unique<TurboPForFusedCodecU16>()); // fused-sum 128v16
 
   return codecs;
 }
@@ -160,7 +169,7 @@ BuildAllCodecsU16() {
   // for (auto& codec : lCodecs)
     // codecs.push_back(
         // std::unique_ptr<StatefulIntegerCodec<uint16_t>>(codec->CloneFresh()));
-  codecs.push_back(std::make_unique<RLECodecU16>());
+  // codecs.push_back(std::make_unique<RLECodecU16>());
 
   // Non-cascaded physical codecs
   for (auto& codec : pCodecs)
