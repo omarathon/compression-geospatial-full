@@ -825,7 +825,7 @@ TEST_F(CompressionRatioTest, PForLocal_BetterThanBase_Sawtooth16) {
 //   CheckCompressionRatio(MakeSawtooth16(kN), base, forc);
 // }
 
-// ── FORHierarchicalCodecU16 round-trip tests ──────────────────────────────────
+// ── FOR round-trip tests (flat + hierarchical, sep=false and sep=true) ────────
 
 static void CheckRoundTrip(const std::vector<uint16_t>& data,
                             StatefulIntegerCodec<uint16_t>& codec) {
@@ -836,83 +836,117 @@ static void CheckRoundTrip(const std::vector<uint16_t>& data,
   std::vector<uint16_t> out(n, 0xDEAD);
   codec.DecodeArray(out.data(), n);
   for (size_t i = 0; i < n; ++i)
-    ASSERT_EQ(out[i], data[i]) << "mismatch at i=" << i;
+    ASSERT_EQ(out[i], data[i]) << codec.name() << " mismatch at i=" << i;
 }
 
-class FORHierTest : public ::testing::Test {};
+// Parameterized on separate_metadata (false = mixed stream, true = sep).
+class FORRoundTripTest : public ::testing::TestWithParam<bool> {};
 
-TEST_F(FORHierTest, Zeros) {
-  for (auto [gw, lw] : std::initializer_list<std::pair<size_t,size_t>>{{256,8},{256,16},{64,8}}) {
-    FORHierarchicalCodecU16 c(gw, lw);
+TEST_P(FORRoundTripTest, Flat_Zeros) {
+  const bool sep = GetParam();
+  for (size_t w : {2u, 4u, 8u, 16u, 32u}) {
+    FORCodecU16 c(w, sep);
     CheckRoundTrip(MakeZeros(256), c);
     CheckRoundTrip(MakeZeros(1024), c);
   }
 }
 
-TEST_F(FORHierTest, Constant) {
-  FORHierarchicalCodecU16 c(256, 8);
+TEST_P(FORRoundTripTest, Flat_Constant) {
+  const bool sep = GetParam();
+  FORCodecU16 c(8, sep);
   CheckRoundTrip(MakeConstant(256, 1), c);
   CheckRoundTrip(MakeConstant(256, 65535), c);
   CheckRoundTrip(MakeConstant(1024, 30000), c);
 }
 
-TEST_F(FORHierTest, Sequential) {
-  FORHierarchicalCodecU16 c(256, 8);
+TEST_P(FORRoundTripTest, Flat_Sequential) {
+  const bool sep = GetParam();
+  FORCodecU16 c(8, sep);
   CheckRoundTrip(MakeSequential(256), c);
   CheckRoundTrip(MakeSequential(1024), c);
 }
 
-TEST_F(FORHierTest, Random) {
-  FORHierarchicalCodecU16 c(256, 8);
+TEST_P(FORRoundTripTest, Flat_Random) {
+  const bool sep = GetParam();
+  FORCodecU16 c(8, sep);
   CheckRoundTrip(MakeRandom(256, 42), c);
   CheckRoundTrip(MakeRandom(1024, 99), c);
 }
 
-TEST_F(FORHierTest, HighFloor) {
-  // All values near 30000 with small variation — b_local should be tiny.
+TEST_P(FORRoundTripTest, Hier_Zeros) {
+  const bool sep = GetParam();
+  for (auto [gw, lw] : std::initializer_list<std::pair<size_t,size_t>>{{256,8},{256,16},{64,8}}) {
+    FORHierarchicalCodecU16 c(gw, lw, sep);
+    CheckRoundTrip(MakeZeros(256), c);
+    CheckRoundTrip(MakeZeros(1024), c);
+  }
+}
+
+TEST_P(FORRoundTripTest, Hier_Constant) {
+  const bool sep = GetParam();
+  FORHierarchicalCodecU16 c(256, 8, sep);
+  CheckRoundTrip(MakeConstant(256, 1), c);
+  CheckRoundTrip(MakeConstant(256, 65535), c);
+  CheckRoundTrip(MakeConstant(1024, 30000), c);
+}
+
+TEST_P(FORRoundTripTest, Hier_Sequential) {
+  const bool sep = GetParam();
+  FORHierarchicalCodecU16 c(256, 8, sep);
+  CheckRoundTrip(MakeSequential(256), c);
+  CheckRoundTrip(MakeSequential(1024), c);
+}
+
+TEST_P(FORRoundTripTest, Hier_Random) {
+  const bool sep = GetParam();
+  FORHierarchicalCodecU16 c(256, 8, sep);
+  CheckRoundTrip(MakeRandom(256, 42), c);
+  CheckRoundTrip(MakeRandom(1024, 99), c);
+}
+
+TEST_P(FORRoundTripTest, Hier_HighFloor) {
+  const bool sep = GetParam();
   std::vector<uint16_t> v(1024);
   std::mt19937 gen(7);
   std::uniform_int_distribution<uint16_t> dist(0, 15);
   for (auto& x : v) x = static_cast<uint16_t>(30000 + dist(gen));
-  FORHierarchicalCodecU16 c(256, 8);
+  FORHierarchicalCodecU16 c(256, 8, sep);
   CheckRoundTrip(v, c);
 }
 
-TEST_F(FORHierTest, LocalWindow4) {
-  // local_window=4 is not a clean divisor of 256 unless gw is also 4-aligned.
-  // Use gw=256, lw=4 (256 % 4 == 0).
-  FORHierarchicalCodecU16 c(256, 4);
+TEST_P(FORRoundTripTest, Hier_LocalWindow4) {
+  const bool sep = GetParam();
+  FORHierarchicalCodecU16 c(256, 4, sep);
   CheckRoundTrip(MakeRandom(256, 17), c);
   CheckRoundTrip(MakeRandom(1024, 18), c);
 }
 
-TEST_F(FORHierTest, AllBitWidths_b0_to_16) {
-  // Systematically test b_local ranging from 0 to 16 by choosing data where
-  // global_min=0 and local_min is a controlled value.
-  FORHierarchicalCodecU16 c(256, 8);
+TEST_P(FORRoundTripTest, Hier_AllBitWidths) {
+  const bool sep = GetParam();
+  FORHierarchicalCodecU16 c(256, 8, sep);
   for (uint16_t max_local_delta : {0, 1, 3, 7, 15, 255, 1023, 65535}) {
     std::vector<uint16_t> v(256, 0);
-    // First 8 elements have local_min = max_local_delta (the rest are 0 → global_min=0)
     v[0] = max_local_delta;
     CheckRoundTrip(v, c);
   }
 }
 
-// ── FORHierarchical vs FORFlat(lw) compression-ratio tests ───────────────────
-//
-// FORHierarchicalCodecU16(gw, lw) beats FORCodecU16(lw) whenever the local
-// anchor deltas (local_min − global_min per lw-element window) are small
-// enough that b_local bits/anchor < 16 bits/anchor. Savings = overhead
-// reduced from (N/lw) full uint16s to ceil(N/lw * b_local / 16) uint16s.
-//
-// Datasets where this holds:
-//   Constant           → all local deltas = 0, b_local=0, zero anchor overhead
-//   Linear ramp        → deltas = stride*lw, b_local = log2(stride*lw), small
-//   Slow sine wave     → local variation << global range, b_local ≪ 16
-//   High-floor+noise   → local deltas = small noise range, b_local ≈ 2-4
-//   DEM-like (smooth)  → adjacent pixels differ by ~1-5, b_local ≈ 3-5
+INSTANTIATE_TEST_SUITE_P(SepMetadata, FORRoundTripTest,
+                         ::testing::Bool(),
+                         [](const ::testing::TestParamInfo<bool>& i) {
+                           return i.param ? "sep" : "mixed";
+                         });
 
-// Helper: make a slow sine wave in [base, base+amplitude].
+// ── FOR compression-ratio tests (flat vs hierarchical, sep=false and sep=true) ─
+//
+// FORHierarchicalCodecU16(gw, lw) beats FORCodecU16(lw) on smooth/structured
+// data because the local anchor deltas are small (low b_local) and pwords
+// << N/lw. Both are tested with sep=false (metadata mixed into the stream the
+// physical codec sees) and sep=true (metadata held aside; physical codec sees
+// only clean residuals). CR is measured on the logical codec output alone —
+// sep=true gives a lower bound on what the residuals compress to before the
+// physical codec's own bit-packing.
+
 static std::vector<uint16_t> MakeSineWave(size_t n, uint16_t base = 1000,
                                            uint16_t amplitude = 500) {
   std::vector<uint16_t> v(n);
@@ -923,7 +957,6 @@ static std::vector<uint16_t> MakeSineWave(size_t n, uint16_t base = 1000,
   return v;
 }
 
-// Helper: smooth DEM-like data — slow linear trend + tiny per-pixel noise.
 static std::vector<uint16_t> MakeDemLike(size_t n, uint32_t seed = 3) {
   std::mt19937 gen(seed);
   std::uniform_int_distribution<int> noise(-2, 2);
@@ -936,66 +969,69 @@ static std::vector<uint16_t> MakeDemLike(size_t n, uint32_t seed = 3) {
   return v;
 }
 
-class FORHierCRTest : public ::testing::Test {
+class FORCRTest : public ::testing::TestWithParam<bool> {
  protected:
   static constexpr size_t kN = 1024;
 };
 
-// Constant: b_local=0 → zero packed-delta words. Overhead: 1+num_gw vs N/lw.
-// With kN=1024, gw=256, lw=8: hier overhead = 1+4 = 5 words; flat overhead = 128 words.
-TEST_F(FORHierCRTest, BetterThanFlat_Constant) {
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+// Constant: b_local=0, zero packed-delta words. hier overhead = 1+num_gw=5
+// words vs flat overhead = N/lw=128 words.
+TEST_P(FORCRTest, BetterThanFlat_Constant) {
+  const bool sep = GetParam();
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(MakeConstant(kN, 30000), flat, hier);
 }
 
-// Linear ramp [0..1023]: each local window of 8 has min = start of window,
-// so local_delta = window_start - global_min = window_start.
-// Max delta within gw=256: last window starts at 248 → b_local=8.
-// pwords = ceil(128 * 8 / 16) = 64 vs flat overhead = 128. Saves 64 words.
-TEST_F(FORHierCRTest, BetterThanFlat_LinearRamp) {
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+// Linear ramp: max delta within gw=256 is 248 → b_local=8.
+// pwords=64 < flat overhead=128.
+TEST_P(FORCRTest, BetterThanFlat_LinearRamp) {
+  const bool sep = GetParam();
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(MakeSequential(kN), flat, hier);
 }
 
-// Slow sine: within each gw=256, the sine completes one full cycle.
-// Local deltas are the per-lw minima relative to the global min of that cycle.
-// These are bounded by amplitude/num_lw_per_gw ≈ small → b_local ≈ 5-6.
-TEST_F(FORHierCRTest, BetterThanFlat_SineWave) {
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+// Slow sine: one full cycle per gw=256. b_local ≈ 5-6 → pwords << N/lw.
+TEST_P(FORCRTest, BetterThanFlat_SineWave) {
+  const bool sep = GetParam();
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(MakeSineWave(kN), flat, hier);
 }
 
-// High floor + small noise: global_min ≈ 30000, local_min varies by ≤15.
-// b_local=4 → pwords = ceil(128*4/16) = 32 vs 128 flat → saves 96 words.
-TEST_F(FORHierCRTest, BetterThanFlat_HighFloorNoise) {
+// High floor + noise ≤15: b_local=4 → pwords=32 vs flat overhead=128.
+TEST_P(FORCRTest, BetterThanFlat_HighFloorNoise) {
+  const bool sep = GetParam();
   std::vector<uint16_t> v(kN);
   std::mt19937 gen(7);
   std::uniform_int_distribution<int> noise(0, 15);
   for (auto& x : v) x = static_cast<uint16_t>(30000 + noise(gen));
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(v, flat, hier);
 }
 
-// DEM-like smooth data: slow random walk ±2 per step. Within a gw=256 window
-// the total range is ~O(sqrt(256)*2) ≈ 32. Local deltas are much smaller →
-// b_local ≈ 3-4.
-TEST_F(FORHierCRTest, BetterThanFlat_DemLike) {
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+// DEM-like smooth random walk ±2: range within gw ≈ O(sqrt(256)*2) → b_local ≈ 3-4.
+TEST_P(FORCRTest, BetterThanFlat_DemLike) {
+  const bool sep = GetParam();
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(MakeDemLike(kN), flat, hier);
 }
 
-// Sawtooth period=256: within each gw=256 it spans [0..255]. Each lw=8
-// window has local_min = window_start % 256. Max delta = 248 → b_local=8.
-// pwords = 64 < 128 flat overhead → wins.
-TEST_F(FORHierCRTest, BetterThanFlat_Sawtooth256) {
+// Sawtooth period=256: max delta=248 → b_local=8, pwords=64 < flat=128.
+TEST_P(FORCRTest, BetterThanFlat_Sawtooth256) {
+  const bool sep = GetParam();
   std::vector<uint16_t> v(kN);
   for (size_t i = 0; i < kN; ++i) v[i] = static_cast<uint16_t>(i % 256);
-  FORCodecU16 flat(8);
-  FORHierarchicalCodecU16 hier(256, 8);
+  FORCodecU16 flat(8, sep);
+  FORHierarchicalCodecU16 hier(256, 8, sep);
   CheckCompressionRatio(v, flat, hier);
 }
+
+INSTANTIATE_TEST_SUITE_P(SepMetadata, FORCRTest,
+                         ::testing::Bool(),
+                         [](const ::testing::TestParamInfo<bool>& i) {
+                           return i.param ? "sep" : "mixed";
+                         });

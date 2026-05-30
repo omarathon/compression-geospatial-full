@@ -88,54 +88,97 @@ class DoubleDeltaCodecU16 : public StatefulIntegerCodec<uint16_t> {
 // ── Frame of Reference (FOR) ──────────────────────────────────────────────────
 // Stores the minimum value as a reference, then encodes each element as
 // (value - reference).  Offsets are always non-negative, so no zigzag is
-// needed.  Layout: [reference, offset[0], offset[1], ..., offset[n-1]].
-// Supported range: [0, UINT16_MAX]. The reference is the minimum, so every
-// offset fits in [0, 65535] and is stored as uint16 without overflow.
-// Layout per window: [min, res_0, res_1, ..., res_{w-1}]
-// Last window may be shorter than w. Total stored values = num_windows + length.
+// needed.
+// Supported range: [0, UINT16_MAX].
+//
+// separate_metadata=false (default): anchors interleaved with residuals in one
+//   stream. Layout per window: [min, res_0, …, res_{w-1}]. Total = N + N/w.
+//
+// separate_metadata=true: GetEncoded() returns residuals only (length values).
+//   Anchors stored in metadata_ (N/w values) and held in the object — NOT fed
+//   to the downstream physical codec. Use this to measure how much the anchor
+//   contamination hurts the physical codec's CR. EncodedNumValues() counts
+//   both so standalone CR measurements remain honest.
 class FORCodecU16 : public StatefulIntegerCodec<uint16_t> {
-  std::vector<uint16_t> compressed_data;
+  std::vector<uint16_t> compressed_data;  // residuals (always)
+  std::vector<uint16_t> metadata_;         // anchors (separate_metadata_ only)
   size_t window_;
+  bool separate_metadata_;
  public:
-  explicit FORCodecU16(size_t window = 0)
-      : window_(window) {}  // 0 = whole array (original behaviour)
+  explicit FORCodecU16(size_t window = 0, bool separate_metadata = false)
+      : window_(window), separate_metadata_(separate_metadata) {}
 
   void EncodeArray(const uint16_t* in, const size_t length) override {
     if (length == 0) return;
-    size_t w = (window_ == 0 || window_ >= length) ? length : window_;
-    size_t pos = 0;
-    for (size_t start = 0; start < length; start += w) {
-      size_t end = std::min(start + w, length);
-      uint16_t ref = *std::min_element(in + start, in + end);
-      compressed_data[pos++] = ref;
-      for (size_t i = start; i < end; ++i)
-        compressed_data[pos++] = static_cast<uint16_t>(in[i] - ref);
+    const size_t w = (window_ == 0 || window_ >= length) ? length : window_;
+    if (separate_metadata_) {
+      size_t rpos = 0, mpos = 0;
+      for (size_t start = 0; start < length; start += w) {
+        const size_t end = std::min(start + w, length);
+        const uint16_t ref = *std::min_element(in + start, in + end);
+        metadata_[mpos++] = ref;
+        for (size_t i = start; i < end; ++i)
+          compressed_data[rpos++] = static_cast<uint16_t>(in[i] - ref);
+      }
+    } else {
+      size_t pos = 0;
+      for (size_t start = 0; start < length; start += w) {
+        const size_t end = std::min(start + w, length);
+        const uint16_t ref = *std::min_element(in + start, in + end);
+        compressed_data[pos++] = ref;
+        for (size_t i = start; i < end; ++i)
+          compressed_data[pos++] = static_cast<uint16_t>(in[i] - ref);
+      }
     }
   }
   void DecodeArray(uint16_t* out, const size_t length) override {
     if (length == 0) return;
-    size_t w = (window_ == 0 || window_ >= length) ? length : window_;
-    size_t pos = 0;
-    for (size_t start = 0; start < length; start += w) {
-      size_t end = std::min(start + w, length);
-      uint16_t ref = compressed_data[pos++];
-      for (size_t i = start; i < end; ++i)
-        out[i] = static_cast<uint16_t>(compressed_data[pos++] + ref);
+    const size_t w = (window_ == 0 || window_ >= length) ? length : window_;
+    if (separate_metadata_) {
+      size_t rpos = 0, mpos = 0;
+      for (size_t start = 0; start < length; start += w) {
+        const size_t end = std::min(start + w, length);
+        const uint16_t ref = metadata_[mpos++];
+        for (size_t i = start; i < end; ++i)
+          out[i] = static_cast<uint16_t>(compressed_data[rpos++] + ref);
+      }
+    } else {
+      size_t pos = 0;
+      for (size_t start = 0; start < length; start += w) {
+        const size_t end = std::min(start + w, length);
+        const uint16_t ref = compressed_data[pos++];
+        for (size_t i = start; i < end; ++i)
+          out[i] = static_cast<uint16_t>(compressed_data[pos++] + ref);
+      }
     }
   }
-  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+  std::size_t EncodedNumValues() override {
+    return compressed_data.size() + metadata_.size();
+  }
   std::size_t EncodedSizeValue() override { return sizeof(uint16_t); }
   std::string name() const override {
-    return "custom_for_unvec_u16_w" + (window_ == 0 ? "full" : std::to_string(window_));
+    std::string base = "custom_for_unvec_u16_w" +
+                       (window_ == 0 ? "full" : std::to_string(window_));
+    return separate_metadata_ ? base + "_sep" : base;
   }
   std::size_t GetOverflowSize(size_t) const override { return 0; }
-  StatefulIntegerCodec<uint16_t>* CloneFresh() const override { return new FORCodecU16(window_); }
-  void AllocEncoded(const uint16_t*, size_t length) override {
-    size_t w = (window_ == 0 || window_ >= length) ? length : window_;
-    size_t num_windows = (length + w - 1) / w;
-    compressed_data.resize(length + num_windows);
+  StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
+    return new FORCodecU16(window_, separate_metadata_);
   }
-  void clear() override { compressed_data.clear(); compressed_data.shrink_to_fit(); }
+  void AllocEncoded(const uint16_t*, size_t length) override {
+    const size_t w = (window_ == 0 || window_ >= length) ? length : window_;
+    const size_t num_windows = (length + w - 1) / w;
+    if (separate_metadata_) {
+      compressed_data.resize(length);
+      metadata_.resize(num_windows);
+    } else {
+      compressed_data.resize(length + num_windows);
+    }
+  }
+  void clear() override {
+    compressed_data.clear(); compressed_data.shrink_to_fit();
+    metadata_.clear(); metadata_.shrink_to_fit();
+  }
   std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
 };
 
@@ -156,9 +199,11 @@ class FORCodecU16 : public StatefulIntegerCodec<uint16_t> {
 // With local_window_=8 and Landsat data, b_local is typically 2–4 bits,
 // reducing anchor overhead from 1/8 (12.5%) to ~1/64–1/32 (1.5–3%).
 class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
-  std::vector<uint16_t> compressed_data;
+  std::vector<uint16_t> compressed_data;  // residuals (always)
+  std::vector<uint16_t> metadata_;         // [b_local, global_mins, packed_deltas] (separate_metadata_ only)
   size_t global_window_;
   size_t local_window_;
+  bool separate_metadata_;
 
   // Scalar bitpack helpers (no SIMD dependency).
   static size_t packed_u16_words(size_t n, uint32_t b) {
@@ -203,9 +248,17 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
   }
 
  public:
-  FORHierarchicalCodecU16(size_t global_window, size_t local_window)
-      : global_window_(global_window), local_window_(local_window) {}
+  FORHierarchicalCodecU16(size_t global_window, size_t local_window,
+                          bool separate_metadata = false)
+      : global_window_(global_window), local_window_(local_window),
+        separate_metadata_(separate_metadata) {}
 
+  // Shared encode pass: computes global_mins, local_deltas, b_local.
+  // Writes residuals into `compressed_data` (always starting at offset 0).
+  // When separate_metadata_=false, also writes [b_local, global_mins,
+  // packed_deltas] before the residuals (current mixed layout).
+  // When separate_metadata_=true, writes those into `metadata_` instead,
+  // keeping `compressed_data` as pure residuals for the physical codec.
   void EncodeArray(const uint16_t* in, const size_t length) override {
     if (length == 0) return;
     const size_t gw = eff_gw(length);
@@ -231,24 +284,32 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
       }
     }
 
-    // b_local = ceil(log2(max_delta + 1))
     uint32_t b_local = 0;
     for (uint16_t tmp = max_delta; tmp > 0; tmp >>= 1) ++b_local;
-
     const size_t pwords = packed_u16_words(total_local, b_local);
-    const size_t res_off = 1 + num_gw + pwords;
 
-    // Write header
-    compressed_data[0] = static_cast<uint16_t>(b_local);
-    for (size_t g = 0; g < num_gw; ++g) compressed_data[1 + g] = global_mins[g];
+    // Helper: write header + packed deltas into a destination buffer.
+    auto write_meta = [&](std::vector<uint16_t>& dest, size_t hdr_off) {
+      dest[hdr_off] = static_cast<uint16_t>(b_local);
+      for (size_t g = 0; g < num_gw; ++g) dest[hdr_off + 1 + g] = global_mins[g];
+      if (pwords > 0) {
+        uint8_t* pbuf = reinterpret_cast<uint8_t*>(dest.data() + hdr_off + 1 + num_gw);
+        pack_u16(local_deltas.data(), total_local, b_local, pbuf);
+      }
+    };
 
-    // Bitpack local deltas into the uint16 buffer (treated as byte stream)
-    if (pwords > 0) {
-      uint8_t* pbuf = reinterpret_cast<uint8_t*>(compressed_data.data() + 1 + num_gw);
-      pack_u16(local_deltas.data(), total_local, b_local, pbuf);
+    size_t res_off;
+    if (separate_metadata_) {
+      // metadata_ = [b_local, global_mins..., packed_deltas...]
+      write_meta(metadata_, 0);
+      metadata_.resize(1 + num_gw + pwords);  // shrink from worst-case alloc
+      res_off = 0;
+    } else {
+      write_meta(compressed_data, 0);
+      res_off = 1 + num_gw + pwords;
     }
 
-    // Pass 2: write residuals
+    // Pass 2: write residuals into compressed_data starting at res_off.
     size_t pos = res_off;
     for (size_t g = 0; g < num_gw; ++g) {
       const size_t gstart = g * gw, gend = std::min(gstart + gw, length);
@@ -260,8 +321,6 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
           compressed_data[pos++] = static_cast<uint16_t>(in[i] - lmin);
       }
     }
-    // Shrink to actual encoded size so EncodedNumValues() is accurate for CR
-    // measurements. AllocEncoded over-allocated for worst-case b_local=16.
     compressed_data.resize(res_off + length);
   }
 
@@ -272,18 +331,20 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     const size_t num_gw = (length + gw - 1) / gw;
     const size_t total_local = (length + lw - 1) / lw;
 
-    const uint32_t b_local = compressed_data[0];
-    const uint16_t* global_mins_ptr = compressed_data.data() + 1;
+    // Read header from whichever buffer holds the metadata.
+    const std::vector<uint16_t>& meta = separate_metadata_ ? metadata_ : compressed_data;
+    const uint32_t b_local = meta[0];
+    const uint16_t* global_mins_ptr = meta.data() + 1;
     const size_t pwords = packed_u16_words(total_local, b_local);
-    const size_t res_off = 1 + num_gw + pwords;
 
     std::vector<uint16_t> local_deltas(total_local);
     if (pwords > 0) {
       const uint8_t* pbuf =
-          reinterpret_cast<const uint8_t*>(compressed_data.data() + 1 + num_gw);
+          reinterpret_cast<const uint8_t*>(meta.data() + 1 + num_gw);
       unpack_u16(pbuf, total_local, b_local, local_deltas.data());
     }
 
+    const size_t res_off = separate_metadata_ ? 0 : (1 + num_gw + pwords);
     size_t pos = res_off;
     for (size_t g = 0; g < num_gw; ++g) {
       const size_t gstart = g * gw, gend = std::min(gstart + gw, length);
@@ -297,25 +358,36 @@ class FORHierarchicalCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
   }
 
-  std::size_t EncodedNumValues() override { return compressed_data.size(); }
+  std::size_t EncodedNumValues() override {
+    return compressed_data.size() + metadata_.size();
+  }
   std::size_t EncodedSizeValue() override { return sizeof(uint16_t); }
   std::string name() const override {
-    return "custom_for_hier_unvec_u16_g" + std::to_string(global_window_) +
-           "_l" + std::to_string(local_window_);
+    std::string base = "custom_for_hier_unvec_u16_g" + std::to_string(global_window_) +
+                       "_l" + std::to_string(local_window_);
+    return separate_metadata_ ? base + "_sep" : base;
   }
   std::size_t GetOverflowSize(size_t) const override { return 0; }
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new FORHierarchicalCodecU16(global_window_, local_window_);
+    return new FORHierarchicalCodecU16(global_window_, local_window_, separate_metadata_);
   }
   void AllocEncoded(const uint16_t*, size_t length) override {
     const size_t gw = eff_gw(length);
     const size_t lw = eff_lw(gw);
     const size_t num_gw = (length + gw - 1) / gw;
     const size_t total_local = (length + lw - 1) / lw;
-    // Worst case: b_local = 16 → pwords = total_local
-    compressed_data.resize(1 + num_gw + total_local + length);
+    if (separate_metadata_) {
+      compressed_data.resize(length);
+      // Worst case metadata: b_local=16 → pwords=total_local
+      metadata_.resize(1 + num_gw + total_local);
+    } else {
+      compressed_data.resize(1 + num_gw + total_local + length);
+    }
   }
-  void clear() override { compressed_data.clear(); compressed_data.shrink_to_fit(); }
+  void clear() override {
+    compressed_data.clear(); compressed_data.shrink_to_fit();
+    metadata_.clear(); metadata_.shrink_to_fit();
+  }
   std::vector<uint16_t>& GetEncoded() override { return compressed_data; }
 };
 

@@ -37,31 +37,17 @@ InitLogicalCodecsU16() {
   // wfull outputs length+1 elements (65537 for a 256x256 block), which is not
   // divisible by kFusedSubBlockSize=256 and crashes fused second-stage codecs.
   // codecs.push_back(std::make_unique<FORCodecU16>());
-  codecs.push_back(std::make_unique<FORCodecU16>(2));
-  codecs.push_back(std::make_unique<FORCodecU16>(4));
-  codecs.push_back(std::make_unique<FORCodecU16>(8));
-  codecs.push_back(std::make_unique<FORCodecU16>(16));
-  codecs.push_back(std::make_unique<FORCodecU16>(32));
-  // codecs.push_back(std::make_unique<FORCodecU16>(64));
-  // codecs.push_back(std::make_unique<FORCodecU16>(128));
-  // codecs.push_back(std::make_unique<FORCodecU16>(256));
-  // w512: output = 65536+128 = 65664, 65664%256=128 != 0 → crashes fused codecs.
-  // codecs.push_back(std::make_unique<FORCodecU16>(512));
+  for (size_t w : {2u, 4u, 8u, 16u, 32u, 64u, 128u, 256u})
+    for (bool sep : {false, true})
+      codecs.push_back(std::make_unique<FORCodecU16>(w, sep));
 
-  // FORHierarchicalCodecU16(gw, lw): output = 1 + num_gw + pwords + length
-  // where pwords = ceil(total_local * b_local / 16) is data-dependent.
-  // Variable output size → NOT safe as logical first-stage for fused physical
-  // codecs. Use standalone or with non-fused physical codecs (TurboPFor etc.).
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 2));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 4));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 8));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 16));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(128, 32));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 2));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 4));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 8));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 16));
-  codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(256, 32));
+  // FORHierarchicalCodecU16: variable output size → not safe with fused
+  // physical codecs. Skip lw that don't divide gw.
+  for (size_t gw : {128u, 256u})
+    for (size_t lw : {2u, 4u, 8u, 16u, 32u, 64u, 128u, 256u})
+      for (bool sep : {false, true})
+        if (gw % lw == 0)
+          codecs.push_back(std::make_unique<FORHierarchicalCodecU16>(gw, lw, sep));
   // RLE outputs 2*num_runs elements — arbitrary size, not guaranteed divisible
   // by kFusedSubBlockSize=256, crashes fused second-stage codecs.
   // codecs.push_back(std::make_unique<RLECodecU16>());
