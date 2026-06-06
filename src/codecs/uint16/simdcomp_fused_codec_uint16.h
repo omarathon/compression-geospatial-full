@@ -21,8 +21,12 @@ static constexpr size_t kFusedSubBlockSize = 256;
 // own b, so a single high-magnitude pixel in one corner of a 65,536-element
 // access block doesn't inflate the bit width for the whole encode.
 //
-// Header layout: [bs : uint8 × num_sub_blocks][payload_0]…[payload_{N-1}]
-// where each payload_k is `bs[k] × sizeof(__m256i)` bytes.
+// Header layout: [madd_safe : uint8][bs : uint8 × num_sub_blocks][payloads]
+// madd_safe = 1 iff all values < 2^15 (enables signed madd-widen aggregate).
+
+// Plain and madd-widen fused-sum unpack (from SimdCompU16W256 static lib).
+extern "C" void simdunpack_u16_w256(const __m256i*, uint16_t*, uint32_t, __m256i*);
+extern "C" void simdunpack_u16_w256_madd(const __m256i*, uint16_t*, uint32_t, __m256i*);
 
 class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
  public:
@@ -32,12 +36,14 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     assert(length % kFusedSubBlockSize == 0);
     const size_t num_sb = length / kFusedSubBlockSize;
 
-    // Encode into shared thread-local scratch; assign exact bytes into
-    // `compressed`. No worst-case heap allocation for `compressed` ever
-    // occurs, so glibc's freelist doesn't bloat per codec instance.
+    // OR-reduce to determine madd safety (all values < 2^15).
+    uint16_t orall = 0;
+    for (size_t i = 0; i < length; ++i) orall |= in[i];
+
     auto& scratch = GetPackScratch();
-    uint8_t* bs = scratch.data();
-    uint8_t* out_ptr = scratch.data() + num_sb;
+    scratch[0] = (orall < 0x8000u) ? 1u : 0u;  // madd_safe byte
+    uint8_t* bs = scratch.data() + 1;
+    uint8_t* out_ptr = bs + num_sb;
     for (size_t k = 0; k < num_sb; ++k) {
       const uint16_t* sb = in + k * kFusedSubBlockSize;
       const uint32_t b_k = maxbits_length_u16(sb, kFusedSubBlockSize);
@@ -54,15 +60,27 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     assert(length % kFusedSubBlockSize == 0);
     const size_t num_sb = length / kFusedSubBlockSize;
 
-    const uint8_t* bs = compressed.data();
-    const uint8_t* in_ptr = compressed.data() + num_sb;
+    const bool madd = compressed.data()[0] != 0;
+    const uint8_t* bs = compressed.data() + 1;
+    const uint8_t* in_ptr = bs + num_sb;
 
     __m256i sum = _mm256_setzero_si256();
-    for (size_t k = 0; k < num_sb; ++k) {
-      const uint32_t b_k = bs[k];
-      simdunpack_u16(reinterpret_cast<const __m256i*>(in_ptr),
-                     out + k * kFusedSubBlockSize, b_k, &sum);
-      in_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
+    if (madd) {
+      for (size_t k = 0; k < num_sb; ++k) {
+        const uint32_t b_k = bs[k];
+        if (b_k == 0) continue;  // all-zero sub-block: sum += 0, skip nullunpacker
+        simdunpack_u16_w256_madd(reinterpret_cast<const __m256i*>(in_ptr),
+                                 out + k * kFusedSubBlockSize, b_k, &sum);
+        in_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
+      }
+    } else {
+      for (size_t k = 0; k < num_sb; ++k) {
+        const uint32_t b_k = bs[k];
+        if (b_k == 0) continue;  // all-zero sub-block: sum += 0, skip nullunpacker
+        simdunpack_u16_w256(reinterpret_cast<const __m256i*>(in_ptr),
+                            out + k * kFusedSubBlockSize, b_k, &sum);
+        in_ptr += static_cast<size_t>(b_k) * sizeof(__m256i);
+      }
     }
 
     __m128i lo = _mm256_castsi256_si128(sum);

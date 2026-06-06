@@ -282,9 +282,11 @@ TEST_F(FusedSumTest, SimdCompFusedFor128_Regular_Sum) {
   };
   for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
     for (bool sep : {false, true}) {
-      SimdCompFusedForCodecU16_128 c(w, sep);
-      for (const auto& d : data)
-        if (d.size() % w == 0) CheckFusedSum(d, c);
+      for (bool nobc : {false, true}) {
+        SimdCompFusedForCodecU16_128 c(w, sep, FusedAggImpl::kMadd, /*shuf=*/false, nobc);
+        for (const auto& d : data)
+          if (d.size() % w == 0) CheckFusedSum(d, c);
+      }
     }
   }
 }
@@ -321,6 +323,9 @@ TEST_F(FusedSumTest, SimdCompFusedFor256_Regular_Sum) {
           for (const auto& d : data)
             if (d.size() % w == 0) CheckFusedSum(d, c);
         }
+        SimdCompFusedForCodecU16_256 cn(w, sep, agg, /*shuf=*/false, /*nobc=*/true);
+        for (const auto& d : data)
+          if (d.size() % w == 0) CheckFusedSum(d, cn);
       }
     }
   }
