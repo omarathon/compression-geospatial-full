@@ -336,8 +336,9 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
                              hierarchical local-delta side-streams at decode time.
     """
     assert mode in ('plain', 'delta_local', 'delta_carry', 'corrected',
-                    'corrected_uniform', 'corrected_scalar', 'corrected_half',
-                    'corrected_half_shuf', 'corrected_quarter', 'pfor', 'store',
+                    'corrected_uniform', 'corrected_scalar', 'corrected_scalar_shuf',
+                    'corrected_half', 'corrected_half_shuf', 'corrected_quarter',
+                    'pfor', 'store',
                     'pfor_corrected_uniform', 'pfor_corrected_scalar',
                     'pfor_corrected_half', 'pfor_corrected_quarter')
     if bit == 0:
@@ -354,7 +355,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         'delta_carry': '_delta_carry',
         'corrected': '_corrected',
         'corrected_uniform': '_corrected_uniform',
-        'corrected_scalar': '_cscalar',  # overridden with shg below
+        'corrected_scalar': '_cscalar',       # overridden with shg below
+        'corrected_scalar_shuf': '_cscalar_shuf',  # overridden with shg below
         'corrected_half': '_chalf',
         'corrected_half_shuf': '_chalf_shuf',
         'corrected_quarter': '_cquarter',
@@ -365,9 +367,14 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         'pfor_corrected_half': '_pfor_chalf',
         'pfor_corrected_quarter': '_pfor_cquarter',
     }[mode]
-    if mode in ('corrected_scalar', 'pfor_corrected_scalar'):
+    if mode in ('corrected_scalar', 'corrected_scalar_shuf', 'pfor_corrected_scalar'):
         assert shg is not None, "corrected_scalar needs a compile-time shg"
-        base = '_pfor_cscalar' if mode == 'pfor_corrected_scalar' else '_cscalar'
+        if mode == 'pfor_corrected_scalar':
+            base = '_pfor_cscalar'
+        elif mode == 'corrected_scalar_shuf':
+            base = '_cscalar_shuf'
+        else:
+            base = '_cscalar'
         suffix = f'{base}{shg}'  # shg = log2(w/lanes), baked in so the index is a
                                    # literal → compiler CSEs repeated broadcasts
     # agg: 'unpack' (default), 'madd' (port-0/1 widen, values<2^15), or 'noagg'
@@ -384,6 +391,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     needs_corrections = mode == 'corrected'
     needs_anchor      = mode == 'corrected_uniform'
     needs_scalar      = mode == 'corrected_scalar'
+    needs_scalar_shuf = mode == 'corrected_scalar_shuf'
     needs_half        = mode == 'corrected_half'
     needs_half_shuf   = mode == 'corrected_half_shuf'
     needs_quarter     = mode == 'corrected_quarter'
@@ -400,8 +408,9 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     needs_pfor_corrected = (needs_pc_uniform or needs_pc_scalar or
                             needs_pc_half or needs_pc_quarter)
     needs_outreg      = mode in ('corrected', 'corrected_uniform',
-                                 'corrected_scalar', 'corrected_half',
-                                 'corrected_half_shuf', 'corrected_quarter', 'pfor', 'store',
+                                 'corrected_scalar', 'corrected_scalar_shuf',
+                                 'corrected_half', 'corrected_half_shuf',
+                                 'corrected_quarter', 'pfor', 'store',
                                  'pfor_corrected_uniform', 'pfor_corrected_scalar',
                                  'pfor_corrected_half', 'pfor_corrected_quarter')
 
@@ -416,7 +425,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         extra_param = f", const {I['reg']} anchor, const uint16_t *pex, const uint16_t *bm16"
     elif needs_pc_scalar or needs_pc_half or needs_pc_quarter:
         extra_param = f", const uint16_t *a_block, const uint16_t *pex, const uint16_t *bm16"
-    elif needs_scalar:
+    elif needs_scalar or needs_scalar_shuf:
         # a_block points at the block's first window anchor in the (cached) raw
         # uint16 anchor stream; OutReg v's anchor is a_block[v >> shg] with shg a
         # compile-time constant, broadcast inline — no per-block __m128i
@@ -465,6 +474,21 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         if v % grp == 0:
             decl = f"{I['reg']} " if v == 0 else ""
             pre = f"  {decl}_bc = {I['set1']}((short)a_block[{v >> shg}]);\n"
+        return (f"{pre}  OutReg = {I['add16']}({srcreg}, _bc);\n"
+                f"  aggregate_sums_u16(OutReg, sum);")
+
+    # corrected_scalar_shuf: like corrected_scalar but uses vmovq + vpshufb(word0)
+    # instead of vpbroadcastw. word0_mask replicates bytes 0-1 to all 8 lanes.
+    # 128-bit only — tests whether batched 8-byte loads beat scalar 2-byte loads.
+    def _cscalar_shuf_agg(srcreg, v):
+        assert I['width'] == 128, "corrected_scalar_shuf is 128-bit only"
+        grp = 1 << shg
+        pre = ""
+        if v % grp == 0:
+            decl = f"{I['reg']} " if v == 0 else ""
+            pre = (f"  {decl}_bc = _mm_shuffle_epi8(\n"
+                   f"      _mm_loadl_epi64((const __m128i *)(a_block + {v >> shg})),\n"
+                   f"      _shuf_word0_mask);\n")
         return (f"{pre}  OutReg = {I['add16']}({srcreg}, _bc);\n"
                 f"  aggregate_sums_u16(OutReg, sum);")
 
@@ -573,6 +597,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return f"  {I['store']}(({I['reg']} *)out + {v}, OutReg);"
         if mode == 'corrected_scalar':
             return _cscalar_agg("OutReg", v)
+        if mode == 'corrected_scalar_shuf':
+            return _cscalar_shuf_agg("OutReg", v)
         if mode == 'corrected_half':
             return _chalf_agg("OutReg", v)
         if mode == 'corrected_half_shuf':
@@ -605,6 +631,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return f"  {I['store']}(({I['reg']} *)out + {v}, InReg);"
         if mode == 'corrected_scalar':
             return _cscalar_agg("InReg", v)
+        if mode == 'corrected_scalar_shuf':
+            return _cscalar_shuf_agg("InReg", v)
         if mode == 'corrected_half':
             return _chalf_agg("InReg", v)
         if mode == 'corrected_half_shuf':
@@ -634,6 +662,10 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         # mask: lanes 0-3 ← bytes 0-1 (a_block[2v]), lanes 4-7 ← bytes 2-3 (a_block[2v+1])
         lines.append("  const __m128i _shuf_half_mask = "
                      "_mm_setr_epi8(0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3);")
+    if needs_scalar_shuf:
+        # mask: replicate word 0 (bytes 0-1) to all 8 uint16 lanes
+        lines.append("  const __m128i _shuf_word0_mask = "
+                     "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
     # corrected_scalar: preload the (15>>shg)+1 distinct window anchors as
     # broadcasts up front — before any *sum write — so GCC's may_alias __m128i*
     # store can't force a reload, and they stay register-resident.
@@ -840,6 +872,47 @@ def gen_unpack_dispatcher_corrected_scalar(I, shg, name_suffix='', agg='unpack',
     for b in range(1, MAX_BIT + 1):
         lines.append(f"  case {b}:")
         lines.append(f"    __SIMD_fastunpack{b}_16_cscalar{shg}{mtag}{name_suffix}(in, out, sum, a_block);")
+        lines.append("    break;")
+        lines.append("")
+    lines.append("  default:")
+    lines.append("    break;")
+    lines.append("  }")
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def gen_unpack_dispatcher_corrected_scalar_shuf(I, shg, name_suffix='', agg='unpack', static_=False):
+    """Dispatcher for the FoR-corrected shuf decode: uses vmovq+vpshufb(word0)
+    instead of vpbroadcastw. 128-bit only. Same structure as corrected_scalar."""
+    assert I['width'] == 128, "corrected_scalar_shuf is 128-bit only"
+    mtag = '' if agg == 'unpack' else '_' + agg
+    kw = "static " if static_ else ""
+    block = I['block']
+    lanes = I['lanes']
+    outregs = block // lanes
+    lines = []
+    lines.append(f"{kw}void simdunpack_u16{name_suffix}_cscalar_shuf{shg}{mtag}(const {I['reg']} *in, "
+                 f"uint16_t *out, const uint32_t bit, "
+                 f"const uint16_t *a_block, {I['reg']}* sum) {{")
+    lines.append("  const __m128i _shuf_word0_mask = "
+                 "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+    lines.append("  switch (bit) {")
+    lines.append("  case 0:")
+    lines.append("    /* b==0: every OutReg = its anchor; aggregate with shuf. */")
+    lines.append("    {")
+    lines.append("      size_t _k;")
+    lines.append(f"      for (_k = 0; _k < {outregs}; ++_k)")
+    lines.append(f"        aggregate_sums_u16{mtag}(_mm_shuffle_epi8("
+                 f"_mm_loadl_epi64((const __m128i *)(a_block + (_k >> {shg}))), "
+                 f"_shuf_word0_mask), sum);")
+    lines.append("    }")
+    lines.append("    (void)in; (void)out;")
+    lines.append("    break;")
+    lines.append("")
+    for b in range(1, MAX_BIT + 1):
+        lines.append(f"  case {b}:")
+        lines.append(f"    __SIMD_fastunpack{b}_16_cscalar_shuf{shg}{mtag}{name_suffix}(in, out, sum, a_block);")
         lines.append("    break;")
         lines.append("")
     lines.append("  default:")
@@ -1845,6 +1918,14 @@ def main():
             f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
             + (f"void simdunpack_u16{args.suffix}_corrected_half_shuf(const __m128i *in, uint16_t *out,\n"
                f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf0(const __m128i *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf1(const __m128i *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf2(const __m128i *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf3(const __m128i *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
                if args.width == 128 else "")
             + (f"void simdunpack_u16{args.suffix}_corrected_quarter(const {reg} *in, uint16_t *out,\n"
                f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
@@ -1885,6 +1966,15 @@ def main():
                                                    agg=agg))
                 out.append(gen_unpack_dispatcher_corrected_scalar(
                     I, shg, name_suffix=args.suffix, agg=agg))
+            # scalar_shuf: vmovq+pshufb variant of corrected_scalar (128-bit only).
+            if args.width == 128:
+                for shg in range(4):
+                    for bit in range(1, MAX_BIT + 1):
+                        out.append(gen_unpack_function(bit, I, mode='corrected_scalar_shuf',
+                                                       name_suffix=args.suffix, shg=shg,
+                                                       agg=agg))
+                    out.append(gen_unpack_dispatcher_corrected_scalar_shuf(
+                        I, shg, name_suffix=args.suffix, agg=agg))
             # half: w==lanes/2 (128→w=4, 256→w=8) — OutReg straddles two windows.
             for bit in range(1, MAX_BIT + 1):
                 out.append(gen_unpack_function(bit, I, mode='corrected_half',

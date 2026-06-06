@@ -96,10 +96,11 @@ InitPhysicalCodecsU16() {
       for (bool sep : {false, true})
         codecs.push_back(
             std::make_unique<SimdCompFusedForCodecU16_128>(w, sep, agg));
-    // shuffle correction for w=4 only (saves 2 port-5 ops/OutReg vs broadcast)
-    for (bool sep : {false, true})
-      codecs.push_back(
-          std::make_unique<SimdCompFusedForCodecU16_128>(4u, sep, agg, true));
+    // shuffle correction for all windows (vmovq+pshufb instead of vpbroadcastw)
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+      for (bool sep : {false, true})
+        codecs.push_back(
+            std::make_unique<SimdCompFusedForCodecU16_128>(w, sep, agg, true));
     // ── 128-bit fused hierarchical FoR (outer ∈ {128,256}, inner | outer) ──
     for (size_t gw : {128u, 256u})
       for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})

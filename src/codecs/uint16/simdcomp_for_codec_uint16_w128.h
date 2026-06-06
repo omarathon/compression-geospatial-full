@@ -76,6 +76,16 @@ extern "C" void simdunpack_u16_w128_corrected_half_shuf(const __m128i*, uint16_t
                                                         uint32_t,
                                                         const uint16_t* a_block,
                                                         __m128i*);
+// w>=8 shuffle variants: vmovq+vpshufb(word0) instead of vpbroadcastw.
+// Tests whether batched 8-byte loads beat scalar 2-byte loads for cscalar modes.
+extern "C" void simdunpack_u16_w128_cscalar_shuf0(const __m128i*, uint16_t*, uint32_t,
+                                                  const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf1(const __m128i*, uint16_t*, uint32_t,
+                                                  const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf2(const __m128i*, uint16_t*, uint32_t,
+                                                  const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf3(const __m128i*, uint16_t*, uint32_t,
+                                                  const uint16_t*, __m128i*);
 // madd-widen aggregate variants (~1.5× decode): valid only when all decoded
 // values < 2^15. The codec stores a 1-byte flag and dispatches on it.
 extern "C" void simdunpack_u16_w128_corrected_uniform_madd(const __m128i*, uint16_t*,
@@ -92,6 +102,14 @@ extern "C" void simdunpack_u16_w128_corrected_half_madd(const __m128i*, uint16_t
                                                         uint32_t, const uint16_t*, __m128i*);
 extern "C" void simdunpack_u16_w128_corrected_half_shuf_madd(const __m128i*, uint16_t*,
                                                              uint32_t, const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf0_madd(const __m128i*, uint16_t*, uint32_t,
+                                                       const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf1_madd(const __m128i*, uint16_t*, uint32_t,
+                                                       const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf2_madd(const __m128i*, uint16_t*, uint32_t,
+                                                       const uint16_t*, __m128i*);
+extern "C" void simdunpack_u16_w128_cscalar_shuf3_madd(const __m128i*, uint16_t*, uint32_t,
+                                                       const uint16_t*, __m128i*);
 #ifdef FOR_DECODE_NOAGG  // benchmark-only: produce OutReg, skip the widening sum
 extern "C" void simdunpack_u16_w128_corrected_uniform_noagg(const __m128i*, uint16_t*,
                                                             uint32_t, const __m128i, __m128i*);
@@ -186,7 +204,7 @@ static inline int decode_mode(size_t w) {
 static inline void decode_block(const __m128i*& in_ptr, uint16_t* out_k,
                                 const uint16_t* anchors, size_t k, size_t w,
                                 unsigned sh, int mode, bool madd, uint32_t b_k,
-                                __m128i* sum, bool shuf_half = false) {
+                                __m128i* sum, bool shuf = false) {
 #ifdef FOR_DECODE_NOAGG
   (void)madd;  // benchmark-only: produce OutReg, XOR sink (sums are wrong)
   if (mode == kModeUniform) {
@@ -213,7 +231,23 @@ static inline void decode_block(const __m128i*& in_ptr, uint16_t* out_k,
     else      simdunpack_u16_w128_corrected_uniform(in_ptr, out_k, b_k, a, sum);
   } else if (mode == kModeScalar) {
     const uint16_t* a_block = anchors + ((k * kBlk) >> sh);
-    if (madd) {
+    if (shuf) {
+      if (madd) {
+        switch (sh) {
+          case 3:  simdunpack_u16_w128_cscalar_shuf0_madd(in_ptr, out_k, b_k, a_block, sum); break;
+          case 4:  simdunpack_u16_w128_cscalar_shuf1_madd(in_ptr, out_k, b_k, a_block, sum); break;
+          case 5:  simdunpack_u16_w128_cscalar_shuf2_madd(in_ptr, out_k, b_k, a_block, sum); break;
+          default: simdunpack_u16_w128_cscalar_shuf3_madd(in_ptr, out_k, b_k, a_block, sum); break;
+        }
+      } else {
+        switch (sh) {
+          case 3:  simdunpack_u16_w128_cscalar_shuf0(in_ptr, out_k, b_k, a_block, sum); break;
+          case 4:  simdunpack_u16_w128_cscalar_shuf1(in_ptr, out_k, b_k, a_block, sum); break;
+          case 5:  simdunpack_u16_w128_cscalar_shuf2(in_ptr, out_k, b_k, a_block, sum); break;
+          default: simdunpack_u16_w128_cscalar_shuf3(in_ptr, out_k, b_k, a_block, sum); break;
+        }
+      }
+    } else if (madd) {
       switch (sh) {
         case 3:  simdunpack_u16_w128_cscalar0_madd(in_ptr, out_k, b_k, a_block, sum); break;
         case 4:  simdunpack_u16_w128_cscalar1_madd(in_ptr, out_k, b_k, a_block, sum); break;
@@ -230,7 +264,7 @@ static inline void decode_block(const __m128i*& in_ptr, uint16_t* out_k,
     }
   } else {  // kModeArray: w == 4 — half/half or shuffle correction, no array
     const uint16_t* a_block = anchors + ((k * kBlk) >> sh);
-    if (shuf_half) {
+    if (shuf) {
       if (madd) simdunpack_u16_w128_corrected_half_shuf_madd(in_ptr, out_k, b_k, a_block, sum);
       else      simdunpack_u16_w128_corrected_half_shuf(in_ptr, out_k, b_k, a_block, sum);
     } else {
@@ -257,12 +291,12 @@ class SimdCompFusedForCodecU16_128 : public StatefulIntegerCodec<uint16_t> {
   size_t window_;
   bool separate_;
   FusedAggImpl agg_;
-  bool shuf_half_;  // use vpshufb correction at w=4 (saves 2 port-5 ops/OutReg)
+  bool shuf_;  // use vpshufb correction (all windows): saves port-5 ops/OutReg
 
   explicit SimdCompFusedForCodecU16_128(size_t window = 8, bool separate = false,
                                         FusedAggImpl agg = FusedAggImpl::kMadd,
-                                        bool shuf_half = false)
-      : window_(window), separate_(separate), agg_(agg), shuf_half_(shuf_half) {
+                                        bool shuf = false)
+      : window_(window), separate_(separate), agg_(agg), shuf_(shuf) {
     assert(window == 4 || window == 8 || window == 16 || window == 32 ||
            window == 64 || window == 128 || window == 256);
   }
@@ -368,7 +402,7 @@ class SimdCompFusedForCodecU16_128 : public StatefulIntegerCodec<uint16_t> {
       const __m128i* in_ptr = reinterpret_cast<const __m128i*>(bs + num_blk);
       for (size_t k = 0; k < num_blk; ++k)
         decode_block(in_ptr, out + k * kBlk, anchors, k, w, sh, mode, madd,
-                     bs[k], &sum, shuf_half_);
+                     bs[k], &sum, shuf_);
     } else {
       // Anchors SIMD-packed (chunked-b). FUSED: unpack each 128-anchor block,
       // then immediately decode the `w` residual blocks it feeds — the anchors
@@ -393,7 +427,7 @@ class SimdCompFusedForCodecU16_128 : public StatefulIntegerCodec<uint16_t> {
         const size_t k1 = ((ab + 1) * w < num_blk) ? (ab + 1) * w : num_blk;
         for (size_t k = k0; k < k1; ++k)
           decode_block(in_ptr, out + k * kBlk, s_anchor, k, w, sh, mode, madd,
-                       bs[k], &sum, shuf_half_);
+                       bs[k], &sum, shuf_);
       }
     }
 
@@ -408,13 +442,13 @@ class SimdCompFusedForCodecU16_128 : public StatefulIntegerCodec<uint16_t> {
   std::string name() const override {
     std::string n = "simdcomp_fused_for_128_w" + std::to_string(window_);
     if (separate_) n += "_sep";
-    if (shuf_half_) n += "_shuf";
+    if (shuf_) n += "_shuf";
     n += (agg_ == FusedAggImpl::kMadd) ? "_madd" : "_unpack";
     return n;
   }
   std::size_t GetOverflowSize(size_t) const override { return 2; }
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new SimdCompFusedForCodecU16_128(window_, separate_, agg_, shuf_half_);
+    return new SimdCompFusedForCodecU16_128(window_, separate_, agg_, shuf_);
   }
   void AllocEncoded(const uint16_t*, size_t) override {}
   void clear() override {

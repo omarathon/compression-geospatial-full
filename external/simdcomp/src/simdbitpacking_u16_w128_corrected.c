@@ -23,6 +23,14 @@ void simdunpack_u16_w128_corrected_half(const __m128i *in, uint16_t *out,
     const uint32_t bit, const uint16_t *a_block, __m128i *sum);
 void simdunpack_u16_w128_corrected_half_shuf(const __m128i *in, uint16_t *out,
     const uint32_t bit, const uint16_t *a_block, __m128i *sum);
+void simdunpack_u16_w128_cscalar_shuf0(const __m128i *in, uint16_t *out,
+    const uint32_t bit, const uint16_t *a_block, __m128i *sum);
+void simdunpack_u16_w128_cscalar_shuf1(const __m128i *in, uint16_t *out,
+    const uint32_t bit, const uint16_t *a_block, __m128i *sum);
+void simdunpack_u16_w128_cscalar_shuf2(const __m128i *in, uint16_t *out,
+    const uint32_t bit, const uint16_t *a_block, __m128i *sum);
+void simdunpack_u16_w128_cscalar_shuf3(const __m128i *in, uint16_t *out,
+    const uint32_t bit, const uint16_t *a_block, __m128i *sum);
 void simdunpack_u16_w128_store(const __m128i *in, uint16_t *out,
     const uint32_t bit);
 
@@ -7921,6 +7929,7426 @@ void simdunpack_u16_w128_cscalar3(const __m128i *in, uint16_t *out, const uint32
 
   case 16:
     __SIMD_fastunpack16_16_cscalar3_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf0_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf0(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 0))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf0_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf1_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf1(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 1))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf1_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf2_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf2(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 2))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf2_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf3_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf3(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 3))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf3_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf3_w128(in, out, sum, a_block);
     break;
 
   default:
@@ -19541,6 +26969,7426 @@ void simdunpack_u16_w128_cscalar3_madd(const __m128i *in, uint16_t *out, const u
     break;
   }
 }
+static void __SIMD_fastunpack1_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf0_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf0_madd(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_madd(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 0))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf0_madd_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf1_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf1_madd(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_madd(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 1))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf1_madd_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf2_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf2_madd(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_madd(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 2))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf2_madd_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf3_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_madd(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf3_madd(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_madd(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 3))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf3_madd_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
 static void __SIMD_fastunpack1_16_chalf_madd_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
   (void)_out;
   __m128i InReg = _mm_loadu_si128(in);
@@ -31149,6 +45997,7426 @@ void simdunpack_u16_w128_cscalar3_noagg(const __m128i *in, uint16_t *out, const 
 
   case 16:
     __SIMD_fastunpack16_16_cscalar3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf0_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 8)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 9)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 10)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 11)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 12)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 13)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 14)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 15)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf0_noagg(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_noagg(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 0))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf0_noagg_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf1_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 4)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 5)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 6)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 7)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf1_noagg(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_noagg(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 1))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf1_noagg_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf2_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 2)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 3)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf2_noagg(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_noagg(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 2))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf2_noagg_w128(in, out, sum, a_block);
+    break;
+
+  default:
+    break;
+  }
+}
+static void __SIMD_fastunpack1_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 1) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 15), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack2_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 2) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 14), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack3_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 3) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 3 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 13), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack4_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 4) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 12), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack5_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 5) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 5 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 11), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack6_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 6) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 6 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 10), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack7_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 7) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 7 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 9), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack8_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 8) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 8), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack9_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 9) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 1), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 9 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 7), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack10_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 10) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 10 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 6), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack11_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 11) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 3), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 11 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 5), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack12_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 12) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 12 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 4), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack13_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 13) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 7), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 5), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 13 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 3), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack14_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 14) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_and_si128(InReg, mask);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 14 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 2), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack15_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  const __m128i mask = _mm_set1_epi16((1U << 15) - 1);
+
+  OutReg = _mm_and_si128(InReg, mask);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 15);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 14), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 14);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 13), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 13);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 12), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 12);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 11), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 11);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 10), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 10);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 9), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 9);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 8), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 8);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 7), mask));
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 7);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 6), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 6);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 5), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 5);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 4), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 4);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 3), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 3);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 2), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_srli_epi16(InReg, 2);
+  InReg = _mm_loadu_si128(++in);
+  OutReg =
+      _mm_or_si128(OutReg, _mm_and_si128(_mm_slli_epi16(InReg, 15 - 1), mask));
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+  OutReg = _mm_and_si128(_mm_srli_epi16(InReg, 1), mask);
+  OutReg = _mm_add_epi16(OutReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+
+}
+static void __SIMD_fastunpack16_16_cscalar_shuf3_noagg_w128(const __m128i *in, uint16_t *_out, __m128i* sum, const uint16_t *a_block) {
+  (void)_out;
+  __m128i InReg = _mm_loadu_si128(in);
+  __m128i OutReg;
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  __m128i _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 0)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  _bc = _mm_shuffle_epi8(
+      _mm_loadl_epi64((const __m128i *)(a_block + 1)),
+      _shuf_word0_mask);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+  InReg = _mm_loadu_si128(++in);
+  OutReg = _mm_add_epi16(InReg, _bc);
+  aggregate_sums_u16_noagg(OutReg, sum);
+}
+void simdunpack_u16_w128_cscalar_shuf3_noagg(const __m128i *in, uint16_t *out, const uint32_t bit, const uint16_t *a_block, __m128i* sum) {
+  const __m128i _shuf_word0_mask = _mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);
+  switch (bit) {
+  case 0:
+    /* b==0: every OutReg = its anchor; aggregate with shuf. */
+    {
+      size_t _k;
+      for (_k = 0; _k < 16; ++_k)
+        aggregate_sums_u16_noagg(_mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> 3))), _shuf_word0_mask), sum);
+    }
+    (void)in; (void)out;
+    break;
+
+  case 1:
+    __SIMD_fastunpack1_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 2:
+    __SIMD_fastunpack2_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 3:
+    __SIMD_fastunpack3_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 4:
+    __SIMD_fastunpack4_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 5:
+    __SIMD_fastunpack5_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 6:
+    __SIMD_fastunpack6_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 7:
+    __SIMD_fastunpack7_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 8:
+    __SIMD_fastunpack8_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 9:
+    __SIMD_fastunpack9_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 10:
+    __SIMD_fastunpack10_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 11:
+    __SIMD_fastunpack11_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 12:
+    __SIMD_fastunpack12_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 13:
+    __SIMD_fastunpack13_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 14:
+    __SIMD_fastunpack14_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 15:
+    __SIMD_fastunpack15_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
+    break;
+
+  case 16:
+    __SIMD_fastunpack16_16_cscalar_shuf3_noagg_w128(in, out, sum, a_block);
     break;
 
   default:
