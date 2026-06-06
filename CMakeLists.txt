@@ -45,11 +45,37 @@ set_target_properties(TurboPFor PROPERTIES
 
 # Fused-sum decode prototype: compiled from a TurboPFor lib/ source so it can
 # use the internal vertical-bitunpack macros + the _shuffle_16 table.
-add_library(TurboPForFused STATIC ${EXT}/TurboPFor/lib/vp4d_fused.c)
+# vp4d256v16_fused.c is the 256-width 16-bit PFor variant; it reuses simdcomp's
+# AVX2 16-lane kernels (simdpack_u16 / simdunpack_u16[_corrected]).
+add_library(TurboPForFused STATIC
+  ${EXT}/TurboPFor/lib/vp4d_fused.c
+  ${EXT}/TurboPFor/lib/vp4d256v16_fused.c
+  ${EXT}/TurboPFor/lib/vp4d256v16_for_fused.c)
 target_include_directories(TurboPForFused PRIVATE
-  ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include)
+  ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include
+  ${EXT}/simdcomp/include ${EXT}/simdcomp/src)
 target_compile_options(TurboPForFused PRIVATE -O3 -mavx2)
-target_link_libraries(TurboPForFused PUBLIC TurboPFor)
+target_link_libraries(TurboPForFused PUBLIC TurboPFor SimdComp)
+
+# 128-bit (SSE) simdcomp u16 pack/unpack — generated minimal variant, built as
+# its own lib (-O3 -march=native, matching libsimdcomp.a) so the plain unpack is
+# dispatched/non-inlined exactly like the 256-bit kernel. Used by the
+# simdcomp_fused_128 codec for an apples-to-apples 128-vs-256 width benchmark.
+add_library(SimdCompU16W128 STATIC
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w128.c
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w128_corrected.c)
+target_include_directories(SimdCompU16W128 PRIVATE ${EXT}/simdcomp/include)
+target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native)
+
+# 256-bit (AVX2) simdcomp u16 FoR kernels — generated minimal + FoR-corrected
+# variant, built as its own lib (suffixed _w256 symbols) so it coexists with
+# canonical libsimdcomp.a. Powers the SimdCompFusedForCodecU16_256 codecs
+# (regular + hierarchical). Mirrors the SimdCompU16W128 setup exactly.
+add_library(SimdCompU16W256 STATIC
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w256.c
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w256_corrected.c)
+target_include_directories(SimdCompU16W256 PRIVATE ${EXT}/simdcomp/include)
+target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native)
 
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
@@ -69,6 +95,8 @@ pkg_check_modules(OpenJPEG REQUIRED libopenjp2)
 # ── Common codec link deps ────────────────────────────────────────────────────
 set(CODEC_LIBS
   TurboPForFused
+  SimdCompU16W128
+  SimdCompU16W256
   FastPFor
   SimdComp
   TurboPFor
@@ -195,3 +223,18 @@ configure_bench(bench_comp)
 
 add_executable(bench_pipeline bench/bench_pipeline.cpp)
 configure_bench(bench_pipeline)
+
+add_executable(for128_parity bench/for128_parity.cpp)
+configure_bench(for128_parity)
+
+add_executable(for256_parity bench/for256_parity.cpp)
+configure_bench(for256_parity)
+
+add_executable(for256_pfor_parity bench/for256_pfor_parity.cpp)
+configure_bench(for256_pfor_parity)
+
+# Same as bench_pipeline but the w128 FoR/base decoders skip the widening sum
+# (XOR sink) — times produce-OutReg-only. Sums are wrong; for decode timing only.
+add_executable(bench_pipeline_noagg bench/bench_pipeline.cpp)
+configure_bench(bench_pipeline_noagg)
+target_compile_definitions(bench_pipeline_noagg PRIVATE FOR_DECODE_NOAGG)

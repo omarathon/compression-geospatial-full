@@ -13,13 +13,18 @@
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
 #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_fused_codec_uint16_w128.h"
 #include "simdcomp_for_codec_uint16.h"
+#include "simdcomp_for_codec_uint16_w128.h"
+#include "simdcomp_for_codec_uint16_w256.h"
 #include "fastpfor_fused_codec_uint16.h"
 
 #include "custom_vec_logic_codecs.h"
 #include "custom_unvec_logic_codecs_u16.h"  // includes predictive_codecs_u16.h
 #include "turbopfor_codecs_u16.h"
 #include "turbopfor_fused_codec_uint16.h"
+#include "turbopfor_fused_256_codec_uint16.h"
+#include "turbopfor_for_codec_uint16.h"
 // predictive_codecs_u16.h is transitively included above
 
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
@@ -81,7 +86,40 @@ InitLogicalCodecsU16() {
 inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
-  // codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());
+  codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());       // 256-bit
+  codecs.push_back(std::make_unique<SimdCompFusedCodecU16_128>());   // 128-bit
+  // Both aggregate-sum implementations (unpack-widen vs madd) are registered for
+  // the 128- and 256-bit FoR codecs so the bench sweep can compare them.
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    // ── 128-bit fused FoR (regular: window × {raw,packed-anchor}) ──
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+      for (bool sep : {false, true})
+        codecs.push_back(
+            std::make_unique<SimdCompFusedForCodecU16_128>(w, sep, agg));
+    // shuffle correction for w=4 only (saves 2 port-5 ops/OutReg vs broadcast)
+    for (bool sep : {false, true})
+      codecs.push_back(
+          std::make_unique<SimdCompFusedForCodecU16_128>(4u, sep, agg, true));
+    // ── 128-bit fused hierarchical FoR (outer ∈ {128,256}, inner | outer) ──
+    for (size_t gw : {128u, 256u})
+      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+        if (lw <= gw && gw % lw == 0)
+          codecs.push_back(
+              std::make_unique<SimdCompFusedForHierarchicalCodecU16_128>(gw, lw,
+                                                                          agg));
+    // ── 256-bit fused FoR (regular: window × {raw,packed-anchor}) ──
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+      for (bool sep : {false, true})
+        codecs.push_back(
+            std::make_unique<SimdCompFusedForCodecU16_256>(w, sep, agg));
+    // ── 256-bit fused hierarchical FoR (outer ∈ {128,256}, inner | outer) ──
+    for (size_t gw : {128u, 256u})
+      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+        if (lw <= gw && gw % lw == 0)
+          codecs.push_back(
+              std::make_unique<SimdCompFusedForHierarchicalCodecU16_256>(gw, lw,
+                                                                          agg));
+  }
   // codecs.push_back(std::make_unique<SimdCompFusedDeltaLocalCodecU16>());
   // codecs.push_back(std::make_unique<SimdCompFusedDeltaCarryCodecU16>());
   // codecs.push_back(std::make_unique<SimdCompFusedForGlobalCodecU16>());        // w256
@@ -113,7 +151,21 @@ InitPhysicalCodecsU16() {
   // codecs.push_back(std::make_unique<FastPForFusedCorrectedForGlobalCodecU16>(false, 8192.0));
   codecs.push_back(std::make_unique<TurboPForCodecU16>(3)); // turbopfor
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
-  // codecs.push_back(std::make_unique<TurboPForFusedCodecU16>()); // fused-sum 128v16
+  codecs.push_back(std::make_unique<TurboPForFusedCodecU16>()); // fused-sum 128v16
+  codecs.push_back(std::make_unique<TurboPForFused256CodecU16>()); // fused-sum 256v16
+
+  // ── 256-bit fused FoR TurboPFor (PFor residuals + per-window anchor), both
+  //    aggregate impls — regular (window × {raw,packed-anchor}) + hierarchical ──
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+      for (bool sep : {false, true})
+        codecs.push_back(std::make_unique<TurboPForFusedForCodecU16>(w, sep, agg));
+    for (size_t gw : {128u, 256u})
+      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+        if (lw <= gw && gw % lw == 0)
+          codecs.push_back(
+              std::make_unique<TurboPForFusedForHierarchicalCodecU16>(gw, lw, agg));
+  }
 
   return codecs;
 }

@@ -4,10 +4,12 @@
 
 set -u
 
-TIF=/home/omar/diss/geotiffs/slope-srtm_35_11.tif
-# TIF=/home/omar/diss/geotiffs/srtm_45_15.tif
-# TIF=/home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif
-# TIF=/home/omar/diss/geotiffs/2656.tif
+TIFS=(
+  /home/omar/diss/geotiffs/slope-srtm_35_11.tif
+  /home/omar/diss/geotiffs/srtm_45_15.tif
+  /home/omar/diss/geotiffs/JRC_TMF_AnnualChange_v1_1990_AFR_ID16_S10_E10.tif
+  /home/omar/diss/geotiffs/2656.tif
+)
 
 COMMON_ARGS="-b 256 -n 500 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
 
@@ -46,6 +48,7 @@ RUNS=(
   # "tpfor_pack linearSumFused  TurboPFor_TurboPack256"
 
   "TurboPFor_fused_128v16_sum   linearSumFused  TurboPFor_fused_128v16_sum"
+  "TurboPFor_fused_256v16_sum   linearSumFused  TurboPFor_fused_256v16_sum"
 )
 
 run_one() {
@@ -57,24 +60,31 @@ run_one() {
   grep "^TRACE" "out_${tag}.txt" > "out_${tag}_trace.txt"
 }
 
-for entry in "${RUNS[@]}"; do
-  # shellcheck disable=SC2086
-  run_one $entry
-done
-
-echo
-echo "=== diffs vs base ==="
 fail=0
-for entry in "${RUNS[@]}"; do
-  tag=${entry%% *}
-  [ "$tag" = "base" ] && continue
-  if diff -q "out_base_trace.txt" "out_${tag}_trace.txt" > /dev/null; then
-    echo "  OK   $tag"
-  else
-    echo "  FAIL $tag"
-    diff "out_base_trace.txt" "out_${tag}_trace.txt" | head -20
-    fail=1
-  fi
+for TIF in "${TIFS[@]}"; do
+  echo
+  echo "############################################################"
+  echo "# TIF: $TIF"
+  echo "############################################################"
+
+  for entry in "${RUNS[@]}"; do
+    # shellcheck disable=SC2086
+    run_one $entry
+  done
+
+  echo
+  echo "=== diffs vs base ($(basename "$TIF")) ==="
+  for entry in "${RUNS[@]}"; do
+    tag=${entry%% *}
+    [ "$tag" = "base" ] && continue
+    if diff -q "out_base_trace.txt" "out_${tag}_trace.txt" > /dev/null; then
+      echo "  OK   $tag"
+    else
+      echo "  FAIL $tag"
+      diff "out_base_trace.txt" "out_${tag}_trace.txt" | head -20
+      fail=1
+    fi
+  done
 done
 
 exit $fail

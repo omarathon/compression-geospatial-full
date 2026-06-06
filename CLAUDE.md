@@ -98,3 +98,73 @@ cmake --build build --target test_fused_codecs && ./build/test_fused_codecs
 - **Cascaded-codec size constraint**: logical codecs feeding a fused physical codec MUST output a multiple of `kFusedSubBlockSize`=256. `FORCodecU16(w)` outputs `length + length/w` (one inline min per window) — safe only when **w divides 256** ({32,64,128,256} OK; wfull→65537, w512→65664 both crash). RLE (2·num_runs) is uncascadable. These are commented out in [codec_collection_uint16.h](src/codecs/uint16/codec_collection_uint16.h).
 - **LERC dtype limitation**: GDAL LERC fails on some SampleFormat/bitspersample combos (uint8 WorldCover, certain Sentinel2 `others/sentinel2/*` files) → "Unsupported combination" RuntimeError. Scripts catch it and store `nrmse=None`; these are expected skips, not bugs.
 - **Finding — fused codecs barely improve with lossy preprocessing**: simdcomp/FastPFor fused codecs pick `b` from the sub-block max (uint16 normalize has GCD hardcoded to 1; LERC's per-block local quantization doesn't align to a global grid), so lossy preprocessing rarely lowers `b`. Delta helps (shrinks max→residual). Only adaptive codecs (TurboPFor128/TurboPack128) show real CR gains from reduced post-LERC range. For the in-RAM pipeline-speedup thesis the relevant metric is bench_pipeline decode speed, not bench_comp CR.
+
+## Session 2026-06: TurboPFor fused 256v16 (DONE) + FoR sep-metadata + 128-vs-256 perf
+
+**FoR separate-metadata (early):** `FORCodecU16`/`FORHierarchicalCodecU16` ([custom_unvec_logic_codecs_u16.h](src/codecs/uint16/custom_unvec_logic_codecs_u16.h)) gained a `separate_metadata` flag: residuals go to the physical codec, anchors held in `metadata_` (not fed downstream). New virtual `ExtraEncodedBytes()` ([generic_codecs.h](src/codecs/generic/generic_codecs.h)) counts side-channel bytes; `CompositeStatefulIntegerCodec::EncodedNumValues()` ([composite_codec.h](src/codecs/generic/composite_codec.h)) adds them so sep=true CR is honest. **Gotcha fixed:** composite `clear()` runs between encode/decode → must NOT clear `metadata_` (decoder needs it). Registered as loops over windows×gw×sep in [codec_collection_uint16.h](src/codecs/uint16/codec_collection_uint16.h). New script [parse_bench_comp_results_for_agg.py](parse_bench_comp_results_for_agg.py): aggregates over FoR windows (min CR), strips window from codec name, short names (FoR/HFoR/PFor/Pack), lossless gets a `0%` NRMSE col for column alignment.
+
+**256-width fused-sum 16-bit PFor (`TurboPFor_fused_256v16_sum`) — built, correct, FAST:**
+- Files: [vp4d256v16_fused.c](external/TurboPFor/lib/vp4d256v16_fused.c) (encoder `p4nenc256v16` + fused decoder `p4ndec256v16_sum`), wrapper [turbopfor_fused_256_codec_uint16.h](src/codecs/uint16/turbopfor_fused_256_codec_uint16.h). Built into the `TurboPForFused` CMake lib.
+- Low bits use **simdcomp's** AVX2 16-lane `simdpack_u16`/`simdunpack_u16` (NOT TurboPFor — there is no stock `p4n*256v16`). Exception coding mirrors TurboPFor for **CR parity**: bit-packed excess (`bitpack16`), bitmap-OR-vbyte positions (whichever smaller), constant-block opcode. Format: `ctrl=(mode<<5)|b`, modes PLAIN/BITMAP/VBYTE/CONST; per-256-block.
+- **Exception merge is in-register** (issues 1/2/3 fixed): `simdunpack_u16_pfor` left-packs `excess<<b` into exception lanes via two 8-lane `pshufb` halves (`kShuffle16` table) per OutReg — same idea as the 128's `_shuffle_16`, since AVX2 has no 16-lane shuffle table. Corrected OutReg materialised in-register before the aggregate (**no sum hack** — aggregate is swappable). Element `i` ↔ OutReg `i/16`, lane `i%16`.
+- CR: TurboPFor256 ≈ TurboPFor128 (within ~1% block-granularity gap); both ≪ simdcomp (which has no exceptions).
+
+**simdcomp generator ([gen_simdbitpacking_u16.py](external/simdcomp/scripts/gen_simdbitpacking_u16.py)) — 3 new modes, all emit SEPARATE files; canonical `simdbitpacking_u16.c` NEVER regenerated (stop-condition honoured):**
+- `--suffix _w128 --width 128`: minimal self-contained SSE variant → `simdbitpacking_u16_w128.c` (powers the `simdcomp_fused_128` codec, [simdcomp_fused_codec_uint16_w128.h](src/codecs/uint16/simdcomp_fused_codec_uint16_w128.h), lib `SimdCompU16W128`, kept for width comparison).
+- `--pfor`: self-contained `simdunpack_u16_pfor` → `simdbitpacking_u16_pfor.c` (now superseded by the inline header; lib removed).
+- `--inline-decode`: STATIC `simdunpack_u16_il` + `simdunpack_u16_pfor_il` → `simdbitpacking_u16_decode_inl.h`, **#included into the decoder TU** so kernels inline.
+
+**PERF LEARNINGS (the important part):**
+- **256 width is genuinely faster than 128** within the same codegen — `simdcomp_fused` (256) beats `simdcomp_fused_128` on every TIF. The width is not the problem.
+- Two bugs made the 256 *look* slow; both fixed in [vp4d256v16_fused.c](external/TurboPFor/lib/vp4d256v16_fused.c):
+  1. **Non-inlined cross-TU call** → the `__m256i *sum` accumulator spilled to memory every sub-block (256×/decode). Fix: `#include "simdbitpacking_u16_decode_inl.h"` (static `_il` kernels) so the unpack inlines, the `switch(b)` folds, and `sum` stays in a YMM register. This fixed a 4× high-`b` regression (b=16 went 4.33×→0.72× vs 128).
+  2. **`b=0` memset**: `simdunpack_u16(b=0)`→`SIMD_nullunpacker16` memsets 512 B of scratch per all-zero block (pure waste for a fused sum; inlined it lands in the hot loop and blows up mostly-zero rasters like srtm). Fix: **skip `b=0` PLAIN** (all-zero ⇒ sum+=0), and do CONST's sum inline (16 widen-accumulates, no memset). The 128 already avoided this (sums zeros inline).
+- After both fixes: **256 beats 128 on all 3 local TIFs and all bit-widths** (~1.2–2×).
+- simdcomp's and TurboPFor's AVX2 unpack are **structurally identical** (same vertical AND/shift/OR, just `epi16` vs `epi32`) — no hand-tuning needed at 256; the generated code is already as good. The lever was inlining, not codegen.
+- **PFor-vs-bitpack tradeoff** (in-RAM thesis): PFor (TurboPFor) wins CR when data is low-`b` + sparse outliers (smooth DEM post-normalize), and wins *decode too* only when exceptions are **sparse** (srtm). Dense-exception data (slope-srtm, WorldCover categorical) → PFor gives big CR wins but decodes slower than plain bitpack (simdcomp); use simdcomp-256 there. Uniformly high-entropy (Landsat) → PFor barely helps CR.
+
+**Local test TIFs** (`/home/omar/diss/geotiffs/`): `srtm_45_15.tif` (Int16 DEM, ~all zeros post-normalize, CR~0.06, sparse exc — PFor wins both), `slope-srtm_35_11.tif` (Int16, CR~0.22, dense exc), `WorldCover_nyc_ESA_WorldCover_10m_2021_v200_N39W075.tif` (Int16 categorical, CR PFor 0.08 vs bitpack 0.14, dense exc), `landsat8_path190_row031_stack.tif` (UInt16, high-entropy, PFor +3% only).
+
+**Methodology notes for the next agent:**
+- **No working profiler on this WSL2 box**: `perf` is dead (wrong kernel), callgrind SIGILLs on `-march=native` and mis-attributes. Use **rdtsc instrumentation** (compile decoder with `-DFUSED_PROFILE`; globals `g_fused_kernel_cyc`/`g_fused_total_cyc` for 128, `g_fused256_*` for 256; `rest = total − kernel`, rest slightly inflated by rdtsc) or a **wall-clock microbench**. Microbenches MUST defeat loop-hoisting (`asm volatile("":::"memory")` or perturb input) — an opaque loop-invariant call gets hoisted/CSE'd.
+- **Microbench (L1-resident, decode one block repeatedly) ≠ bench_pipeline (streams many blocks, memory-bound)** — they can disagree; trust bench_pipeline `medtimedec` for real-world, microbench for isolating the kernel. Run perf on a quiet machine; use `--rs 3` (skip 3 warm-up reps).
+- Verified throughout: 196 `test_fused_codecs` pass; [verify_fusion_latest.sh](verify_fusion_latest.sh) (now loops all 4 TIFs) green for 128 & 256; a 2M-trial per-lane placement test confirmed the pfor shuffle merge is correct (not just the sum).
+- **Final fused decode (ns/65536-block, bench_pipeline, quiet, --rs 3):** srtm: sc128 4565 / sc256 4449 / tp128 3777 / **tp256 2999**; slope: 7095 / **4383** / 20311 / 16057; WorldCover: 5380 / **3502** / 11664 / 9598. (sc=simdcomp, tp=TurboPFor.)
+
+## Session 2026-06: simdcomp 128-width FoR fused — DONE; next = 256-width + TurboPFor FoR
+
+**DESIGN GOAL (the whole point): minimise decode LATENCY at a *given* CR.** Not best CR, not fewest bytes — fastest fused-sum/aggregation decode for whatever CR a window/codec gives. The lever that delivered it: **fully fuse the anchor correction into the unpack kernel — zero memory round-trips.** Anchors are broadcast inline from the (cached) anchor stream straight into the OutReg add; never materialised as a `__m128i` corrections array (that store→reload was *the* dominant cost). Every technique below serves this: keep the correction in-register, keep the aggregate off port 5, never touch memory you don't have to. Carry the same discipline to 256 + TurboPFor.
+
+**What exists (128):** [simdcomp_for_codec_uint16_w128.h](src/codecs/uint16/simdcomp_for_codec_uint16_w128.h) — `SimdCompFusedForCodecU16_128(window∈{4,8,16,32,64,128,256}, separate)` (regular) + `SimdCompFusedForHierarchicalCodecU16_128(outer∈{128,256}, inner)`. Base = [simdcomp_fused_codec_uint16_w128.h](src/codecs/uint16/simdcomp_fused_codec_uint16_w128.h). Kernels generated by `gen_simdbitpacking_u16.py --width 128 --suffix _w128 [--corrected]` → `simdbitpacking_u16_w128{,_corrected}.c`, lib `SimdCompU16W128`. Parity harness [bench/for128_parity.cpp](bench/for128_parity.cpp); timing `bench_pipeline` + `bench_pipeline_noagg` (`-DFOR_DECODE_NOAGG`, produces OutReg w/ XOR sink, sums wrong — decode-timing only). 198 `test_fused_codecs` pass; CR byte-exact vs unvec composite (FORCodecU16→SimdCompFusedCodecU16_128) for separate=true + hier.
+
+**Run / verify (128):**
+```bash
+# after editing the generator, regen BOTH w128 files (NEVER the canonical 256 .c):
+python3 external/simdcomp/scripts/gen_simdbitpacking_u16.py --width 128 --suffix _w128
+python3 external/simdcomp/scripts/gen_simdbitpacking_u16.py --width 128 --suffix _w128 --corrected
+cmake --build build --target test_fused_codecs bench_pipeline bench_pipeline_noagg for128_parity -j32
+# CORRECTNESS (round-trip fused sum, all windows×sep×hier, madd+unpack paths): must be 198/198
+./build/test_fused_codecs
+# CR-PARITY vs unvec (sep=true/hier should be ~1.000): prints vec/ref per codec×TIF
+./build/for128_parity
+# DECODE TIMING (medtimedec ns/65536-block). Codec names: simdcomp_fused_128 (baseline),
+#   simdcomp_fused_for_128_w{4,8,16,32,64,128,256}[_sep], simdcomp_fused_for_hier_128_g{128,256}_l{..}
+./build/bench_pipeline <TIF> -b 256 -n 1000 -r 6 --rs 2 --icodec <codec> --acodec <codec> \
+  --ordering default --itrans none --pattern linear --atrans linearSumFused --normalize
+# produce-OutReg-only (no widening sum, XOR sink): same flags, ./build/bench_pipeline_noagg
+```
+Local TIFs in `/home/omar/diss/geotiffs/`: srtm_45_15 (b≈0), slope-srtm_35_11 (mid-b), WorldCover_nyc_…N39W075 (FoR cuts CR ~2×). Quiet machine + `--rs 2`; runs are noisy ±10%, re-run outliers. No working profiler on WSL2 — use bench_pipeline `medtimedec` (streaming, real) + L1 microbench (`g++ -O3 -march=native …` linking the regenerated `.o`s; `asm volatile("":::"memory")` to defeat hoisting) to isolate the kernel.
+
+**Geometry:** 128-block = 16 OutRegs × 8 lanes; elem i ↔ OutReg i/8, lane i%8. Window only sets anchor granularity; residuals always 128-block chunked-b. Decode dispatch = `decode_block()` by mode: **uniform** (w≥128: 1 broadcast/block, `corrected_uniform`), **scalar** (8≤w<128: rolling single `_bc` per window-group, kernels `cscalar0..3`, shg=log2(w/8)), **half** (w=4: inline `[a×4,b×4]` via 2 set1+blend, `chalf`). Anchors read straight from the (raw/`simdpack`'d) stream — NO `__m128i` corrections array.
+
+**KEY TECHNIQUES (carry to 256 + TurboPFor):**
+1. **No corrections array** — the 16-vector store→reload is the dominant overhead; broadcast per-OutReg anchor inline instead.
+2. **may_alias trap** — GCC `__m256i/__m128i` are `may_alias`, so `*sum` writes force a reload of `set1(a_block[..])` between OutRegs, defeating broadcast reuse. Fix: hold the broadcast in a **named local `_bc`**, re-broadcast only at window-group boundaries (1 register, no spill).
+3. **madd aggregate** (`aggregate_sums_u16_madd` = `madd_epi16(OutReg, set1(1))`, port 0/1) vs default unpack-widen (2× `unpacklo/hi`, **port 5 = #1 cost**). ~1.5× kernel (L1), ~1.15× streaming. SIGNED → gated: encoder ORs all values, sets 1-byte `madd_safe` flag (max<2^15) after `num_blk` in header; decoder dispatches, falls back to unpack. Both kernel sets generated (`agg='unpack'|'madd'|'noagg'`).
+4. **b=0 skips the `SIMD_nullunpacker16` memset** (fused sum never writes `out`) — big on srtm (mostly b=0). FoR b=0 still aggregates the anchors (honest decode).
+
+**PERF (128, n1000 r6 rs2, sx vs baseline):** coarse (w128/256, hier l128/256) ≈ parity–1.17× **where FoR cuts CR** (WorldCover 8% vs 14%); slope ~0.85; srtm slower (baseline near-free at b=0). Fine (w8–w64) 0.3–0.9×, **port-5-bound** (broadcasts + aggregate both port 5); w8 floor ~1.5× (16 distinct broadcasts, unavoidable). Decode = extract(~2400) + broadcasts(0–1800 by window) + per-lane add(~800) + aggregate(madd~1000/unpack~2800). Verdict: **FoR-128 is a coarse-window CR play; fine windows trade decode speed for CR.** delta+zigzag fusion considered & rejected — ~2–3× FoR's ops + serial carry/prefix-sum chain (FoR OutRegs are independent), slower than even w=4.
+
+**Next — 256-width simdcomp FoR:** run gen `--width 256`. 256-block = 16 OutRegs × **16 lanes** → corrections amortize over 16 (per-element overhead ~halves); windows shift: w=16→"1 anchor/OutReg" (the cscalar0 case), w=8→half, w=4→quarter (new worst). **MUST inline the kernel** (cross-TU 256 `sum` spills → 4× regression, see inline-decode header trick). The old [simdcomp_for_codec_uint16.h](src/codecs/uint16/simdcomp_for_codec_uint16.h) (256 global/local/hier) uses the slow `simdunpack_u16_corrected` array path — replace with cscalar/uniform/madd. Expect ratio similar-to-better than 128 for medium windows.
+
+**Next — TurboPFor FoR fused (128 & 256):** same FoR-correction idea + exceptions. `uncompressblockPFOR_u16_corrected_for` ([simdpfor_u16.h](external/FastPFor/headers/simdpfor_u16.h)) already does global/uniform anchor; extend to per-window (cscalar) + madd. 256 fused lives in [vp4d256v16_fused.c](external/TurboPFor/lib/vp4d256v16_fused.c), wrappers `turbopfor_fused_{,256_}codec_uint16.h`.

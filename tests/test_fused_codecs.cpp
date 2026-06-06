@@ -12,6 +12,11 @@
 #include "simdcomp_for_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 #include "turbopfor_fused_codec_uint16.h"
+#include "turbopfor_fused_256_codec_uint16.h"
+#include "simdcomp_fused_codec_uint16_w128.h"
+#include "simdcomp_for_codec_uint16_w128.h"
+#include "simdcomp_for_codec_uint16_w256.h"
+#include "turbopfor_for_codec_uint16.h"
 #include "custom_unvec_logic_codecs_u16.h"
 
 // ── Helper ────────────────────────────────────────────────────────────────────
@@ -244,6 +249,138 @@ INSTANTIATE_TEST_SUITE_P(
 // MakeZeros/MakeConstant exercise the all-equal RLE branch.
 TEST_F(FusedSumTest, TurboPForFused128_Sum) {
   TurboPForFusedCodecU16 c;
+  CheckFusedSum(MakeZeros(256), c);
+  CheckFusedSum(MakeConstant(256, 7), c);
+  CheckFusedSum(MakeConstant(1024, 12345), c);
+  CheckFusedSum(MakeSequential(256), c);
+  CheckFusedSum(MakeSequential(1024), c);
+  CheckFusedSum(MakeRandom(256, 42), c);
+  CheckFusedSum(MakeRandom(1024, 99), c);
+  CheckFusedSum(MakeSpiky(65536, 7, 0.05), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFused128_Sum) {
+  SimdCompFusedCodecU16_128 c;
+  CheckFusedSum(MakeZeros(256), c);
+  CheckFusedSum(MakeConstant(256, 7), c);
+  CheckFusedSum(MakeConstant(1024, 12345), c);
+  CheckFusedSum(MakeSequential(256), c);
+  CheckFusedSum(MakeSequential(1024), c);
+  CheckFusedSum(MakeRandom(256, 42), c);
+  CheckFusedSum(MakeRandom(1024, 99), c);
+  CheckFusedSum(MakeSpiky(65536, 7, 0.05), c);
+}
+
+// ── 128-bit fused FoR (regular + hierarchical) — fused sum round-trip ─────────
+// Every window × sep, plus hierarchical outer×inner, over patterns that stress
+// the FoR path (DEM-like locally-varying baseline, spikes, constants, zeros).
+TEST_F(FusedSumTest, SimdCompFusedFor128_Regular_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),          MakeConstant(256, 7),
+      MakeConstant(1024, 12345), MakeSequential(1024),
+      MakeRandom(65536, 42),     MakeSpiky(65536, 7, 0.05),
+  };
+  for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+    for (bool sep : {false, true}) {
+      SimdCompFusedForCodecU16_128 c(w, sep);
+      for (const auto& d : data)
+        if (d.size() % w == 0) CheckFusedSum(d, c);
+    }
+  }
+}
+
+TEST_F(FusedSumTest, SimdCompFusedFor128_Hierarchical_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),       MakeConstant(1024, 12345),
+      MakeSequential(65536),  MakeRandom(65536, 99),
+      MakeSpiky(65536, 7, 0.05),
+  };
+  for (size_t gw : {128u, 256u}) {
+    for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+      if (lw > gw || gw % lw) continue;
+      SimdCompFusedForHierarchicalCodecU16_128 c(gw, lw);
+      for (const auto& d : data)
+        if (d.size() % gw == 0) CheckFusedSum(d, c);
+    }
+  }
+}
+
+// 256-bit counterparts. Exercise both aggregate impls (kUnpack always; kMadd
+// falls back to kUnpack on the MakeRandom case where values reach 2^15).
+TEST_F(FusedSumTest, SimdCompFusedFor256_Regular_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),          MakeConstant(256, 7),
+      MakeConstant(1024, 12345), MakeSequential(1024),
+      MakeRandom(65536, 42),     MakeSpiky(65536, 7, 0.05),
+  };
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+      for (bool sep : {false, true}) {
+        SimdCompFusedForCodecU16_256 c(w, sep, agg);
+        for (const auto& d : data)
+          if (d.size() % w == 0) CheckFusedSum(d, c);
+      }
+    }
+  }
+}
+
+TEST_F(FusedSumTest, SimdCompFusedFor256_Hierarchical_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),       MakeConstant(1024, 12345),
+      MakeSequential(65536),  MakeRandom(65536, 99),
+      MakeSpiky(65536, 7, 0.05),
+  };
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    for (size_t gw : {128u, 256u}) {
+      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+        if (lw > gw || gw % lw) continue;
+        SimdCompFusedForHierarchicalCodecU16_256 c(gw, lw, agg);
+        for (const auto& d : data)
+          if (d.size() % gw == 0) CheckFusedSum(d, c);
+      }
+    }
+  }
+}
+
+// TurboPFor FoR-fused (PFor residuals + per-window anchor). Spiky data exercises
+// the exception path; the others hit PLAIN / b==0 corrected paths.
+TEST_F(FusedSumTest, TurboPForFusedFor256_Regular_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),          MakeConstant(256, 7),
+      MakeConstant(1024, 12345), MakeSequential(1024),
+      MakeRandom(65536, 42),     MakeSpiky(65536, 7, 0.05),
+  };
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+      for (bool sep : {false, true}) {
+        TurboPForFusedForCodecU16 c(w, sep, agg);
+        for (const auto& d : data)
+          if (d.size() % w == 0) CheckFusedSum(d, c);
+      }
+    }
+  }
+}
+
+TEST_F(FusedSumTest, TurboPForFusedFor256_Hierarchical_Sum) {
+  const std::vector<std::vector<uint16_t>> data = {
+      MakeZeros(65536),       MakeConstant(1024, 12345),
+      MakeSequential(65536),  MakeRandom(65536, 99),
+      MakeSpiky(65536, 7, 0.05),
+  };
+  for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
+    for (size_t gw : {128u, 256u}) {
+      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+        if (lw > gw || gw % lw) continue;
+        TurboPForFusedForHierarchicalCodecU16 c(gw, lw, agg);
+        for (const auto& d : data)
+          if (d.size() % gw == 0) CheckFusedSum(d, c);
+      }
+    }
+  }
+}
+
+TEST_F(FusedSumTest, TurboPForFused256_Sum) {
+  TurboPForFused256CodecU16 c;
   CheckFusedSum(MakeZeros(256), c);
   CheckFusedSum(MakeConstant(256, 7), c);
   CheckFusedSum(MakeConstant(1024, 12345), c);

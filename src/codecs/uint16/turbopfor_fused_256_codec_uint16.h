@@ -8,17 +8,19 @@
 
 #include "generic_codecs.h"
 #include "delta_scratch_u16.h"  // GetPackScratch()
-#include "ic.h"  // p4nenc128v16 / p4nbound128v16
 
-// Fused-sum decode (prototype). Defined in external/TurboPFor/lib/vp4d_fused.c.
-extern "C" uint32_t p4ndec128v16_sum(const unsigned char *in, unsigned n);
+// 256-width 16-bit PFor with fused-sum decode. Defined in
+// external/TurboPFor/lib/vp4d256v16_fused.c. Unlike the 128v16 codec this is a
+// NEW bitstream (not stock p4n*-compatible): a 256-element PFor block built on
+// simdcomp's AVX2 16-lane kernels. Decode materializes the corrected stream in
+// SIMD registers (low bits + in-register exception merge) and sums it without
+// storing decoded values. Sum is written to out[length] / out[length+1] like
+// the other fused codecs.
+extern "C" size_t   p4nenc256v16(uint16_t *in, size_t n, unsigned char *out);
+extern "C" uint32_t p4ndec256v16_sum(const unsigned char *in, unsigned n);
+extern "C" size_t   p4nbound256v16_fused(size_t n);
 
-// Encodes with stock TurboPFor (p4nenc128v16) — so CR is identical to
-// TurboPFor128 — and decodes via the fused-sum path: the corrected value stream
-// is materialized in SIMD registers and summed (32-bit-widened) without storing
-// decoded values to memory. Sum is written to out[length] / out[length+1] like
-// the FastPFor fused codecs.
-class TurboPForFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
+class TurboPForFused256CodecU16 : public StatefulIntegerCodec<uint16_t> {
  private:
   std::vector<uint8_t> compressed;
 
@@ -27,30 +29,30 @@ class TurboPForFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     // Encode into shared thread-local scratch, then assign exact bytes into
     // `compressed`. Avoids the worst-case resize + shrink on `compressed` that
     // leaves glibc's freelist holding ~128 KB per codec instance. The 256 KB
-    // scratch covers the max supported block (p4nbound128v16(65536)=128.5 KB).
+    // scratch covers the max supported block (p4nbound256v16_fused(65536)=144 KB).
     auto& scratch = GetPackScratch();
-    assert(p4nbound128v16(length) <= scratch.size());
-    uint16_t *in_nc = const_cast<uint16_t *>(in);  // TurboPFor is a C API
-    size_t csize = p4nenc128v16(in_nc, length, scratch.data());
+    assert(p4nbound256v16_fused(length) <= scratch.size());
+    uint16_t *in_nc = const_cast<uint16_t *>(in);  // C API
+    size_t csize = p4nenc256v16(in_nc, length, scratch.data());
     compressed.assign(scratch.data(), scratch.data() + csize);
   }
 
   void DecodeArray(uint16_t *out, const std::size_t length) override {
-    uint32_t s = p4ndec128v16_sum(compressed.data(), static_cast<unsigned>(length));
+    uint32_t s = p4ndec256v16_sum(compressed.data(), static_cast<unsigned>(length));
     out[length]     = static_cast<uint16_t>(s & 0xFFFF);
     out[length + 1] = static_cast<uint16_t>(s >> 16);
   }
 
   std::size_t EncodedNumValues() override { return compressed.size(); }
   std::size_t EncodedSizeValue() override { return sizeof(uint8_t); }
-  virtual ~TurboPForFusedCodecU16() {}
+  virtual ~TurboPForFused256CodecU16() {}
 
-  std::string name() const override { return "TurboPFor_fused_128v16_sum"; }
+  std::string name() const override { return "TurboPFor_fused_256v16_sum"; }
 
   std::size_t GetOverflowSize(size_t) const override { return 64; }
 
   StatefulIntegerCodec<uint16_t> *CloneFresh() const override {
-    return new TurboPForFusedCodecU16();
+    return new TurboPForFused256CodecU16();
   }
 
   void AllocEncoded(const uint16_t *, size_t) override {}
