@@ -108,11 +108,12 @@ InitPhysicalCodecsU16() {
           codecs.push_back(
               std::make_unique<SimdCompFusedForHierarchicalCodecU16_128>(gw, lw,
                                                                           agg));
-    // ── 256-bit fused FoR (regular: window × {raw,packed-anchor}) ──
+    // ── 256-bit fused FoR (regular: window × {raw,packed-anchor} × {shuf}) ──
     for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
       for (bool sep : {false, true})
-        codecs.push_back(
-            std::make_unique<SimdCompFusedForCodecU16_256>(w, sep, agg));
+        for (bool shuf : {false, true})
+          codecs.push_back(
+              std::make_unique<SimdCompFusedForCodecU16_256>(w, sep, agg, shuf));
     // ── 256-bit fused hierarchical FoR (outer ∈ {128,256}, inner | outer) ──
     for (size_t gw : {128u, 256u})
       for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})

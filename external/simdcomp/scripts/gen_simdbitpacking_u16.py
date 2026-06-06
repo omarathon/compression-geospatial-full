@@ -338,6 +338,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     assert mode in ('plain', 'delta_local', 'delta_carry', 'corrected',
                     'corrected_uniform', 'corrected_scalar', 'corrected_scalar_shuf',
                     'corrected_half', 'corrected_half_shuf', 'corrected_quarter',
+                    'corrected_quarter_shuf',
                     'pfor', 'store',
                     'pfor_corrected_uniform', 'pfor_corrected_scalar',
                     'pfor_corrected_half', 'pfor_corrected_quarter')
@@ -360,6 +361,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         'corrected_half': '_chalf',
         'corrected_half_shuf': '_chalf_shuf',
         'corrected_quarter': '_cquarter',
+        'corrected_quarter_shuf': '_cquarter_shuf',
         'pfor': '_pfor',
         'store': '_store',
         'pfor_corrected_uniform': '_pfor_cuniform',
@@ -395,6 +397,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     needs_half        = mode == 'corrected_half'
     needs_half_shuf   = mode == 'corrected_half_shuf'
     needs_quarter     = mode == 'corrected_quarter'
+    needs_quarter_shuf = mode == 'corrected_quarter_shuf'
     needs_pfor        = mode == 'pfor'
     needs_store       = mode == 'store'
     # pfor_corrected_*: PFOR exception merge AND a FoR per-OutReg anchor add,
@@ -410,7 +413,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     needs_outreg      = mode in ('corrected', 'corrected_uniform',
                                  'corrected_scalar', 'corrected_scalar_shuf',
                                  'corrected_half', 'corrected_half_shuf',
-                                 'corrected_quarter', 'pfor', 'store',
+                                 'corrected_quarter', 'corrected_quarter_shuf',
+                                 'pfor', 'store',
                                  'pfor_corrected_uniform', 'pfor_corrected_scalar',
                                  'pfor_corrected_half', 'pfor_corrected_quarter')
 
@@ -437,7 +441,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         # 128: split at lane 4 (w=4); 256: split at lane 8 (w=8).
         # _shuf variant: uses vpshufb+vmovq instead of vpbroadcastw+vpblendw.
         extra_param = f", const uint16_t *a_block"
-    elif needs_quarter:
+    elif needs_quarter or needs_quarter_shuf:
         # w==4 (256-bit only): OutReg v (16 lanes) straddles four windows
         # 4v..4v+3, each owning 4 lanes; correction built inline (no array).
         extra_param = f", const uint16_t *a_block"
@@ -481,14 +485,18 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     # instead of vpbroadcastw. word0_mask replicates bytes 0-1 to all 8 lanes.
     # 128-bit only — tests whether batched 8-byte loads beat scalar 2-byte loads.
     def _cscalar_shuf_agg(srcreg, v):
-        assert I['width'] == 128, "corrected_scalar_shuf is 128-bit only"
         grp = 1 << shg
         pre = ""
         if v % grp == 0:
             decl = f"{I['reg']} " if v == 0 else ""
-            pre = (f"  {decl}_bc = _mm_shuffle_epi8(\n"
-                   f"      _mm_loadl_epi64((const __m128i *)(a_block + {v >> shg})),\n"
-                   f"      _shuf_word0_mask);\n")
+            if I['width'] == 128:
+                pre = (f"  {decl}_bc = _mm_shuffle_epi8(\n"
+                       f"      _mm_loadl_epi64((const __m128i *)(a_block + {v >> shg})),\n"
+                       f"      _shuf_word0_mask);\n")
+            else:  # 256-bit: vmovq + vbroadcasti128 + vpshufb
+                pre = (f"  {decl}_bc = _mm256_shuffle_epi8(\n"
+                       f"      _mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + {v >> shg}))),\n"
+                       f"      _shuf_word0_mask);\n")
         return (f"{pre}  OutReg = {I['add16']}({srcreg}, _bc);\n"
                 f"  aggregate_sums_u16(OutReg, sum);")
 
@@ -512,15 +520,34 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
                 f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
                 f"  aggregate_sums_u16(OutReg, sum);")
 
-    # corrected_half_shuf: same as corrected_half but uses vpshufb+vmovq instead
-    # of 2×vpbroadcastw + vpblendw — saves 2 port-5 ops per OutReg (3→1 corr ops).
-    # 128-bit only (mask: lanes 0-3 get a_block[2v], lanes 4-7 get a_block[2v+1]).
-    # The mask is a compile-time const; GCC hoists it to .rodata at -O3.
+    # corrected_half_shuf: same as corrected_half but uses vpshufb instead of
+    # 2×vpbroadcastw + vpblendw.
+    # 128-bit: vmovq load + vpshufb → saves 3→1 port-5 ops per OutReg.
+    # 256-bit: vmovq + vbroadcasti128 + vpshufb → saves 3→2 port-5 ops per OutReg.
+    # Mask is a compile-time const; GCC hoists it to .rodata at -O3.
     def _chalf_shuf_agg(srcreg, v):
-        assert I['width'] == 128, "corrected_half_shuf is 128-bit only"
         decl = f"{I['reg']} " if v == 0 else ""
-        return (f"  {decl}_bc = _mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + {2*v})),\n"
-                f"                         _shuf_half_mask);\n"
+        if I['width'] == 128:
+            return (f"  {decl}_bc = _mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + {2*v})),\n"
+                    f"                         _shuf_half_mask);\n"
+                    f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
+                    f"  aggregate_sums_u16(OutReg, sum);")
+        else:  # 256-bit
+            return (f"  {decl}_bc = _mm256_shuffle_epi8(\n"
+                    f"      _mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + {2*v}))),\n"
+                    f"      _shuf_half_mask);\n"
+                    f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
+                    f"  aggregate_sums_u16(OutReg, sum);")
+
+    # corrected_quarter_shuf: vpshufb variant of corrected_quarter (256-bit only).
+    # vmovq loads 4 anchors (8 bytes), vbroadcasti128 duplicates to both lanes,
+    # vpshufb distributes a0/a1/a2/a3 to 4-lane groups → 2 port-5 ops vs 7.
+    def _cquarter_shuf_agg(srcreg, v):
+        assert I['width'] == 256, "corrected_quarter_shuf is 256-bit only"
+        decl = f"{I['reg']} " if v == 0 else ""
+        return (f"  {decl}_bc = _mm256_shuffle_epi8(\n"
+                f"      _mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + {4*v}))),\n"
+                f"      _shuf_quarter_mask);\n"
                 f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
                 f"  aggregate_sums_u16(OutReg, sum);")
 
@@ -605,6 +632,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return _chalf_shuf_agg("OutReg", v)
         if mode == 'corrected_quarter':
             return _cquarter_agg("OutReg", v)
+        if mode == 'corrected_quarter_shuf':
+            return _cquarter_shuf_agg("OutReg", v)
         if mode == 'pfor_corrected_uniform':
             return pfor_corrected_merge(v, "", "anchor")
         if mode == 'pfor_corrected_scalar':
@@ -639,6 +668,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return _chalf_shuf_agg("InReg", v)
         if mode == 'corrected_quarter':
             return _cquarter_agg("InReg", v)
+        if mode == 'corrected_quarter_shuf':
+            return _cquarter_shuf_agg("InReg", v)
         # corrected_uniform: route through OutReg so we can add anchor.
         return (f"  OutReg = {I['add16']}(InReg, anchor);\n"
                 "  aggregate_sums_u16(OutReg, sum);")
@@ -659,13 +690,33 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     if need_outreg_decl:
         lines.append(f"  {I['reg']} OutReg;")
     if needs_half_shuf:
-        # mask: lanes 0-3 ← bytes 0-1 (a_block[2v]), lanes 4-7 ← bytes 2-3 (a_block[2v+1])
-        lines.append("  const __m128i _shuf_half_mask = "
-                     "_mm_setr_epi8(0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3);")
+        if I['width'] == 128:
+            # 128-bit: lanes 0-3 ← bytes 0-1 (a_block[2v]), lanes 4-7 ← bytes 2-3
+            lines.append("  const __m128i _shuf_half_mask = "
+                         "_mm_setr_epi8(0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3);")
+        else:
+            # 256-bit: first 128-bit lane ← bytes 0-1 (a_block[2v]) ×8,
+            #           second 128-bit lane ← bytes 2-3 (a_block[2v+1]) ×8.
+            lines.append("  const __m256i _shuf_half_mask = _mm256_setr_epi8("
+                         "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1, "
+                         "2,3,2,3,2,3,2,3, 2,3,2,3,2,3,2,3);")
+    if needs_quarter_shuf:
+        # 256-bit: lanes 0-3 ← bytes 0-1 (a_block[4v]), lanes 4-7 ← bytes 2-3,
+        #           lanes 8-11 ← bytes 4-5 (a_block[4v+2]), lanes 12-15 ← bytes 6-7.
+        lines.append("  const __m256i _shuf_quarter_mask = _mm256_setr_epi8("
+                     "0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3, "
+                     "4,5,4,5,4,5,4,5, 6,7,6,7,6,7,6,7);")
     if needs_scalar_shuf:
-        # mask: replicate word 0 (bytes 0-1) to all 8 uint16 lanes
-        lines.append("  const __m128i _shuf_word0_mask = "
-                     "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+        if I['width'] == 128:
+            # mask: replicate word 0 (bytes 0-1) to all 8 uint16 lanes
+            lines.append("  const __m128i _shuf_word0_mask = "
+                         "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+        else:
+            # 256-bit: replicate word 0 (bytes 0-1) to all 16 uint16 lanes
+            # both 128-bit lanes of source have the same word at bytes 0-1.
+            lines.append("  const __m256i _shuf_word0_mask = _mm256_setr_epi8("
+                         "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1, "
+                         "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
     # corrected_scalar: preload the (15>>shg)+1 distinct window anchors as
     # broadcasts up front — before any *sum write — so GCC's may_alias __m128i*
     # store can't force a reload, and they stay register-resident.
@@ -884,28 +935,38 @@ def gen_unpack_dispatcher_corrected_scalar(I, shg, name_suffix='', agg='unpack',
 
 def gen_unpack_dispatcher_corrected_scalar_shuf(I, shg, name_suffix='', agg='unpack', static_=False):
     """Dispatcher for the FoR-corrected shuf decode: uses vmovq+vpshufb(word0)
-    instead of vpbroadcastw. 128-bit only. Same structure as corrected_scalar."""
-    assert I['width'] == 128, "corrected_scalar_shuf is 128-bit only"
+    instead of vpbroadcastw. Both 128-bit and 256-bit. Same structure as corrected_scalar.
+    Note: at 256-bit, shuf uses 2 port-5 ops vs 1 for vpbroadcastw — likely slower."""
     mtag = '' if agg == 'unpack' else '_' + agg
     kw = "static " if static_ else ""
     block = I['block']
     lanes = I['lanes']
     outregs = block // lanes
+    reg = I['reg']
     lines = []
-    lines.append(f"{kw}void simdunpack_u16{name_suffix}_cscalar_shuf{shg}{mtag}(const {I['reg']} *in, "
+    lines.append(f"{kw}void simdunpack_u16{name_suffix}_cscalar_shuf{shg}{mtag}(const {reg} *in, "
                  f"uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a_block, {I['reg']}* sum) {{")
-    lines.append("  const __m128i _shuf_word0_mask = "
-                 "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+                 f"const uint16_t *a_block, {reg}* sum) {{")
+    if I['width'] == 128:
+        lines.append("  const __m128i _shuf_word0_mask = "
+                     "_mm_setr_epi8(0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+        b0_agg = (f"aggregate_sums_u16{mtag}(_mm_shuffle_epi8("
+                  f"_mm_loadl_epi64((const __m128i *)(a_block + (_k >> {shg}))), "
+                  f"_shuf_word0_mask), sum);")
+    else:
+        lines.append("  const __m256i _shuf_word0_mask = _mm256_setr_epi8("
+                     "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1, "
+                     "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1);")
+        b0_agg = (f"aggregate_sums_u16{mtag}(_mm256_shuffle_epi8("
+                  f"_mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + (_k >> {shg})))), "
+                  f"_shuf_word0_mask), sum);")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append("    /* b==0: every OutReg = its anchor; aggregate with shuf. */")
     lines.append("    {")
     lines.append("      size_t _k;")
     lines.append(f"      for (_k = 0; _k < {outregs}; ++_k)")
-    lines.append(f"        aggregate_sums_u16{mtag}(_mm_shuffle_epi8("
-                 f"_mm_loadl_epi64((const __m128i *)(a_block + (_k >> {shg}))), "
-                 f"_shuf_word0_mask), sum);")
+    lines.append(f"        {b0_agg}")
     lines.append("    }")
     lines.append("    (void)in; (void)out;")
     lines.append("    break;")
@@ -968,29 +1029,38 @@ def gen_unpack_dispatcher_corrected_half(I, name_suffix='', agg='unpack', static
 
 
 def gen_unpack_dispatcher_corrected_half_shuf(I, name_suffix='', agg='unpack', static_=False):
-    """Dispatcher for the w==lanes/2 FoR decode using vpshufb+vmovq correction
-    instead of vpbroadcastw+vpblendw. 128-bit only. Saves 2 port-5 ops per OutReg
-    (3→1 correction ops at W=4). Mask is a compile-time const in each kernel."""
-    assert I['width'] == 128, "corrected_half_shuf is 128-bit only"
+    """Dispatcher for the w==lanes/2 FoR decode using vpshufb correction instead of
+    2×vpbroadcastw+vpblendw. Supports both 128-bit (saves 3→1 port-5 ops) and
+    256-bit (saves 3→2 port-5 ops). Mask is a compile-time const in each kernel."""
     mtag = '' if agg == 'unpack' else '_' + agg
     kw = "static " if static_ else ""
     block = I['block']
     lanes = I['lanes']
     outregs = block // lanes
+    reg = I['reg']
     lines = []
-    lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_half_shuf{mtag}(const __m128i *in, "
+    lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_half_shuf{mtag}(const {reg} *in, "
                  f"uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a_block, __m128i* sum) {{")
-    lines.append("  const __m128i _shuf_half_mask = "
-                 "_mm_setr_epi8(0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3);")
+                 f"const uint16_t *a_block, {reg}* sum) {{")
+    if I['width'] == 128:
+        lines.append("  const __m128i _shuf_half_mask = "
+                     "_mm_setr_epi8(0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3);")
+        b0_agg = (f"aggregate_sums_u16{mtag}(_mm_shuffle_epi8("
+                  f"_mm_loadl_epi64((const __m128i *)(a_block + 2*_k)), _shuf_half_mask), sum);")
+    else:
+        lines.append("  const __m256i _shuf_half_mask = _mm256_setr_epi8("
+                     "0,1,0,1,0,1,0,1, 0,1,0,1,0,1,0,1, "
+                     "2,3,2,3,2,3,2,3, 2,3,2,3,2,3,2,3);")
+        b0_agg = (f"aggregate_sums_u16{mtag}(_mm256_shuffle_epi8("
+                  f"_mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + 2*_k))), "
+                  f"_shuf_half_mask), sum);")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append("    /* b==0: every OutReg = its half/half anchor (shuffle); aggregate them. */")
     lines.append("    {")
     lines.append("      size_t _k;")
     lines.append(f"      for (_k = 0; _k < {outregs}; ++_k)")
-    lines.append(f"        aggregate_sums_u16{mtag}(_mm_shuffle_epi8("
-                 f"_mm_loadl_epi64((const __m128i *)(a_block + 2*_k)), _shuf_half_mask), sum);")
+    lines.append(f"        {b0_agg}")
     lines.append("    }")
     lines.append("    (void)in; (void)out;  /* sum-only: no zero-fill of out */")
     lines.append("    break;")
@@ -1042,6 +1112,50 @@ def gen_unpack_dispatcher_corrected_quarter(I, name_suffix='', agg='unpack', sta
     for b in range(1, MAX_BIT + 1):
         lines.append(f"  case {b}:")
         lines.append(f"    __SIMD_fastunpack{b}_16_cquarter{mtag}{name_suffix}(in, out, sum, a_block);")
+        lines.append("    break;")
+        lines.append("")
+    lines.append("  default:")
+    lines.append("    break;")
+    lines.append("  }")
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def gen_unpack_dispatcher_corrected_quarter_shuf(I, name_suffix='', agg='unpack', static_=False):
+    """Dispatcher for the w==4 FoR decode at 256-bit using vpshufb instead of
+    7 port-5 ops per OutReg (2×set_m128i blends). Saves 7→2 port-5 ops per OutReg."""
+    assert I['width'] == 256, "corrected_quarter_shuf is AVX2 (256-bit) only"
+    mtag = '' if agg == 'unpack' else '_' + agg
+    kw = "static " if static_ else ""
+    block = I['block']
+    lanes = I['lanes']
+    outregs = block // lanes
+    shuf_quarter = (
+        "_mm256_shuffle_epi8(\n"
+        "            _mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + 4*_k))),\n"
+        "            _shuf_quarter_mask)")
+    lines = []
+    lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_quarter_shuf{mtag}(const {I['reg']} *in, "
+                 f"uint16_t *out, const uint32_t bit, "
+                 f"const uint16_t *a_block, {I['reg']}* sum) {{")
+    lines.append("  const __m256i _shuf_quarter_mask = _mm256_setr_epi8("
+                 "0,1,0,1,0,1,0,1, 2,3,2,3,2,3,2,3, "
+                 "4,5,4,5,4,5,4,5, 6,7,6,7,6,7,6,7);")
+    lines.append("  switch (bit) {")
+    lines.append("  case 0:")
+    lines.append("    /* b==0: every OutReg = its quarter anchor (shuffle); aggregate them. */")
+    lines.append("    {")
+    lines.append("      size_t _k;")
+    lines.append(f"      for (_k = 0; _k < {outregs}; ++_k)")
+    lines.append(f"        aggregate_sums_u16{mtag}({shuf_quarter}, sum);")
+    lines.append("    }")
+    lines.append("    (void)in; (void)out;  /* sum-only: no zero-fill of out */")
+    lines.append("    break;")
+    lines.append("")
+    for b in range(1, MAX_BIT + 1):
+        lines.append(f"  case {b}:")
+        lines.append(f"    __SIMD_fastunpack{b}_16_cquarter_shuf{mtag}{name_suffix}(in, out, sum, a_block);")
         lines.append("    break;")
         lines.append("")
     lines.append("  default:")
@@ -1927,7 +2041,19 @@ def main():
                f"void simdunpack_u16{args.suffix}_cscalar_shuf3(const __m128i *in, uint16_t *out,\n"
                f"    const uint32_t bit, const uint16_t *a_block, __m128i *sum);\n"
                if args.width == 128 else "")
-            + (f"void simdunpack_u16{args.suffix}_corrected_quarter(const {reg} *in, uint16_t *out,\n"
+            + (f"void simdunpack_u16{args.suffix}_cscalar_shuf0(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf1(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf2(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_cscalar_shuf3(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_corrected_half_shuf(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_corrected_quarter(const {reg} *in, uint16_t *out,\n"
+               f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
+               f"void simdunpack_u16{args.suffix}_corrected_quarter_shuf(const {reg} *in, uint16_t *out,\n"
                f"    const uint32_t bit, const uint16_t *a_block, {reg} *sum);\n"
                if args.width == 256 else "")
             + f"void simdunpack_u16{args.suffix}_store(const {reg} *in, uint16_t *out,\n"
@@ -1966,34 +2092,37 @@ def main():
                                                    agg=agg))
                 out.append(gen_unpack_dispatcher_corrected_scalar(
                     I, shg, name_suffix=args.suffix, agg=agg))
-            # scalar_shuf: vmovq+pshufb variant of corrected_scalar (128-bit only).
-            if args.width == 128:
-                for shg in range(4):
-                    for bit in range(1, MAX_BIT + 1):
-                        out.append(gen_unpack_function(bit, I, mode='corrected_scalar_shuf',
-                                                       name_suffix=args.suffix, shg=shg,
-                                                       agg=agg))
-                    out.append(gen_unpack_dispatcher_corrected_scalar_shuf(
-                        I, shg, name_suffix=args.suffix, agg=agg))
+            # scalar_shuf: vmovq+(vbroadcasti128+)vpshufb variant of corrected_scalar.
+            for shg in range(4):
+                for bit in range(1, MAX_BIT + 1):
+                    out.append(gen_unpack_function(bit, I, mode='corrected_scalar_shuf',
+                                                   name_suffix=args.suffix, shg=shg,
+                                                   agg=agg))
+                out.append(gen_unpack_dispatcher_corrected_scalar_shuf(
+                    I, shg, name_suffix=args.suffix, agg=agg))
             # half: w==lanes/2 (128→w=4, 256→w=8) — OutReg straddles two windows.
             for bit in range(1, MAX_BIT + 1):
                 out.append(gen_unpack_function(bit, I, mode='corrected_half',
                                                name_suffix=args.suffix, agg=agg))
             out.append(gen_unpack_dispatcher_corrected_half(
                 I, name_suffix=args.suffix, agg=agg))
-            # half_shuf: shuffle-based variant of corrected_half (128-bit only).
-            if args.width == 128:
-                for bit in range(1, MAX_BIT + 1):
-                    out.append(gen_unpack_function(bit, I, mode='corrected_half_shuf',
-                                                   name_suffix=args.suffix, agg=agg))
-                out.append(gen_unpack_dispatcher_corrected_half_shuf(
-                    I, name_suffix=args.suffix, agg=agg))
-            # quarter: w==4 (256 only) — OutReg straddles four 4-lane windows.
+            # half_shuf: shuffle-based variant of corrected_half (both widths).
+            for bit in range(1, MAX_BIT + 1):
+                out.append(gen_unpack_function(bit, I, mode='corrected_half_shuf',
+                                               name_suffix=args.suffix, agg=agg))
+            out.append(gen_unpack_dispatcher_corrected_half_shuf(
+                I, name_suffix=args.suffix, agg=agg))
+            # quarter + quarter_shuf: w==4 (256 only) — OutReg straddles four 4-lane windows.
             if args.width == 256:
                 for bit in range(1, MAX_BIT + 1):
                     out.append(gen_unpack_function(bit, I, mode='corrected_quarter',
                                                    name_suffix=args.suffix, agg=agg))
                 out.append(gen_unpack_dispatcher_corrected_quarter(
+                    I, name_suffix=args.suffix, agg=agg))
+                for bit in range(1, MAX_BIT + 1):
+                    out.append(gen_unpack_function(bit, I, mode='corrected_quarter_shuf',
+                                                   name_suffix=args.suffix, agg=agg))
+                out.append(gen_unpack_dispatcher_corrected_quarter_shuf(
                     I, name_suffix=args.suffix, agg=agg))
         for bit in range(1, MAX_BIT + 1):  # store: data-output, no aggregate
             out.append(gen_unpack_function(bit, I, mode='store',

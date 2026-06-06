@@ -316,9 +316,11 @@ TEST_F(FusedSumTest, SimdCompFusedFor256_Regular_Sum) {
   for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
     for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
       for (bool sep : {false, true}) {
-        SimdCompFusedForCodecU16_256 c(w, sep, agg);
-        for (const auto& d : data)
-          if (d.size() % w == 0) CheckFusedSum(d, c);
+        for (bool shuf : {false, true}) {
+          SimdCompFusedForCodecU16_256 c(w, sep, agg, shuf);
+          for (const auto& d : data)
+            if (d.size() % w == 0) CheckFusedSum(d, c);
+        }
       }
     }
   }
