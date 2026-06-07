@@ -436,8 +436,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         extra_param = f", const {I['reg']} *corrections"
     elif needs_anchor:
         if is_nobc:
-            # nobc: scalar pointer to the one anchor for this block (not a broadcast reg)
-            extra_param = f", const uint16_t *a, uint64_t *scalar_acc"
+            # nobc: restrict tells GCC a[0] and *scalar_acc don't alias *sum (may_alias)
+            extra_param = f", const uint16_t * __restrict__ a, uint64_t * __restrict__ scalar_acc"
         else:
             extra_param = f", const {I['reg']} anchor"
     elif needs_pc_uniform:
@@ -449,23 +449,27 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         # uint16 anchor stream; OutReg v's anchor is a_block[v >> shg] with shg a
         # compile-time constant, broadcast inline — no per-block __m128i
         # corrections array, and repeated broadcasts (w>8) get CSE'd.
-        extra_param = f", const uint16_t *a_block"
         if is_nobc:
-            extra_param += ", uint64_t *scalar_acc"
+            # restrict: a_block and scalar_acc don't alias *sum (may_alias)
+            extra_param = f", const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc"
+        else:
+            extra_param = f", const uint16_t *a_block"
     elif needs_half or needs_half_shuf:
         # w==lanes/2: OutReg v straddles windows 2v (low half) and 2v+1 (high
         # half); the correction is built inline as a half/half vector (no array).
         # 128: split at lane 4 (w=4); 256: split at lane 8 (w=8).
         # _shuf variant: uses vpshufb+vmovq instead of vpbroadcastw+vpblendw.
-        extra_param = f", const uint16_t *a_block"
         if is_nobc:
-            extra_param += ", uint64_t *scalar_acc"
+            extra_param = f", const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc"
+        else:
+            extra_param = f", const uint16_t *a_block"
     elif needs_quarter or needs_quarter_shuf:
         # w==4 (256-bit only): OutReg v (16 lanes) straddles four windows
         # 4v..4v+3, each owning 4 lanes; correction built inline (no array).
-        extra_param = f", const uint16_t *a_block"
         if is_nobc:
-            extra_param += ", uint64_t *scalar_acc"
+            extra_param = f", const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc"
+        else:
+            extra_param = f", const uint16_t *a_block"
     elif needs_pfor:
         extra_param = f", const uint16_t *pex, const uint16_t *bm16"
 
@@ -495,7 +499,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     # reload), and no register-file spill regardless of window.
     def _cscalar_agg(srcreg, v):
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc{nobc_msufx}({srcreg}, a_block + {v >> shg}, &_sacc, (nobc_sum_t*)sum);"
         grp = 1 << shg
         pre = ""
         if v % grp == 0:
@@ -509,8 +513,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     # 128-bit only — tests whether batched 8-byte loads beat scalar 2-byte loads.
     def _cscalar_shuf_agg(srcreg, v):
         if is_nobc:
-            # shuf doesn't affect nobc (no SIMD anchor construction); plain aggregate
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc{nobc_msufx}({srcreg}, a_block + {v >> shg}, &_sacc, (nobc_sum_t*)sum);"
         grp = 1 << shg
         pre = ""
         if v % grp == 0:
@@ -542,7 +545,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
 
     def _chalf_agg(srcreg, v):
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc_half{nobc_msufx}({srcreg}, a_block + {2*v}, &_sacc, (nobc_sum_t*)sum);"
         decl = f"{I['reg']} " if v == 0 else ""
         return (f"  {decl}_bc = {_half_expr(f'a_block[{2*v}]', f'a_block[{2*v + 1}]')};\n"
                 f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
@@ -555,7 +558,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     # Mask is a compile-time const; GCC hoists it to .rodata at -O3.
     def _chalf_shuf_agg(srcreg, v):
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc_half{nobc_msufx}({srcreg}, a_block + {2*v}, &_sacc, (nobc_sum_t*)sum);"
         decl = f"{I['reg']} " if v == 0 else ""
         if I['width'] == 128:
             return (f"  {decl}_bc = _mm_shuffle_epi8(_mm_loadl_epi64((const __m128i *)(a_block + {2*v})),\n"
@@ -575,7 +578,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
     def _cquarter_shuf_agg(srcreg, v):
         assert I['width'] == 256, "corrected_quarter_shuf is 256-bit only"
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc_quarter{nobc_msufx}({srcreg}, a_block + {4*v}, &_sacc, (nobc_sum_t*)sum);"
         decl = f"{I['reg']} " if v == 0 else ""
         return (f"  {decl}_bc = _mm256_shuffle_epi8(\n"
                 f"      _mm256_broadcastsi128_si256(_mm_loadl_epi64((const __m128i *)(a_block + {4*v}))),\n"
@@ -597,7 +600,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
 
     def _cquarter_agg(srcreg, v):
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}({srcreg}, sum);"
+            return f"  aggregate_sums_u16_nobc_quarter{nobc_msufx}({srcreg}, a_block + {4*v}, &_sacc, (nobc_sum_t*)sum);"
         decl = f"{I['reg']} " if v == 0 else ""
         return (f"  {decl}_bc = {_quarter_expr(v)};\n"
                 f"  OutReg = {I['add16']}({srcreg}, _bc);\n"
@@ -678,7 +681,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             pre, e = _bc_quarter(v); return pfor_corrected_merge(v, pre, e)
         # corrected_uniform:
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}(OutReg, sum);"
+            return f"  aggregate_sums_u16_nobc{nobc_msufx}(OutReg, a, &_sacc, (nobc_sum_t*)sum);"
         return (f"  OutReg = {I['add16']}(OutReg, anchor);\n"
                 "  aggregate_sums_u16(OutReg, sum);")
 
@@ -708,7 +711,7 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return _cquarter_shuf_agg("InReg", v)
         # corrected_uniform:
         if is_nobc:
-            return f"  aggregate_sums_u16{nobc_msufx}(InReg, sum);"
+            return f"  aggregate_sums_u16_nobc{nobc_msufx}(InReg, a, &_sacc, (nobc_sum_t*)sum);"
         return (f"  OutReg = {I['add16']}(InReg, anchor);\n"
                 "  aggregate_sums_u16(OutReg, sum);")
 
@@ -721,33 +724,15 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         lines.append("  (void)_out;")
     if needs_pfor or needs_pfor_corrected:
         lines.append("  const uint16_t *_pex = pex;")  # running excess pointer
-    # nobc preamble: accumulate the anchor contribution into *scalar_acc BEFORE
-    # any *sum writes. GCC __m256i/__m128i are may_alias, so every *sum store
-    # forces a reload of anything accessed through a pointer. Doing the scalar
-    # accumulation here (before the InReg load) means we never re-access
-    # scalar_acc or the anchor pointer after a *sum write — zero reload overhead.
     if is_nobc:
-        if needs_anchor:  # corrected_uniform: 1 anchor per block
-            lines.append(f"  *scalar_acc += (uint64_t){block} * (uint64_t)a[0];")
-        elif needs_scalar or needs_scalar_shuf:  # corrected_scalar{shg}
-            lines.append(
-                f"  {{ uint64_t _sacc = 0; int _k;"
-                f" for (_k = 0; _k < {total_values}; _k++) _sacc += (uint64_t)a_block[_k >> {shg}];"
-                f" *scalar_acc += (uint64_t){lanes} * _sacc; }}")
-        elif needs_half or needs_half_shuf:  # corrected_half: 2 anchors/OutReg
-            lines.append(
-                f"  {{ uint64_t _sacc = 0; int _k;"
-                f" for (_k = 0; _k < {2 * total_values}; _k++) _sacc += (uint64_t)a_block[_k];"
-                f" *scalar_acc += (uint64_t){lanes // 2} * _sacc; }}")
-        elif needs_quarter or needs_quarter_shuf:  # corrected_quarter: 4 anchors/OutReg
-            lines.append(
-                f"  {{ uint64_t _sacc = 0; int _k;"
-                f" for (_k = 0; _k < {4 * total_values}; _k++) _sacc += (uint64_t)a_block[_k];"
-                f" *scalar_acc += (uint64_t){lanes // 4} * _sacc; }}")
+        # Local accumulator: GCC can prove &_sacc doesn't alias sum (caller-allocated).
+        # aggregate_sums_u16_nobc* writes to &_sacc (a local), then *scalar_acc += _sacc once.
+        lines.append("  uint64_t _sacc = 0;")
     lines.append(f"  {I['reg']} InReg = {I['load']}(in);")
     # The bit==16 fast path uses InReg directly, so OutReg is only declared when
     # actually used (corrected/scalar reroute through it even at bit==16).
-    need_outreg_decl = not (bit == LANE_BITS and (not needs_outreg or needs_store))
+    # nobc at bit==LANE_BITS: agg_inreg passes InReg directly, OutReg never set
+    need_outreg_decl = not (bit == LANE_BITS and (not needs_outreg or needs_store or is_nobc))
     if need_outreg_decl:
         lines.append(f"  {I['reg']} OutReg;")
     if needs_half_shuf:
@@ -787,6 +772,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         for i in range(1, total_values):
             lines.append(f"  InReg = {I['load']}(++in);")
             lines.append(agg_inreg(i))
+        if is_nobc:
+            lines.append("  *scalar_acc += _sacc;")
         lines.append("}")
         lines.append("")
         return _finalize("\n".join(lines))
@@ -827,6 +814,8 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
                 lines.append(f"  InReg = {I['load']}(++in);")
             bit_pos = 0
 
+    if is_nobc:
+        lines.append("  *scalar_acc += _sacc;")
     lines.append("}")
     lines.append("")
     return _finalize("\n".join(lines))
@@ -1236,7 +1225,7 @@ def gen_unpack_dispatcher_corrected_uniform_nobc(I, name_suffix='', agg_variant=
     lines = []
     lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_uniform{mtag}("
                  f"const {I['reg']} *in, uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a, uint64_t *scalar_acc, {I['reg']}* sum) {{")
+                 f"const uint16_t * __restrict__ a, uint64_t * __restrict__ scalar_acc, {I['reg']}* sum) {{")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append(f"    /* b==0: residuals are 0; accumulate kBlk*anchor only. */")
@@ -1269,7 +1258,7 @@ def gen_unpack_dispatcher_corrected_scalar_nobc(I, shg, name_suffix='', agg_vari
     lines = []
     lines.append(f"{kw}void simdunpack_u16{name_suffix}_cscalar{shg}{mtag}("
                  f"const {I['reg']} *in, uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a_block, uint64_t *scalar_acc, {I['reg']}* sum) {{")
+                 f"const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc, {I['reg']}* sum) {{")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append("    /* b==0: residuals are 0; accumulate anchor contributions only. */")
@@ -1307,7 +1296,7 @@ def gen_unpack_dispatcher_corrected_half_nobc(I, name_suffix='', agg_variant='no
     lines = []
     lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_half{mtag}("
                  f"const {I['reg']} *in, uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a_block, uint64_t *scalar_acc, {I['reg']}* sum) {{")
+                 f"const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc, {I['reg']}* sum) {{")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append("    {")
@@ -1345,7 +1334,7 @@ def gen_unpack_dispatcher_corrected_quarter_nobc(I, name_suffix='', agg_variant=
     lines = []
     lines.append(f"{kw}void simdunpack_u16{name_suffix}_corrected_quarter{mtag}("
                  f"const {I['reg']} *in, uint16_t *out, const uint32_t bit, "
-                 f"const uint16_t *a_block, uint64_t *scalar_acc, {I['reg']}* sum) {{")
+                 f"const uint16_t * __restrict__ a_block, uint64_t * __restrict__ scalar_acc, {I['reg']}* sum) {{")
     lines.append("  switch (bit) {")
     lines.append("  case 0:")
     lines.append("    {")
@@ -2376,16 +2365,77 @@ def main():
         )
         zero_init = "{0, 0}" if args.width == 128 else "{0, 0, 0, 0}"
         out.append(f"static const {reg} kZero = {zero_init};\n\n")
-        # plain aggregate helpers (called by the nobc inner per-bit functions)
+        # nobc_sum_t: native GCC vector type WITHOUT __may_alias__.
+        # GCC's __m256i/__m128i carry __may_alias__, meaning writes through
+        # __m256i* force reloads of any other pointer (including anchor a[]).
+        # Using a custom typedef without may_alias for the sum accumulator pointer
+        # lets GCC hoist a[0] across all per-OutReg vpaddd/vpmaddwd stores.
+        # __m256i storage is safe to access through nobc_sum_t* (the may_alias on
+        # __m256i permits access from any type; the non-aliasingness goes one way).
+        nbytes = args.width // 8
+        out.append(f"typedef int nobc_sum_t __attribute__((vector_size({nbytes})));\n\n")
         out.append(
-            f"static void aggregate_sums_u16({reg} OutReg, {reg}* sum) {{\n"
-            f"    *sum = {I['add']}(*sum, {I['unpacklo']}(OutReg, kZero));\n"
-            f"    *sum = {I['add']}(*sum, {I['unpackhi']}(OutReg, kZero));\n"
+            f"static void aggregate_sums_u16_nobc({reg} OutReg,"
+            f" const uint16_t * __restrict__ a,"
+            f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+            f"    {reg} _sv = ({reg})(*sum);\n"
+            f"    _sv = {I['add']}(_sv, {I['unpacklo']}(OutReg, kZero));\n"
+            f"    _sv = {I['add']}(_sv, {I['unpackhi']}(OutReg, kZero));\n"
+            f"    *sum = (nobc_sum_t)_sv;\n"
+            f"    *scalar_acc += {lanes}ULL * (uint64_t)a[0];\n"
             f"}}\n\n"
-            f"static void aggregate_sums_u16_madd({reg} OutReg, {reg}* sum) {{\n"
-            f"    *sum = {I['add']}(*sum, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
+            f"static void aggregate_sums_u16_nobc_madd({reg} OutReg,"
+            f" const uint16_t * __restrict__ a,"
+            f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+            f"    {reg} _sv = ({reg})(*sum);\n"
+            f"    _sv = {I['add']}(_sv, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
+            f"    *sum = (nobc_sum_t)_sv;\n"
+            f"    *scalar_acc += {lanes}ULL * (uint64_t)a[0];\n"
+            f"}}\n\n"
+            # half: 2 anchors per OutReg, lanes/2 elements each
+            f"static void aggregate_sums_u16_nobc_half({reg} OutReg,"
+            f" const uint16_t * __restrict__ a,"
+            f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+            f"    {reg} _sv = ({reg})(*sum);\n"
+            f"    _sv = {I['add']}(_sv, {I['unpacklo']}(OutReg, kZero));\n"
+            f"    _sv = {I['add']}(_sv, {I['unpackhi']}(OutReg, kZero));\n"
+            f"    *sum = (nobc_sum_t)_sv;\n"
+            f"    *scalar_acc += {half_lanes}ULL * (uint64_t)a[0]"
+            f" + {half_lanes}ULL * (uint64_t)a[1];\n"
+            f"}}\n\n"
+            f"static void aggregate_sums_u16_nobc_half_madd({reg} OutReg,"
+            f" const uint16_t * __restrict__ a,"
+            f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+            f"    {reg} _sv = ({reg})(*sum);\n"
+            f"    _sv = {I['add']}(_sv, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
+            f"    *sum = (nobc_sum_t)_sv;\n"
+            f"    *scalar_acc += {half_lanes}ULL * (uint64_t)a[0]"
+            f" + {half_lanes}ULL * (uint64_t)a[1];\n"
             f"}}\n\n"
         )
+        if args.width == 256:
+            out.append(
+                # quarter: 4 anchors per OutReg, lanes/4 elements each
+                f"static void aggregate_sums_u16_nobc_quarter({reg} OutReg,"
+                f" const uint16_t * __restrict__ a,"
+                f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+                f"    {reg} _sv = ({reg})(*sum);\n"
+                f"    _sv = {I['add']}(_sv, {I['unpacklo']}(OutReg, kZero));\n"
+                f"    _sv = {I['add']}(_sv, {I['unpackhi']}(OutReg, kZero));\n"
+                f"    *sum = (nobc_sum_t)_sv;\n"
+                f"    *scalar_acc += {quarter_lanes}ULL * ((uint64_t)a[0]"
+                f" + (uint64_t)a[1] + (uint64_t)a[2] + (uint64_t)a[3]);\n"
+                f"}}\n\n"
+                f"static void aggregate_sums_u16_nobc_quarter_madd({reg} OutReg,"
+                f" const uint16_t * __restrict__ a,"
+                f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+                f"    {reg} _sv = ({reg})(*sum);\n"
+                f"    _sv = {I['add']}(_sv, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
+                f"    *sum = (nobc_sum_t)_sv;\n"
+                f"    *scalar_acc += {quarter_lanes}ULL * ((uint64_t)a[0]"
+                f" + (uint64_t)a[1] + (uint64_t)a[2] + (uint64_t)a[3]);\n"
+                f"}}\n\n"
+            )
         # per-bit inner functions + dispatchers for nobc and nobc_madd
         for av in ('nobc', 'nobc_madd'):
             for bit in range(1, MAX_BIT + 1):
