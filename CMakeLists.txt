@@ -66,7 +66,7 @@ add_library(SimdCompU16W128 STATIC
   ${EXT}/simdcomp/src/simdbitpacking_u16_w128_corrected.c
   ${EXT}/simdcomp/src/simdbitpacking_u16_w128_nobc.c)
 target_include_directories(SimdCompU16W128 PRIVATE ${EXT}/simdcomp/include)
-target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native)
+target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native -mno-avx512f)
 
 # 256-bit (AVX2) simdcomp u16 FoR kernels — generated minimal + FoR-corrected
 # variant, built as its own lib (suffixed _w256 symbols) so it coexists with
@@ -77,7 +77,7 @@ add_library(SimdCompU16W256 STATIC
   ${EXT}/simdcomp/src/simdbitpacking_u16_w256_corrected.c
   ${EXT}/simdcomp/src/simdbitpacking_u16_w256_nobc.c)
 target_include_directories(SimdCompU16W256 PRIVATE ${EXT}/simdcomp/include)
-target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native)
+target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native -mno-avx512f)
 
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
