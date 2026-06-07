@@ -63,7 +63,8 @@ target_link_libraries(TurboPForFused PUBLIC TurboPFor SimdComp)
 # simdcomp_fused_128 codec for an apples-to-apples 128-vs-256 width benchmark.
 add_library(SimdCompU16W128 STATIC
   ${EXT}/simdcomp/src/simdbitpacking_u16_w128.c
-  ${EXT}/simdcomp/src/simdbitpacking_u16_w128_corrected.c)
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w128_corrected.c
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w128_nobc.c)
 target_include_directories(SimdCompU16W128 PRIVATE ${EXT}/simdcomp/include)
 target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native)
 
@@ -73,7 +74,8 @@ target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native)
 # (regular + hierarchical). Mirrors the SimdCompU16W128 setup exactly.
 add_library(SimdCompU16W256 STATIC
   ${EXT}/simdcomp/src/simdbitpacking_u16_w256.c
-  ${EXT}/simdcomp/src/simdbitpacking_u16_w256_corrected.c)
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w256_corrected.c
+  ${EXT}/simdcomp/src/simdbitpacking_u16_w256_nobc.c)
 target_include_directories(SimdCompU16W256 PRIVATE ${EXT}/simdcomp/include)
 target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native)
 

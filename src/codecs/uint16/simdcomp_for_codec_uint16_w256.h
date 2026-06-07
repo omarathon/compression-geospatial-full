@@ -48,9 +48,24 @@ extern "C" void simdpack_u16_w256(const uint16_t* in, __m256i* out,
                                   const uint32_t bit);
 extern "C" void simdunpack_u16_w256_store(const __m256i* in, uint16_t* out,
                                           const uint32_t bit);
-// Plain (no correction) fused-sum kernels used by the nobc path.
-extern "C" void simdunpack_u16_w256(const __m256i*, uint16_t*, uint32_t, __m256i*);
-extern "C" void simdunpack_u16_w256_madd(const __m256i*, uint16_t*, uint32_t, __m256i*);
+// nobc kernels: aggregate_sums handles both the widen-sum and scalar anchor acc.
+// Uniform: 1 anchor/block; cscalarN: shg=N, 1 anchor/OutReg group; half: 2/OutReg; quarter: 4/OutReg.
+extern "C" void simdunpack_u16_w256_corrected_uniform_nobc(const __m256i*, uint16_t*, uint32_t,
+                                                           const uint16_t* a, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar0_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar1_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar2_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar3_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_corrected_half_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_corrected_quarter_nobc(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_corrected_uniform_nobc_madd(const __m256i*, uint16_t*, uint32_t,
+                                                                const uint16_t* a, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar0_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar1_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar2_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_cscalar3_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_corrected_half_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
+extern "C" void simdunpack_u16_w256_corrected_quarter_nobc_madd(const __m256i*, uint16_t*, uint32_t, const uint16_t*, uint64_t*, __m256i*);
 extern "C" void simdunpack_u16_w256_corrected_uniform(const __m256i* in,
                                                       uint16_t* out,
                                                       const uint32_t bit,
@@ -156,9 +171,6 @@ static constexpr size_t kLanes = 16;      // uint16 lanes per __m256i
 static thread_local uint16_t s_res[256 * 256];
 static thread_local uint16_t s_anchor[256 * 256];  // local anchors per inner window
 static thread_local uint16_t s_delta[256 * 256];   // hierarchical anchor deltas
-// nobc scalar accumulator: sum(w * anchor[a]) for all blocks; reset before each decode.
-static thread_local uint64_t s_nobc_scalar_acc = 0;
-
 static inline uint32_t bits_u16(uint16_t v) {
   return v ? (uint32_t)(32 - __builtin_clz((uint32_t)v)) : 0u;
 }
@@ -250,21 +262,40 @@ static inline int decode_mode(size_t w) {
 static inline void decode_block(const __m256i*& in_ptr, uint16_t* out_k,
                                 const uint16_t* anchors, size_t k, size_t w,
                                 unsigned sh, int mode, bool madd, bool shuf,
-                                uint32_t b_k, __m256i* sum, bool nobc = false) {
-  if (nobc) {
-    // sum(residual_i + anchor(i)) = sum(residuals) + sum_i(anchor(i))
-    if (madd) simdunpack_u16_w256_madd(in_ptr, out_k, b_k, sum);
-    else      simdunpack_u16_w256(in_ptr, out_k, b_k, sum);
+                                uint32_t b_k, __m256i* sum,
+                                uint64_t* scalar_acc = nullptr) {
+  if (scalar_acc) {
+    // nobc path: aggregate_sums_u16_nobc* handles both the widen-sum and the
+    // scalar anchor accumulation inline, per OutReg.
     if (mode == kModeUniform) {
-      // w >= kBlk: one anchor may span multiple blocks; kBlk elements use it
-      s_nobc_scalar_acc += (uint64_t)kBlk * anchors[(k * kBlk) >> sh];
-    } else {
-      // w < kBlk: kBlk/w anchors per block, each covering w elements
-      const size_t n_anc = kBlk >> sh;
       const uint16_t* a = anchors + ((k * kBlk) >> sh);
-      uint32_t asum = 0;
-      for (size_t i = 0; i < n_anc; i++) asum += a[i];
-      s_nobc_scalar_acc += (uint64_t)w * asum;
+      if (madd) simdunpack_u16_w256_corrected_uniform_nobc_madd(in_ptr, out_k, b_k, a, scalar_acc, sum);
+      else      simdunpack_u16_w256_corrected_uniform_nobc(in_ptr, out_k, b_k, a, scalar_acc, sum);
+    } else if (mode == kModeScalar) {
+      const uint16_t* a_block = anchors + ((k * kBlk) >> sh);
+      if (madd) {
+        switch (sh) {
+          case 4:  simdunpack_u16_w256_cscalar0_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          case 5:  simdunpack_u16_w256_cscalar1_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          case 6:  simdunpack_u16_w256_cscalar2_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          default: simdunpack_u16_w256_cscalar3_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+        }
+      } else {
+        switch (sh) {
+          case 4:  simdunpack_u16_w256_cscalar0_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          case 5:  simdunpack_u16_w256_cscalar1_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          case 6:  simdunpack_u16_w256_cscalar2_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+          default: simdunpack_u16_w256_cscalar3_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum); break;
+        }
+      }
+    } else if (mode == kModeHalf) {
+      const uint16_t* a_block = anchors + ((k * kBlk) >> sh);
+      if (madd) simdunpack_u16_w256_corrected_half_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum);
+      else      simdunpack_u16_w256_corrected_half_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum);
+    } else {  // kModeQuarter
+      const uint16_t* a_block = anchors + ((k * kBlk) >> sh);
+      if (madd) simdunpack_u16_w256_corrected_quarter_nobc_madd(in_ptr, out_k, b_k, a_block, scalar_acc, sum);
+      else      simdunpack_u16_w256_corrected_quarter_nobc(in_ptr, out_k, b_k, a_block, scalar_acc, sum);
     }
     in_ptr += b_k;
     return;
@@ -483,7 +514,8 @@ class SimdCompFusedForCodecU16_256 : public StatefulIntegerCodec<uint16_t> {
     const int mode = decode_mode(w);
     const bool shuf = shuf_;  // applies to kModeScalar, kModeHalf, kModeQuarter
     __m256i sum = _mm256_setzero_si256();
-    if (nobc_) s_nobc_scalar_acc = 0;
+    uint64_t scalar_acc = 0;
+    uint64_t* const sacc = nobc_ ? &scalar_acc : nullptr;
 
     if (separate_) {
       // Anchors raw, in place — no materialisation pass.
@@ -493,7 +525,7 @@ class SimdCompFusedForCodecU16_256 : public StatefulIntegerCodec<uint16_t> {
       const __m256i* in_ptr = reinterpret_cast<const __m256i*>(bs + num_blk);
       for (size_t k = 0; k < num_blk; ++k)
         decode_block(in_ptr, out + k * kBlk, anchors, k, w, sh, mode, madd, shuf,
-                     bs[k], &sum, nobc_);
+                     bs[k], &sum, sacc);
     } else {
       // Anchors SIMD-packed (chunked-b). FUSED: unpack each 256-anchor block,
       // then immediately decode the `w` residual blocks it feeds — the anchors
@@ -518,12 +550,12 @@ class SimdCompFusedForCodecU16_256 : public StatefulIntegerCodec<uint16_t> {
         const size_t k1 = ((ab + 1) * w < num_blk) ? (ab + 1) * w : num_blk;
         for (size_t k = k0; k < k1; ++k)
           decode_block(in_ptr, out + k * kBlk, s_anchor, k, w, sh, mode, madd, shuf,
-                       bs[k], &sum, nobc_);
+                       bs[k], &sum, sacc);
       }
     }
 
     const uint32_t simd_total = hsum8(sum);
-    const uint32_t total = nobc_ ? (simd_total + (uint32_t)s_nobc_scalar_acc) : simd_total;
+    const uint32_t total = nobc_ ? (simd_total + (uint32_t)scalar_acc) : simd_total;
     out[length] = (uint16_t)(total & 0xFFFF);
     out[length + 1] = (uint16_t)(total >> 16);
   }
