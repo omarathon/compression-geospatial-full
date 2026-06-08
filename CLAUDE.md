@@ -181,6 +181,63 @@ $BP <TIF> -b 256 -n 500 -r 11 --rs 3 --icodec <codec> --acodec <codec> \
 ```
 - Parallel is fine for independent TIF×codec combos if the server is otherwise idle and you want throughput; avoid parallel within the same codec comparison (cache/scheduler interference).
 
-**Next — 256-width simdcomp FoR:** run gen `--width 256`. 256-block = 16 OutRegs × **16 lanes** → corrections amortize over 16 (per-element overhead ~halves); windows shift: w=16→"1 anchor/OutReg" (the cscalar0 case), w=8→half, w=4→quarter (new worst). **MUST inline the kernel** (cross-TU 256 `sum` spills → 4× regression, see inline-decode header trick). The old [simdcomp_for_codec_uint16.h](src/codecs/uint16/simdcomp_for_codec_uint16.h) (256 global/local/hier) uses the slow `simdunpack_u16_corrected` array path — replace with cscalar/uniform/madd. Expect ratio similar-to-better than 128 for medium windows.
+**Next — TurboPFor FoR fused (128 & 256):** same FoR-correction idea + exceptions. `uncompressblockPFOR_u16_corrected_for` ([simdpfor_u16.h](external/FastPFor/headers/simdpfor_u16.h)) already does global/uniform anchor; extend to per-window (cscalar) + madd. 256 fused lives in [vp4d256v16_fused.c](external/TurboPFor/lib/vp4d256v16_fused.c), wrappers `turbopfor_fused_{,256_}codec_uint16.h`. Apply the same nobc_sum_t and -mno-avx512f discipline described in the session below.
 
-**Next — TurboPFor FoR fused (128 & 256):** same FoR-correction idea + exceptions. `uncompressblockPFOR_u16_corrected_for` ([simdpfor_u16.h](external/FastPFor/headers/simdpfor_u16.h)) already does global/uniform anchor; extend to per-window (cscalar) + madd. 256 fused lives in [vp4d256v16_fused.c](external/TurboPFor/lib/vp4d256v16_fused.c), wrappers `turbopfor_fused_{,256_}codec_uint16.h`.
+## Session 2026-06: 256-width simdcomp FoR nobc — DONE
+
+**256-width FoR fused is now complete.** Generated files: [simdbitpacking_u16_w256_nobc.c](external/simdcomp/src/simdbitpacking_u16_w256_nobc.c) and [simdbitpacking_u16_w128_nobc.c](external/simdcomp/src/simdbitpacking_u16_w128_nobc.c). Built into `SimdCompU16W256` / `SimdCompU16W128` libs alongside the existing `_w256.c` / `_w256_corrected.c` files. Geometry: 256-block = 16 OutRegs × 16 lanes; windows shift vs 128: w=16 → cscalar0 (1 anchor/OutReg), w=8 → half, w=4 → quarter (new worst case, 4 anchors/OutReg).
+
+**nobc (no-broadcast-correction) design:** FoR sum-fused exploits `sum(v + a) = sum(v) + N*a` to defer anchor contribution. Residual SIMD sum accumulates in `*sum`; anchor contributions accumulate in scalar `*scalar_acc += lanes * a[outReg]`. Final: `hsum(*sum) + scalar_acc`. Avoids per-OutReg `vpadd` with anchor broadcast — the anchor correction overhead (broadcast + vadd) was the dominant cost for fine-window FoR.
+
+**CRITICAL — nobc_sum_t typedef to break may_alias (must carry to TurboPFor FoR):**
+`__m256i` / `__m128i` are declared `__attribute__((__may_alias__))` by GCC headers. This means any write through a `__m256i*` forces GCC to assume it may alias ANY other pointer — including the anchor array `a_block`. Without the fix, GCC inserts a reload of `a_block[k]` after every `vmovdqa` store to `*sum`, defeating anchor broadcast reuse. This causes a **2.8× perf hit** on fine-window (w=4) modes.
+
+Fix: use a custom vector typedef WITHOUT may_alias for the sum parameter:
+```c
+typedef int nobc_sum_t __attribute__((vector_size(32)));  // 256-bit
+// (or vector_size(16) for 128-bit)
+```
+The aggregate helper signature becomes `aggregate_sums_u16_nobc(OutReg, a, scalar_acc, nobc_sum_t* sum)`. Call sites cast: `(nobc_sum_t*)sum`. Writes through `nobc_sum_t*` do NOT carry may_alias, so GCC keeps `set1(a[k])` live in a YMM register across OutRegs.
+
+**Alternative tried and REVERTED — `_sum_local` local accumulator:** Instead of a helper with `nobc_sum_t*`, hold sum as `__m256i _sum_local = *sum` at function entry, accumulate all 16 OutRegs in-register, write back once at exit. This eliminates the store-load chain entirely. But it increases register pressure by 1 YMM, causing GCC to spill 3 YMM registers to stack for large-b (b=15) quarter-mode functions (`vmovdqa %ymm4,-0x20(%rsp)` etc). Net result: 1-5% **worse** than nobc_sum_t across all windows. Reverted in commit `3bcadb8`; do NOT re-attempt.
+
+**CRITICAL — `-mno-avx512f` on SimdCompU16W128 and SimdCompU16W256 CMake targets:**
+GCC on AVX-512-capable machines (e.g. this WSL2 host) emits EVEX-encoded YMM instructions (`vmovdqu64`, `ymm16`/`ymm17` etc.) even when targeting AVX2 code, because `-march=native` enables AVX-512. The server (sherwood) is AVX2-only and will SIGILL on EVEX. Fix is already in CMakeLists.txt:
+```cmake
+target_compile_options(SimdCompU16W128 PRIVATE -O3 -march=native -mno-avx512f)
+target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native -mno-avx512f)
+```
+Apply the same flag to any new lib built from generated nobc/corrected kernels (e.g. future TurboPFor FoR libs). Verify with `objdump -d | grep 'ymm1[6-9]\|ymm[23][0-9]\|{evex}'` — should be empty.
+
+**Performance (server sherwood, n=500 r=11 rs=3, sequential, nobc_madd variants):**
+
+| codec (w) | srtm | ETOPO1 | WorldCover | WorldCover baseline |
+|---|---|---|---|---|
+| w4 | 6529 | 8066 | 5475 | 2357 |
+| w8 | 5170 | 7163 | 3770 | |
+| w16 | 4525 | 6686 | 3167 | |
+| w32 | 4317 | 6462 | 2484 | |
+| w64 | 4147 | 6436 | 2326 | |
+| w128 | 4044 | 6377 | 2349 | |
+| w256 | 3903 | 6323 | 2096 | |
+| baseline | 5614 | 7996 | 2357 | |
+
+w4 is ~12-29% slower than baseline (nobc removes the accidental ILP benefit where anchor L1 reads filled the ~5-cycle store-load-forwarding latency). w≥16 beats baseline. WorldCover w≥32 wins significantly because FoR cuts CR ~2× (categorical data has tight local ranges).
+
+**Kernel fusion abstraction — design notes for future ops (NDVI, min, max, multiply):**
+
+The aggregate kernel is the natural abstraction point for plugging in different operations. The two-kernel pattern eliminates redundant anchor work at w≥32:
+
+```
+anchor_state = anchor_kernel(n, r, ...)   // once per window group
+kernel(OutReg_A, OutReg_B, anchor_state)  // once per OutReg
+```
+
+`anchor_kernel` is called at window-group granularity (multiple OutRegs share the same anchor group). `kernel` is called per OutReg. For operations with algebraic simplifications this avoids redundant broadcasts:
+
+- **sum (nobc)**: `anchor_kernel(a) → {a_scalar}`; `kernel(OutReg, a)` → `*sum += widen(OutReg); *scalar_acc += lanes*a`
+- **min/max (kModeUniform only)**: `anchor_kernel(a) → {a_scalar}`; `kernel(OutReg, a)` → `min_running = min(min_running, hmin(OutReg) + a)`. For kModeScalar (varying anchors per OutReg) hmin per OutReg is expensive; corrected path is better.
+- **NDVI** `(NIR-RED)/(NIR+RED)`: `anchor_kernel(n, r) → {broadcast(n), broadcast(r)}`; `kernel(N, R, bc_n, bc_r)` computes `bc_diff = bc_n - bc_r`, `bc_sum = bc_n + bc_r` internally (2 cheap SIMD ops, ~free even at w=256 with 16× reuse). Saves 2 broadcasts and 2 adds vs correcting both bands before passing to kernel. Kernel signature takes pre-broadcast scalar anchors `{bc_n, bc_r}` — NOT `{bc_diff, bc_sum}` — so the outer loop stays generic (just broadcasts anchors) and NDVI algebra lives entirely inside the kernel.
+- **multiply (no algebraic simplification)**: `anchor_kernel(a, b) → {broadcast(a), broadcast(b)}`; `kernel(A, B, bc_a, bc_b)` corrects inline: `(A + bc_a) * (B + bc_b)`. Still benefits from w≥32 broadcast reuse.
+
+The outer dispatch loop (cscalar/uniform/half/quarter) is identical regardless of operation — only the two kernel implementations differ. Half/quarter modes (multiple anchors per OutReg) need a different kernel signature for multi-band ops; cleanest to treat as a separate code path or restrict multi-band ops to w≥16 (256-bit) / w≥8 (128-bit).
