@@ -43,7 +43,7 @@
 extern "C" size_t   p4nenc256v16_for(uint16_t* in, size_t n, unsigned char* out);
 extern "C" uint32_t p4ndec256v16_for_sum(const unsigned char* in, unsigned n,
                                          const uint16_t* anchors, unsigned w,
-                                         unsigned sh, int mode, int madd);
+                                         unsigned sh, int mode, int madd, int nobc);
 // Conservative residual-payload byte bound (shared with the non-FoR fused codec).
 extern "C" size_t   p4nbound256v16_fused(size_t n);
 
@@ -71,10 +71,12 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
   size_t window_;
   bool separate_;
   FusedAggImpl agg_;
+  bool nobc_;  // nobc: anchor accumulated in a scalar (off port 5), not added SIMD
 
   explicit TurboPForFusedForCodecU16(size_t window = 16, bool separate = false,
-                                     FusedAggImpl agg = FusedAggImpl::kMadd)
-      : window_(window), separate_(separate), agg_(agg) {
+                                     FusedAggImpl agg = FusedAggImpl::kMadd,
+                                     bool nobc = false)
+      : window_(window), separate_(separate), agg_(agg), nobc_(nobc) {
     assert(window == 4 || window == 8 || window == 16 || window == 32 ||
            window == 64 || window == 128 || window == 256);
   }
@@ -97,13 +99,12 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       anchors[a] = m;
     }
 
-    // 2. Header + anchor region into scratch.
-    uint16_t orall = 0;
-    for (size_t i = 0; i < length; ++i) orall |= in[i];
+    // 2. Header + anchor region into scratch. madd_safe is filled in step 3
+    //    (after residuals): bc aggregates the full value, nobc aggregates only the
+    //    residual, so the < 2^15 check is on different data per variant.
     auto& scratch = GetPackScratch();
     uint8_t* base = scratch.data();
     *reinterpret_cast<uint32_t*>(base) = (uint32_t)num_blk;
-    base[sizeof(uint32_t)] = (orall < 0x8000u) ? 1 : 0;
     uint8_t* cur = base + sizeof(uint32_t) + 1;
     if (separate_) {
       std::memcpy(cur, anchors, num_anchors * sizeof(uint16_t));
@@ -124,6 +125,10 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
 
     // 3. Residuals (value − window anchor) into s_res, then PFor-encode them.
+    //    Track the OR of residuals (for nobc madd-safety) and of values (for bc).
+    __m256i resor = _mm256_setzero_si256();
+    uint16_t orall = 0;
+    for (size_t i = 0; i < length; ++i) orall |= in[i];
     for (size_t k = 0; k < num_blk; ++k) {
       __m256i corr[16];
       build_corrections(corr, anchors, k, w);
@@ -131,10 +136,16 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       for (size_t j = 0; j < kOutRegs; ++j) {
         __m256i v = _mm256_loadu_si256(
             reinterpret_cast<const __m256i*>(in + k * kBlk + j * kLanes));
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + j * kLanes),
-                            _mm256_sub_epi16(v, corr[j]));
+        __m256i r = _mm256_sub_epi16(v, corr[j]);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + j * kLanes), r);
+        resor = _mm256_or_si256(resor, r);
       }
     }
+    // madd_safe: nobc checks max residual < 2^15 (no residual lane has bit 15),
+    // bc checks max value < 2^15. testz==1 ⇔ (resor & 0x8000) is all-zero.
+    const bool res_safe =
+        _mm256_testz_si256(resor, _mm256_set1_epi16((short)0x8000)) != 0;
+    base[sizeof(uint32_t)] = (nobc_ ? res_safe : (orall < 0x8000u)) ? 1 : 0;
     assert((size_t)(cur - base) + p4nbound256v16_fused(length) <= scratch.size());
     size_t pbytes = p4nenc256v16_for(s_res, length, cur);
     cur += pbytes;
@@ -183,7 +194,7 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
     }
 
     uint32_t total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
-                                          (unsigned)w, sh, mode, madd);
+                                          (unsigned)w, sh, mode, madd, nobc_ ? 1 : 0);
     out[length] = (uint16_t)(total & 0xFFFF);
     out[length + 1] = (uint16_t)(total >> 16);
   }
@@ -194,12 +205,13 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
   std::string name() const override {
     std::string n = "TurboPFor_fused_for_256_w" + std::to_string(window_);
     if (separate_) n += "_sep";
+    if (nobc_) n += "_nobc";
     n += (agg_ == FusedAggImpl::kMadd) ? "_madd" : "_unpack";
     return n;
   }
   std::size_t GetOverflowSize(size_t) const override { return 64; }
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new TurboPForFusedForCodecU16(window_, separate_, agg_);
+    return new TurboPForFusedForCodecU16(window_, separate_, agg_, nobc_);
   }
   void AllocEncoded(const uint16_t*, size_t) override {}
   void clear() override {
@@ -224,10 +236,12 @@ class TurboPForFusedForHierarchicalCodecU16
   size_t outer_;
   size_t inner_;
   FusedAggImpl agg_;
+  bool nobc_;
 
   TurboPForFusedForHierarchicalCodecU16(size_t outer = 256, size_t inner = 16,
-                                        FusedAggImpl agg = FusedAggImpl::kMadd)
-      : outer_(outer), inner_(inner), agg_(agg) {
+                                        FusedAggImpl agg = FusedAggImpl::kMadd,
+                                        bool nobc = false)
+      : outer_(outer), inner_(inner), agg_(agg), nobc_(nobc) {
     assert(outer == 128 || outer == 256);
     assert(inner == 4 || inner == 8 || inner == 16 || inner == 32 ||
            inner == 64 || inner == 128 || inner == 256);
@@ -271,7 +285,7 @@ class TurboPForFusedForHierarchicalCodecU16
     auto& scratch = GetPackScratch();
     uint8_t* basep = scratch.data();
     *reinterpret_cast<uint32_t*>(basep) = (uint32_t)num_blk;
-    basep[sizeof(uint32_t)] = (orall < 0x8000u) ? 1 : 0;
+    // madd_safe filled after residuals (see regular codec note).
     uint8_t* cur = basep + sizeof(uint32_t) + 1;
     std::memcpy(cur, gmin, num_outer * sizeof(uint16_t));
     cur += num_outer * sizeof(uint16_t);
@@ -289,6 +303,7 @@ class TurboPForFusedForHierarchicalCodecU16
     }
 
     // Residuals (value − local anchor) into s_res, then PFor-encode.
+    __m256i resor = _mm256_setzero_si256();
     for (size_t k = 0; k < num_blk; ++k) {
       __m256i corr[16];
       build_corrections(corr, lanchor, k, w);
@@ -296,10 +311,14 @@ class TurboPForFusedForHierarchicalCodecU16
       for (size_t j = 0; j < kOutRegs; ++j) {
         __m256i v = _mm256_loadu_si256(
             reinterpret_cast<const __m256i*>(in + k * kBlk + j * kLanes));
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + j * kLanes),
-                            _mm256_sub_epi16(v, corr[j]));
+        __m256i r = _mm256_sub_epi16(v, corr[j]);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + j * kLanes), r);
+        resor = _mm256_or_si256(resor, r);
       }
     }
+    const bool res_safe =
+        _mm256_testz_si256(resor, _mm256_set1_epi16((short)0x8000)) != 0;
+    basep[sizeof(uint32_t)] = (nobc_ ? res_safe : (orall < 0x8000u)) ? 1 : 0;
     assert((size_t)(cur - basep) + p4nbound256v16_fused(length) <= scratch.size());
     size_t pbytes = p4nenc256v16_for(s_res, length, cur);
     cur += pbytes;
@@ -347,7 +366,7 @@ class TurboPForFusedForHierarchicalCodecU16
     const unsigned sh = (unsigned)__builtin_ctzll((unsigned long long)w);
     const int mode = driver_mode(w);
     uint32_t total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
-                                          (unsigned)w, sh, mode, madd);
+                                          (unsigned)w, sh, mode, madd, nobc_ ? 1 : 0);
     out[length] = (uint16_t)(total & 0xFFFF);
     out[length + 1] = (uint16_t)(total >> 16);
   }
@@ -358,12 +377,13 @@ class TurboPForFusedForHierarchicalCodecU16
   std::string name() const override {
     std::string n = "TurboPFor_fused_for_hier_256_g" + std::to_string(outer_) +
                     "_l" + std::to_string(inner_);
+    if (nobc_) n += "_nobc";
     n += (agg_ == FusedAggImpl::kMadd) ? "_madd" : "_unpack";
     return n;
   }
   std::size_t GetOverflowSize(size_t) const override { return 64; }
   StatefulIntegerCodec<uint16_t>* CloneFresh() const override {
-    return new TurboPForFusedForHierarchicalCodecU16(outer_, inner_, agg_);
+    return new TurboPForFusedForHierarchicalCodecU16(outer_, inner_, agg_, nobc_);
   }
   void AllocEncoded(const uint16_t*, size_t) override {}
   void clear() override {

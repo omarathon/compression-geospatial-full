@@ -358,11 +358,13 @@ TEST_F(FusedSumTest, TurboPForFusedFor256_Regular_Sum) {
       MakeRandom(65536, 42),     MakeSpiky(65536, 7, 0.05),
   };
   for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
-    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
-      for (bool sep : {false, true}) {
-        TurboPForFusedForCodecU16 c(w, sep, agg);
-        for (const auto& d : data)
-          if (d.size() % w == 0) CheckFusedSum(d, c);
+    for (bool nobc : {false, true}) {
+      for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+        for (bool sep : {false, true}) {
+          TurboPForFusedForCodecU16 c(w, sep, agg, nobc);
+          for (const auto& d : data)
+            if (d.size() % w == 0) CheckFusedSum(d, c);
+        }
       }
     }
   }
@@ -375,12 +377,14 @@ TEST_F(FusedSumTest, TurboPForFusedFor256_Hierarchical_Sum) {
       MakeSpiky(65536, 7, 0.05),
   };
   for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
-    for (size_t gw : {128u, 256u}) {
-      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
-        if (lw > gw || gw % lw) continue;
-        TurboPForFusedForHierarchicalCodecU16 c(gw, lw, agg);
-        for (const auto& d : data)
-          if (d.size() % gw == 0) CheckFusedSum(d, c);
+    for (bool nobc : {false, true}) {
+      for (size_t gw : {128u, 256u}) {
+        for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u}) {
+          if (lw > gw || gw % lw) continue;
+          TurboPForFusedForHierarchicalCodecU16 c(gw, lw, agg, nobc);
+          for (const auto& d : data)
+            if (d.size() % gw == 0) CheckFusedSum(d, c);
+        }
       }
     }
   }

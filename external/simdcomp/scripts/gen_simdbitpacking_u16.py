@@ -440,10 +440,17 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             extra_param = f", const uint16_t * __restrict__ a, uint64_t * __restrict__ scalar_acc"
         else:
             extra_param = f", const {I['reg']} anchor"
-    elif needs_pc_uniform:
-        extra_param = f", const {I['reg']} anchor, const uint16_t *pex, const uint16_t *bm16"
-    elif needs_pc_scalar or needs_pc_half or needs_pc_quarter:
-        extra_param = f", const uint16_t *a_block, const uint16_t *pex, const uint16_t *bm16"
+    elif needs_pfor_corrected:
+        # nobc: anchor pointer + scalar_acc (uniform also reads a_block[0]); bc
+        # uniform: broadcast __m256i anchor; bc others: a_block.
+        if is_nobc:
+            extra_param = (f", const uint16_t * __restrict__ a_block,"
+                           f" uint64_t * __restrict__ scalar_acc,"
+                           f" const uint16_t *pex, const uint16_t *bm16")
+        elif needs_pc_uniform:
+            extra_param = f", const {I['reg']} anchor, const uint16_t *pex, const uint16_t *bm16"
+        else:
+            extra_param = f", const uint16_t *a_block, const uint16_t *pex, const uint16_t *bm16"
     elif needs_scalar or needs_scalar_shuf:
         # a_block points at the block's first window anchor in the (cached) raw
         # uint16 anchor stream; OutReg v's anchor is a_block[v >> shg] with shg a
@@ -628,9 +635,11 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
         decl = f"{I['reg']} " if v == 0 else ""
         return f"  {decl}_bc = {_quarter_expr(v)};\n", "_bc"
 
-    def pfor_corrected_merge(v, pre, anchor_expr):
+    # Exception merge into OutReg (residual), then `tail`. bc emits the `_bc` build
+    # as `pre` (function scope); nobc emits no broadcast — `tail` is the scalar-
+    # accumulating nobc aggregate, so the anchor never touches the SIMD reg.
+    def _pfor_exc_block(v, tail):
         return (
-            f"{pre}"
             f"  {{ unsigned _m = bm16[{v}];\n"
             f"    {I['reg']} _exc = _mm256_set_m128i(\n"
             f"        _mm_loadu_si128((const __m128i *)(_pex + _mm_popcnt_u32(_m & 0xFF))),\n"
@@ -642,8 +651,35 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             f"    _exc = _mm256_shuffle_epi8(_exc, _shuf);\n"
             f"    OutReg = {I['add16']}(OutReg, _exc);\n"
             f"    _pex += _mm_popcnt_u32(_m);\n"
-            f"    OutReg = {I['add16']}(OutReg, {anchor_expr});\n"
-            f"    aggregate_sums_u16(OutReg, sum); }}")
+            f"{tail} }}")
+
+    def _pfor_corrected_emit(v):
+        if is_nobc:
+            if mode == 'pfor_corrected_uniform':
+                tail = (f"    aggregate_sums_u16_nobc{nobc_msufx}(OutReg, a_block,"
+                        f" &_sacc, (nobc_sum_t*)sum);\n")
+            elif mode == 'pfor_corrected_scalar':
+                tail = (f"    aggregate_sums_u16_nobc{nobc_msufx}(OutReg, a_block + {v >> shg},"
+                        f" &_sacc, (nobc_sum_t*)sum);\n")
+            elif mode == 'pfor_corrected_half':
+                tail = (f"    aggregate_sums_u16_nobc_half{nobc_msufx}(OutReg, a_block + {2*v},"
+                        f" &_sacc, (nobc_sum_t*)sum);\n")
+            else:  # quarter
+                tail = (f"    aggregate_sums_u16_nobc_quarter{nobc_msufx}(OutReg, a_block + {4*v},"
+                        f" &_sacc, (nobc_sum_t*)sum);\n")
+            return _pfor_exc_block(v, tail)
+        # bc: build the broadcast `_bc` (pre), exception merge, anchor add, aggregate.
+        if mode == 'pfor_corrected_uniform':
+            pre, e = "", "anchor"
+        elif mode == 'pfor_corrected_scalar':
+            pre, e = _bc_scalar(v)
+        elif mode == 'pfor_corrected_half':
+            pre, e = _bc_half(v)
+        else:
+            pre, e = _bc_quarter(v)
+        tail = (f"    OutReg = {I['add16']}(OutReg, {e});\n"
+                f"    aggregate_sums_u16(OutReg, sum);\n")
+        return pre + _pfor_exc_block(v, tail)
 
     def agg_outreg(v):
         if mode == 'plain':
@@ -671,14 +707,9 @@ def gen_unpack_function(bit, I, mode='plain', name_suffix='', shg=None,
             return _cquarter_agg("OutReg", v)
         if mode == 'corrected_quarter_shuf':
             return _cquarter_shuf_agg("OutReg", v)
-        if mode == 'pfor_corrected_uniform':
-            return pfor_corrected_merge(v, "", "anchor")
-        if mode == 'pfor_corrected_scalar':
-            pre, e = _bc_scalar(v);  return pfor_corrected_merge(v, pre, e)
-        if mode == 'pfor_corrected_half':
-            pre, e = _bc_half(v);    return pfor_corrected_merge(v, pre, e)
-        if mode == 'pfor_corrected_quarter':
-            pre, e = _bc_quarter(v); return pfor_corrected_merge(v, pre, e)
+        if mode in ('pfor_corrected_uniform', 'pfor_corrected_scalar',
+                    'pfor_corrected_half', 'pfor_corrected_quarter'):
+            return _pfor_corrected_emit(v)
         # corrected_uniform:
         if is_nobc:
             return f"  aggregate_sums_u16_nobc{nobc_msufx}(OutReg, a, &_sacc, (nobc_sum_t*)sum);"
@@ -1902,12 +1933,20 @@ def gen_pfor_dispatcher(I):
 def gen_pfor_corrected_dispatcher(I, anchor_kind, shg=None, name_suffix='',
                                   agg='unpack', static=True):
     """STATIC `_il` dispatcher for a fused TurboPFor-FoR exception block: unpack
-    low bits, in-register PFOR exception merge, FoR per-OutReg anchor add, then
-    aggregate. anchor_kind ∈ {uniform, scalar, half, quarter} mirrors the
-    corrected_* family (256-bit only). b==0 (low bits all zero) is handled in a
-    runtime loop: corrected OutReg = anchor(v) + left-packed excess."""
+    low bits, in-register PFOR exception merge, FoR anchor, then aggregate.
+    anchor_kind ∈ {uniform, scalar, half, quarter} (256-bit only).
+
+    agg ∈ {unpack, madd}  → bc: anchor added to the OutReg (SIMD), then aggregate.
+    agg ∈ {nobc, nobc_madd}→ no SIMD anchor; residual aggregated + the anchor's
+        contribution accumulated into *scalar_acc via aggregate_sums_u16_nobc*.
+
+    b==0 (low bits all zero): residual = the left-packed excess; bc adds anchor(v)
+    in-register, nobc routes the same excess through the nobc aggregate so the
+    anchor still lands in *scalar_acc (must NOT be skipped — anchors are nonzero)."""
     assert I['width'] == 256
     assert anchor_kind in ('uniform', 'scalar', 'half', 'quarter')
+    is_nobc = agg in ('nobc', 'nobc_madd')
+    nm = '_madd' if agg == 'nobc_madd' else ''   # nobc helper madd suffix
     mtag = '' if agg == 'unpack' else '_' + agg
     s1 = I['set1']
     if anchor_kind == 'scalar':
@@ -1917,24 +1956,43 @@ def gen_pfor_corrected_dispatcher(I, anchor_kind, shg=None, name_suffix='',
         tag = {'uniform': 'pfor_cuniform', 'half': 'pfor_chalf',
                'quarter': 'pfor_cquarter'}[anchor_kind]
 
-    # anchor param + per-OutReg anchor C-expression (runtime loop var _k).
+    # bc anchor C-expression (runtime loop var _k) for the b==0 in-register add.
     if anchor_kind == 'uniform':
-        anchor_param = f"const {I['reg']} anchor"
         def aexpr(k): return "anchor"
+    elif anchor_kind == 'scalar':
+        def aexpr(k): return f"{s1}((short)a_block[{k} >> {shg}])"
+    elif anchor_kind == 'half':
+        def aexpr(k): return (f"_mm256_blend_epi32({s1}((short)a_block[2*{k}]), "
+                              f"{s1}((short)a_block[2*{k}+1]), 0xF0)")
+    else:  # quarter
+        def aexpr(k): return (
+            "_mm256_set_m128i("
+            f"_mm_blend_epi16(_mm_set1_epi16((short)a_block[4*{k}+2]), "
+            f"_mm_set1_epi16((short)a_block[4*{k}+3]), 0xF0), "
+            f"_mm_blend_epi16(_mm_set1_epi16((short)a_block[4*{k}]), "
+            f"_mm_set1_epi16((short)a_block[4*{k}+1]), 0xF0))")
+
+    # nobc b==0 helper call (residual = _exc; scalar anchor accumulated into _sacc).
+    def nobc_b0(k):
+        if anchor_kind in ('uniform', 'scalar'):
+            idx = "a_block" if anchor_kind == 'uniform' else f"a_block + ({k} >> {shg})"
+            return f"aggregate_sums_u16_nobc{nm}(_exc, {idx}, &_sacc, (nobc_sum_t*)sum);"
+        if anchor_kind == 'half':
+            return f"aggregate_sums_u16_nobc_half{nm}(_exc, a_block + 2*{k}, &_sacc, (nobc_sum_t*)sum);"
+        return f"aggregate_sums_u16_nobc_quarter{nm}(_exc, a_block + 4*{k}, &_sacc, (nobc_sum_t*)sum);"
+
+    # Signature: nobc always passes a_block + scalar_acc (uniform too); bc uniform
+    # passes a broadcast __m256i anchor, bc others pass a_block.
+    if is_nobc:
+        anchor_param = ("const uint16_t * __restrict__ a_block, "
+                        "uint64_t * __restrict__ scalar_acc")
+        call_anchor = "a_block, scalar_acc"
+    elif anchor_kind == 'uniform':
+        anchor_param = f"const {I['reg']} anchor"
+        call_anchor = "anchor"
     else:
         anchor_param = "const uint16_t *a_block"
-        if anchor_kind == 'scalar':
-            def aexpr(k): return f"{s1}((short)a_block[{k} >> {shg}])"
-        elif anchor_kind == 'half':
-            def aexpr(k): return (f"_mm256_blend_epi32({s1}((short)a_block[2*{k}]), "
-                                  f"{s1}((short)a_block[2*{k}+1]), 0xF0)")
-        else:  # quarter
-            def aexpr(k): return (
-                "_mm256_set_m128i("
-                f"_mm_blend_epi16(_mm_set1_epi16((short)a_block[4*{k}+2]), "
-                f"_mm_set1_epi16((short)a_block[4*{k}+3]), 0xF0), "
-                f"_mm_blend_epi16(_mm_set1_epi16((short)a_block[4*{k}]), "
-                f"_mm_set1_epi16((short)a_block[4*{k}+1]), 0xF0))")
+        call_anchor = "a_block"
 
     kw = "static " if static else ""
     lines = []
@@ -1942,9 +2000,10 @@ def gen_pfor_corrected_dispatcher(I, anchor_kind, shg=None, name_suffix='',
                  f"uint16_t *out, const uint32_t bit,")
     lines.append(f"    {anchor_param}, {I['reg']} *sum, const uint16_t *pex, const uint16_t *bm16) {{")
     lines.append("  switch (bit) {")
-    # b==0: low bits all zero → corrected OutReg = anchor(v) + left-packed excess.
     lines.append("  case 0: {")
     lines.append("    const uint16_t *_pex = pex; int v; (void)in; (void)out;")
+    if is_nobc:
+        lines.append("    uint64_t _sacc = 0;")
     lines.append("    for (v = 0; v < 16; ++v) {")
     lines.append("      unsigned _m = bm16[v];")
     lines.append(f"      {I['reg']} _exc = _mm256_set_m128i(")
@@ -1954,11 +2013,15 @@ def gen_pfor_corrected_dispatcher(I, anchor_kind, shg=None, name_suffix='',
     lines.append("          _mm_loadu_si128((const __m128i *)kShuffle16[_m >> 8]),")
     lines.append("          _mm_loadu_si128((const __m128i *)kShuffle16[_m & 0xFF]));")
     lines.append("      _exc = _mm256_shuffle_epi8(_exc, _shuf);")
-    lines.append(f"      aggregate_sums_u16{mtag}({I['add16']}(_exc, {aexpr('v')}), sum);")
+    if is_nobc:
+        lines.append(f"      {nobc_b0('v')}")
+    else:
+        lines.append(f"      aggregate_sums_u16{mtag}({I['add16']}(_exc, {aexpr('v')}), sum);")
     lines.append("      _pex += _mm_popcnt_u32(_m);")
     lines.append("    }")
+    if is_nobc:
+        lines.append("    *scalar_acc += _sacc;")
     lines.append("    break; }")
-    call_anchor = "anchor" if anchor_kind == 'uniform' else "a_block"
     for b in range(1, MAX_BIT):  # 1..15
         lines.append(f"  case {b}:")
         lines.append(f"    __SIMD_fastunpack{b}_16_{tag}{mtag}{name_suffix}"
@@ -2115,6 +2178,33 @@ def main():
             f"static void aggregate_sums_u16_noagg({reg} OutReg, {reg}* sum) {{\n"
             f"    *sum = {I['xor_fn']}(*sum, OutReg);\n"
             "}\n\n")
+        # nobc helpers: plain widen-sum into *sum + scalar anchor contribution into
+        # *scalar_acc. nobc_sum_t is a vector typedef WITHOUT __may_alias__ so the
+        # *sum writes don't force GCC to reload a[] between OutRegs (the 2.8× trap).
+        _lanes = I['lanes']; _hl = _lanes // 2; _ql = _lanes // 4
+        def _nobc_def(name, scalar_expr, use_madd):
+            agg_line = (f"    _sv = {I['add']}(_sv, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
+                        if use_madd else
+                        f"    _sv = {I['add']}(_sv, {I['unpacklo']}(OutReg, kZero));\n"
+                        f"    _sv = {I['add']}(_sv, {I['unpackhi']}(OutReg, kZero));\n")
+            return (f"__attribute__((unused))\n"
+                    f"static void {name}({reg} OutReg, const uint16_t * __restrict__ a,"
+                    f" uint64_t * __restrict__ scalar_acc, nobc_sum_t * __restrict__ sum) {{\n"
+                    f"    {reg} _sv = ({reg})(*sum);\n{agg_line}"
+                    f"    *sum = (nobc_sum_t)_sv;\n"
+                    f"    *scalar_acc += {scalar_expr};\n}}\n\n")
+        head += (
+            f"typedef int nobc_sum_t __attribute__((vector_size(32)));\n\n"
+            + _nobc_def("aggregate_sums_u16_nobc", f"{_lanes}ULL * (uint64_t)a[0]", False)
+            + _nobc_def("aggregate_sums_u16_nobc_madd", f"{_lanes}ULL * (uint64_t)a[0]", True)
+            + _nobc_def("aggregate_sums_u16_nobc_half",
+                        f"{_hl}ULL * (uint64_t)a[0] + {_hl}ULL * (uint64_t)a[1]", False)
+            + _nobc_def("aggregate_sums_u16_nobc_half_madd",
+                        f"{_hl}ULL * (uint64_t)a[0] + {_hl}ULL * (uint64_t)a[1]", True)
+            + _nobc_def("aggregate_sums_u16_nobc_quarter",
+                        f"{_ql}ULL * ((uint64_t)a[0] + (uint64_t)a[1] + (uint64_t)a[2] + (uint64_t)a[3])", False)
+            + _nobc_def("aggregate_sums_u16_nobc_quarter_madd",
+                        f"{_ql}ULL * ((uint64_t)a[0] + (uint64_t)a[1] + (uint64_t)a[2] + (uint64_t)a[3])", True))
         out = [head, gen_null_unpacker(I), gen_shuffle16_table(), "\n"]
         ns = '_il'
         for agg in ('unpack', 'madd', 'noagg'):
@@ -2159,6 +2249,50 @@ def main():
                 out.append(gen_unpack_function(bit, I, mode='pfor_corrected_quarter',
                                                name_suffix=ns, agg=agg))
             out.append(gen_pfor_corrected_dispatcher(I, 'quarter', name_suffix=ns, agg=agg))
+        # ── nobc: scalar anchor accumulation (no SIMD correction). PLAIN blocks use
+        #    corrected_*_nobc; exception blocks use pfor_c*_nobc. ──
+        for av in ('nobc', 'nobc_madd'):
+            # no-exception (PLAIN) corrected nobc kernels
+            for bit in range(1, MAX_BIT + 1):
+                out.append(gen_unpack_function(bit, I, mode='corrected_uniform',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_unpack_dispatcher_corrected_uniform_nobc(
+                I, name_suffix=ns, agg_variant=av, static_=True))
+            for shg in range(4):
+                for bit in range(1, MAX_BIT + 1):
+                    out.append(gen_unpack_function(bit, I, mode='corrected_scalar',
+                                                   name_suffix=ns, shg=shg, agg=av))
+                out.append(gen_unpack_dispatcher_corrected_scalar_nobc(
+                    I, shg, name_suffix=ns, agg_variant=av, static_=True))
+            for bit in range(1, MAX_BIT + 1):
+                out.append(gen_unpack_function(bit, I, mode='corrected_half',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_unpack_dispatcher_corrected_half_nobc(
+                I, name_suffix=ns, agg_variant=av, static_=True))
+            for bit in range(1, MAX_BIT + 1):
+                out.append(gen_unpack_function(bit, I, mode='corrected_quarter',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_unpack_dispatcher_corrected_quarter_nobc(
+                I, name_suffix=ns, agg_variant=av, static_=True))
+            # PFOR-exception corrected nobc kernels
+            for bit in range(1, MAX_BIT):
+                out.append(gen_unpack_function(bit, I, mode='pfor_corrected_uniform',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_pfor_corrected_dispatcher(I, 'uniform', name_suffix=ns, agg=av))
+            for shg in range(4):
+                for bit in range(1, MAX_BIT):
+                    out.append(gen_unpack_function(bit, I, mode='pfor_corrected_scalar',
+                                                   name_suffix=ns, shg=shg, agg=av))
+                out.append(gen_pfor_corrected_dispatcher(I, 'scalar', shg=shg,
+                                                         name_suffix=ns, agg=av))
+            for bit in range(1, MAX_BIT):
+                out.append(gen_unpack_function(bit, I, mode='pfor_corrected_half',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_pfor_corrected_dispatcher(I, 'half', name_suffix=ns, agg=av))
+            for bit in range(1, MAX_BIT):
+                out.append(gen_unpack_function(bit, I, mode='pfor_corrected_quarter',
+                                               name_suffix=ns, agg=av))
+            out.append(gen_pfor_corrected_dispatcher(I, 'quarter', name_suffix=ns, agg=av))
         out_path = args.output or os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'src',
             'simdbitpacking_u16_for_decode_inl.h')

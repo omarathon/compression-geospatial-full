@@ -168,15 +168,20 @@ InitPhysicalCodecsU16() {
 
   // ── 256-bit fused FoR TurboPFor (PFor residuals + per-window anchor), both
   //    aggregate impls — regular (window × {raw,packed-anchor}) + hierarchical ──
+  //    nobc: anchor accumulated in a scalar (off port 5) — the variant meant to
+  //    beat the plain fused TurboPFor baseline. bc kept for non-distributive ops.
   for (FusedAggImpl agg : {FusedAggImpl::kUnpack, FusedAggImpl::kMadd}) {
-    for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
-      for (bool sep : {false, true})
-        codecs.push_back(std::make_unique<TurboPForFusedForCodecU16>(w, sep, agg));
-    for (size_t gw : {128u, 256u})
-      for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
-        if (lw <= gw && gw % lw == 0)
+    for (bool nobc : {false, true}) {
+      for (size_t w : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+        for (bool sep : {false, true})
           codecs.push_back(
-              std::make_unique<TurboPForFusedForHierarchicalCodecU16>(gw, lw, agg));
+              std::make_unique<TurboPForFusedForCodecU16>(w, sep, agg, nobc));
+      for (size_t gw : {128u, 256u})
+        for (size_t lw : {4u, 8u, 16u, 32u, 64u, 128u, 256u})
+          if (lw <= gw && gw % lw == 0)
+            codecs.push_back(
+                std::make_unique<TurboPForFusedForHierarchicalCodecU16>(gw, lw, agg, nobc));
+    }
   }
 
   return codecs;
