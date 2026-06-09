@@ -29,6 +29,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <immintrin.h>
 #include <stdexcept>
@@ -50,10 +51,20 @@ extern "C" uint32_t p4ndec256v16_for_sum(const unsigned char* in, unsigned n,
 // residuals are madd-safe (< 2^15).
 extern "C" uint32_t p4ndec256v16_sum(const unsigned char* in, unsigned n);
 extern "C" uint32_t p4ndec256v16_sum_madd(const unsigned char* in, unsigned n);
+// SUM-only fast decoder: exceptions add (Σ excess)<<b scalar-ly (no per-OutReg
+// pshufb merge). Default for the madd-safe nobc path; FOR_SUM_MERGE=1 forces the
+// old per-position merge (p4ndec256v16_sum_madd) for A/B.
+extern "C" uint32_t p4ndec256v16_sum_fast(const unsigned char* in, unsigned n);
 // Conservative residual-payload byte bound (shared with the non-FoR fused codec).
 extern "C" size_t   p4nbound256v16_fused(size_t n);
 
 namespace turbopfor_for_detail {
+// SUM-fast vs old merge for the madd nobc residual decode (A/B via env, read once).
+static inline bool use_sum_fast() {
+  static int v = -1;
+  if (v < 0) { const char* e = std::getenv("FOR_SUM_MERGE"); v = (e && *e && *e != '0') ? 0 : 1; }
+  return v != 0;
+}
 // FoR anchor granularity mode, matching vp4d256v16_for_fused.c's FOR_* enum
 // (NOTE: a different numbering than simdcomp_for_w256_detail::decode_mode).
 enum { FOR_UNIFORM = 0, FOR_SCALAR = 1, FOR_HALF = 2, FOR_QUARTER = 3 };
@@ -205,8 +216,11 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       // residual stream with the plain baseline (fast, no anchor), add the scalar.
       uint64_t asum = 0;
       for (size_t a = 0; a < num_anchors; ++a) asum += anchors[a];
-      const uint32_t rsum = madd ? p4ndec256v16_sum_madd(payload, (unsigned)length)
-                                 : p4ndec256v16_sum(payload, (unsigned)length);
+      const uint32_t rsum =
+          madd ? (turbopfor_for_detail::use_sum_fast()
+                      ? p4ndec256v16_sum_fast(payload, (unsigned)length)
+                      : p4ndec256v16_sum_madd(payload, (unsigned)length))
+               : p4ndec256v16_sum(payload, (unsigned)length);
       total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
@@ -387,8 +401,11 @@ class TurboPForFusedForHierarchicalCodecU16
       // Decoupled: each inner window (w elems) contributes w·local_anchor.
       uint64_t asum = 0;
       for (size_t l = 0; l < num_inner; ++l) asum += s_anchor[l];
-      const uint32_t rsum = madd ? p4ndec256v16_sum_madd(payload, (unsigned)length)
-                                 : p4ndec256v16_sum(payload, (unsigned)length);
+      const uint32_t rsum =
+          madd ? (turbopfor_for_detail::use_sum_fast()
+                      ? p4ndec256v16_sum_fast(payload, (unsigned)length)
+                      : p4ndec256v16_sum_madd(payload, (unsigned)length))
+               : p4ndec256v16_sum(payload, (unsigned)length);
       total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
