@@ -43,7 +43,10 @@
 extern "C" size_t   p4nenc256v16_for(uint16_t* in, size_t n, unsigned char* out);
 extern "C" uint32_t p4ndec256v16_for_sum(const unsigned char* in, unsigned n,
                                          const uint16_t* anchors, unsigned w,
-                                         unsigned sh, int mode, int madd, int nobc);
+                                         unsigned sh, int mode, int madd);
+// Plain fused baseline decoder (vp4d256v16_fused.c). nobc decodes the residual
+// stream with this (no anchor) and adds w·Σ(anchors) — sum(v)=sum(r)+w·Σ(anchor).
+extern "C" uint32_t p4ndec256v16_sum(const unsigned char* in, unsigned n);
 // Conservative residual-payload byte bound (shared with the non-FoR fused codec).
 extern "C" size_t   p4nbound256v16_fused(size_t n);
 
@@ -193,8 +196,18 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       payload = reinterpret_cast<const unsigned char*>(acur);
     }
 
-    uint32_t total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
-                                          (unsigned)w, sh, mode, madd, nobc_ ? 1 : 0);
+    uint32_t total;
+    if (nobc_) {
+      // Decoupled: sum(value) = sum(residual) + w·Σ(window anchors). Decode the
+      // residual stream with the plain baseline (fast, no anchor), add the scalar.
+      uint64_t asum = 0;
+      for (size_t a = 0; a < num_anchors; ++a) asum += anchors[a];
+      total = p4ndec256v16_sum(payload, (unsigned)length) +
+              (uint32_t)((uint64_t)w * asum);
+    } else {
+      total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
+                                   (unsigned)w, sh, mode, madd);
+    }
     out[length] = (uint16_t)(total & 0xFFFF);
     out[length + 1] = (uint16_t)(total >> 16);
   }
@@ -365,8 +378,17 @@ class TurboPForFusedForHierarchicalCodecU16
 
     const unsigned sh = (unsigned)__builtin_ctzll((unsigned long long)w);
     const int mode = driver_mode(w);
-    uint32_t total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
-                                          (unsigned)w, sh, mode, madd, nobc_ ? 1 : 0);
+    uint32_t total;
+    if (nobc_) {
+      // Decoupled: each inner window (w elems) contributes w·local_anchor.
+      uint64_t asum = 0;
+      for (size_t l = 0; l < num_inner; ++l) asum += s_anchor[l];
+      total = p4ndec256v16_sum(payload, (unsigned)length) +
+              (uint32_t)((uint64_t)w * asum);
+    } else {
+      total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
+                                   (unsigned)w, sh, mode, madd);
+    }
     out[length] = (uint16_t)(total & 0xFFFF);
     out[length + 1] = (uint16_t)(total >> 16);
   }
