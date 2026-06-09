@@ -46,7 +46,10 @@ extern "C" uint32_t p4ndec256v16_for_sum(const unsigned char* in, unsigned n,
                                          unsigned sh, int mode, int madd);
 // Plain fused baseline decoder (vp4d256v16_fused.c). nobc decodes the residual
 // stream with this (no anchor) and adds w·Σ(anchors) — sum(v)=sum(r)+w·Σ(anchor).
+// _madd twin sums with vpmaddwd (matches simdcomp nobc_madd); used when the
+// residuals are madd-safe (< 2^15).
 extern "C" uint32_t p4ndec256v16_sum(const unsigned char* in, unsigned n);
+extern "C" uint32_t p4ndec256v16_sum_madd(const unsigned char* in, unsigned n);
 // Conservative residual-payload byte bound (shared with the non-FoR fused codec).
 extern "C" size_t   p4nbound256v16_fused(size_t n);
 
@@ -182,7 +185,7 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       anchors = reinterpret_cast<const uint16_t*>(p);
       payload = reinterpret_cast<const unsigned char*>(p + num_anchors * sizeof(uint16_t));
     } else {
-      // Materialize the packed anchor stream into s_anchor (two-pass).
+      // Materialize the packed anchor stream into s_anchor (two-pass). NB: 2 pass not great...
       const size_t na_blk = (num_anchors + kBlk - 1) / kBlk;
       const uint8_t* abs = p;
       const uint8_t* apay = abs + na_blk;
@@ -202,8 +205,9 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
       // residual stream with the plain baseline (fast, no anchor), add the scalar.
       uint64_t asum = 0;
       for (size_t a = 0; a < num_anchors; ++a) asum += anchors[a];
-      total = p4ndec256v16_sum(payload, (unsigned)length) +
-              (uint32_t)((uint64_t)w * asum);
+      const uint32_t rsum = madd ? p4ndec256v16_sum_madd(payload, (unsigned)length)
+                                 : p4ndec256v16_sum(payload, (unsigned)length);
+      total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
                                    (unsigned)w, sh, mode, madd);
@@ -383,8 +387,9 @@ class TurboPForFusedForHierarchicalCodecU16
       // Decoupled: each inner window (w elems) contributes w·local_anchor.
       uint64_t asum = 0;
       for (size_t l = 0; l < num_inner; ++l) asum += s_anchor[l];
-      total = p4ndec256v16_sum(payload, (unsigned)length) +
-              (uint32_t)((uint64_t)w * asum);
+      const uint32_t rsum = madd ? p4ndec256v16_sum_madd(payload, (unsigned)length)
+                                 : p4ndec256v16_sum(payload, (unsigned)length);
+      total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
                                    (unsigned)w, sh, mode, madd);

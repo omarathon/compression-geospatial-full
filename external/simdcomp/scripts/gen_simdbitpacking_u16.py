@@ -2098,6 +2098,14 @@ def main():
             f"static void aggregate_sums_u16({reg} OutReg, {reg}* sum) {{\n"
             f"    *sum = {I['add']}(*sum, {I['unpacklo']}(OutReg, kZero));\n"
             f"    *sum = {I['add']}(*sum, {I['unpackhi']}(OutReg, kZero));\n"
+            "}\n\n"
+            "/* madd-widen aggregate (one port-0/1 op vs two port-5 shuffles).\n"
+            "   Signed — valid only when every summed value < 2^15. Used by the\n"
+            "   _madd decode kernels so the TurboPFor nobc residual decode matches\n"
+            "   simdcomp's nobc_madd aggregate for a fair comparison. */\n"
+            f"__attribute__((unused))\n"
+            f"static void aggregate_sums_u16_madd({reg} OutReg, {reg}* sum) {{\n"
+            f"    *sum = {I['add']}(*sum, {I['madd16']}(OutReg, {I['set1']}(1)));\n"
             "}\n\n")
         out = [head, gen_null_unpacker(I), gen_shuffle16_table(), "\n"]
         # Plain unpack (static, _il)
@@ -2136,6 +2144,44 @@ def main():
             pf.append(f"  case {b}: __SIMD_fastunpack{b}_16_pfor_il(in, out, sum, pex, bm16); break;")
         pf += ["  default: break;", "  }", "}", ""]
         out.append("\n".join(pf))
+        # ── madd aggregate variants: identical bit-unpack + PFOR merge, but the
+        #    per-OutReg aggregate is madd (port 0/1) instead of unpack-widen
+        #    (port 5). p4ndec256v16_sum_madd uses these so nobc residual decode
+        #    sums the same way simdcomp's nobc_madd does (fair comparison).
+        for bit in range(1, MAX_BIT + 1):
+            out.append(gen_unpack_function(bit, I, mode='plain', name_suffix='_il', agg='madd'))
+        plain_m = ["static void simdunpack_u16_il_madd(const __m256i *in, uint16_t *out, "
+                   "const uint32_t bit, __m256i* sum) {", "  switch (bit) {",
+                   "  case 0: SIMD_nullunpacker16(in, out); break;"]
+        for b in range(1, MAX_BIT + 1):
+            plain_m.append(f"  case {b}: __SIMD_fastunpack{b}_16_madd_il(in, out, sum); break;")
+        plain_m += ["  default: break;", "  }", "}", ""]
+        out.append("\n".join(plain_m))
+        for bit in range(1, MAX_BIT):
+            out.append(gen_unpack_function(bit, I, mode='pfor', name_suffix='_il', agg='madd'))
+        pfm = ["static void simdunpack_u16_pfor_il_madd(const __m256i *in, uint16_t *out, "
+               "const uint32_t bit, __m256i *sum,",
+               "                                    const uint16_t *pex, const uint16_t *bm16) {",
+               "  switch (bit) {",
+               "  case 0: {",
+               "    const uint16_t *_pex = pex; int v; (void)in; (void)out;",
+               "    for (v = 0; v < 16; ++v) {",
+               "      unsigned _m = bm16[v];",
+               "      __m256i _exc = _mm256_set_m128i(",
+               "          _mm_loadu_si128((const __m128i *)(_pex + _mm_popcnt_u32(_m & 0xFF))),",
+               "          _mm_loadu_si128((const __m128i *)_pex));",
+               "      __m256i _shuf = _mm256_set_m128i(",
+               "          _mm_loadu_si128((const __m128i *)kShuffle16[_m >> 8]),",
+               "          _mm_loadu_si128((const __m128i *)kShuffle16[_m & 0xFF]));",
+               "      _exc = _mm256_shuffle_epi8(_exc, _shuf);",
+               "      aggregate_sums_u16_madd(_exc, sum);",
+               "      _pex += _mm_popcnt_u32(_m);",
+               "    }",
+               "    break; }"]
+        for b in range(1, MAX_BIT):
+            pfm.append(f"  case {b}: __SIMD_fastunpack{b}_16_pfor_madd_il(in, out, sum, pex, bm16); break;")
+        pfm += ["  default: break;", "  }", "}", ""]
+        out.append("\n".join(pfm))
         out_path = args.output or os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', 'src',
             'simdbitpacking_u16_decode_inl.h')
