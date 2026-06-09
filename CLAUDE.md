@@ -3,7 +3,7 @@
 ## 1) Hard Rules
 
 - Goal: keep geospatial uint16 data **compressed in RAM** and run aggregations / NDVI / multiply directly over the fused-decode SIMD pipeline. Speedup comes from smaller working set fitting in L2/L3 + fused per-OutReg work.
-- Honest decode: per-OutReg `add_anchor` must stay on the OutReg dep chain even though sum-fused doesn't strictly need it. Do **not** shortcut by adding `length * anchor` at the end.
+- Honest decode: per-OutReg `add_anchor` must stay on the OutReg dep chain even though sum-fused doesn't strictly need it. Do **not** shortcut by adding `length * anchor` at the end. Post-correction (`hsum + length*anchor`) is sum-only and breaks generalisation to min/max/NDVI/multiply — all of which require the anchor applied per-OutReg during decode. In-flight per-OutReg correction (nobc scalar_acc or bc broadcast) is the right abstraction: it composes uniformly with any operation via the `anchor_kernel` / `kernel` two-kernel pattern.
 - Encode pattern: `AllocEncoded` is a no-op; encode into shared thread-local `GetPackScratch()`; `compressed.assign(...)` exactly `actual_size` bytes. Never resize-to-worst-case + shrink_to_fit on `compressed` (glibc freelist bloats RSS).
 - `bench_pipeline -b 256` ⇒ EncodeArray gets 65,536 elements. Sub-block size is **256 elements** (`kFusedSubBlockSize`), one byte of `b` per sub-block.
 - Anchor for FoR = `min` of the relevant scope (per OutReg / per sub-block / per inner block). Min excludes nothing for now (approach (a) — global min is fine).
