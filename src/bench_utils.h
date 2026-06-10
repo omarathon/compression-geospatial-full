@@ -343,15 +343,20 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
       break;
     }
     case AccessTransformation::LinearSumSimd: {
+      // madd aggregate — same port profile as the fused codecs'
+      // aggregate_sums_u16_madd (madd_epi16(v, set1(1)), port 0/1), so the
+      // uncompressed baseline is a fair ISA match for compressed fused decode.
+      // NOTE: madd treats lanes as signed — values >= 2^15 would sum wrong, but
+      // this is a timing sink (kLinearSumSink only prevents DCE; not
+      // correctness-checked). For madd-safe data (e.g. ETOPO1) it also matches
+      // the value. The fused codecs gate madd on a madd_safe flag identically.
       int total = static_cast<int>(blockSize * blockSize);
       int i = 0;
+      const __m256i kOnes16 = _mm256_set1_epi16(1);
       __m256i vsum = _mm256_setzero_si256();
       for (; i + 16 <= total; i += 16) {
         __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
-        // Zero-extend uint16 to int32 (unpack with zero), then accumulate.
-        // _mm256_madd_epi16 treats inputs as signed — wrong for values > 32767.
-        vsum = _mm256_add_epi32(vsum, _mm256_unpacklo_epi16(v, kZero));
-        vsum = _mm256_add_epi32(vsum, _mm256_unpackhi_epi16(v, kZero));
+        vsum = _mm256_add_epi32(vsum, _mm256_madd_epi16(v, kOnes16));
       }
       __m128i lo = _mm256_castsi256_si128(vsum);
       __m128i hi = _mm256_extracti128_si256(vsum, 1);
