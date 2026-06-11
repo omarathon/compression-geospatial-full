@@ -29,4 +29,4 @@ external/FastPFor_unfused/
 external/simdcomp_fused/
 external/simdcomp_unfused/
 
-data/
+data/build_skipexc/

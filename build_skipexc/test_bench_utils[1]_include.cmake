@@ -1,5 +1,0 @@
-if(EXISTS "/home/omar/compression-geospatial-git/build_skipexc/test_bench_utils[1]_tests.cmake")
-  include("/home/omar/compression-geospatial-git/build_skipexc/test_bench_utils[1]_tests.cmake")
-else()
-  add_test(test_bench_utils_NOT_BUILT test_bench_utils_NOT_BUILT)
-endif()

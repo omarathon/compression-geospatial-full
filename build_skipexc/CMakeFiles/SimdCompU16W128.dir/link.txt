@@ -1,2 +1,0 @@
-/usr/bin/ar qc libSimdCompU16W128.a CMakeFiles/SimdCompU16W128.dir/external/simdcomp/src/simdbitpacking_u16_w128.c.o CMakeFiles/SimdCompU16W128.dir/external/simdcomp/src/simdbitpacking_u16_w128_corrected.c.o CMakeFiles/SimdCompU16W128.dir/external/simdcomp/src/simdbitpacking_u16_w128_nobc.c.o
-/usr/bin/ranlib libSimdCompU16W128.a

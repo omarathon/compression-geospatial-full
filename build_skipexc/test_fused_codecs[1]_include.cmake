@@ -1,5 +1,0 @@
-if(EXISTS "/home/omar/compression-geospatial-git/build_skipexc/test_fused_codecs[1]_tests.cmake")
-  include("/home/omar/compression-geospatial-git/build_skipexc/test_fused_codecs[1]_tests.cmake")
-else()
-  add_test(test_fused_codecs_NOT_BUILT test_fused_codecs_NOT_BUILT)
-endif()

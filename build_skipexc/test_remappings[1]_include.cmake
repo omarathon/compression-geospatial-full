@@ -1,5 +1,0 @@
-if(EXISTS "/home/omar/compression-geospatial-git/build_skipexc/test_remappings[1]_tests.cmake")
-  include("/home/omar/compression-geospatial-git/build_skipexc/test_remappings[1]_tests.cmake")
-else()
-  add_test(test_remappings_NOT_BUILT test_remappings_NOT_BUILT)
-endif()
