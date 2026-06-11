@@ -35,7 +35,8 @@ enum class AccessPattern { Linear, Random };
 enum class AccessTransformation {
   LinearXOR,
   LinearSum,
-  LinearSumSimd,   // SSE SIMD vectorised sum — fair baseline matching FastPFor ISA
+  LinearSumSimd,   // AVX2 SIMD sum — madd aggregate (matches fused madd codecs)
+  LinearSumSimdUnpack,  // AVX2 SIMD sum — unpack-widen aggregate (matches non-madd codecs)
   LinearSumFused,  // reads pre-computed 32-bit sum from codec overflow slot
   RandomXOR,
   RandomSum,
@@ -77,6 +78,7 @@ inline AccessTransformation ParseAccessTransformation(const std::string& s) {
     return AccessTransformation::LinearXOR;
   if (s == "linearSum") return AccessTransformation::LinearSum;
   if (s == "linearSumSimd") return AccessTransformation::LinearSumSimd;
+  if (s == "linearSumSimdUnpack") return AccessTransformation::LinearSumSimdUnpack;
   if (s == "linearSumFused") return AccessTransformation::LinearSumFused;
   if (s == "randomXOR") return AccessTransformation::RandomXOR;
   if (s == "randomSum") return AccessTransformation::RandomSum;
@@ -139,6 +141,8 @@ inline std::string ToString(AccessTransformation t) {
       return "linearSum";
     case AccessTransformation::LinearSumSimd:
       return "linearSumSimd";
+    case AccessTransformation::LinearSumSimdUnpack:
+      return "linearSumSimdUnpack";
     case AccessTransformation::LinearSumFused:
       return "linearSumFused";
     case AccessTransformation::RandomXOR:
@@ -357,6 +361,27 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
       for (; i + 16 <= total; i += 16) {
         __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
         vsum = _mm256_add_epi32(vsum, _mm256_madd_epi16(v, kOnes16));
+      }
+      __m128i lo = _mm256_castsi256_si128(vsum);
+      __m128i hi = _mm256_extracti128_si256(vsum, 1);
+      __m128i s = _mm_add_epi32(lo, hi);
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1, 0, 3, 2)));
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(2, 3, 0, 1)));
+      kLinearSumSink = _mm_cvtsi128_si32(s);
+      for (; i < total; ++i)
+        kLinearSumSink += data[i];
+      break;
+    }
+    case AccessTransformation::LinearSumSimdUnpack: {
+      // unpack-widen aggregate (zero-extend uint16 -> int32, port 5) — the
+      // unsigned-correct, non-madd baseline matching the codecs' kUnpack path.
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      __m256i vsum = _mm256_setzero_si256();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
+        vsum = _mm256_add_epi32(vsum, _mm256_unpacklo_epi16(v, kZero));
+        vsum = _mm256_add_epi32(vsum, _mm256_unpackhi_epi16(v, kZero));
       }
       __m128i lo = _mm256_castsi256_si128(vsum);
       __m128i hi = _mm256_extracti128_si256(vsum, 1);

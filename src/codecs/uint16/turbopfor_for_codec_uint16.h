@@ -55,6 +55,9 @@ extern "C" uint32_t p4ndec256v16_sum_madd(const unsigned char* in, unsigned n);
 // pshufb merge). Default for the madd-safe nobc path; FOR_SUM_MERGE=1 forces the
 // old per-position merge (p4ndec256v16_sum_madd) for A/B.
 extern "C" uint32_t p4ndec256v16_sum_fast(const unsigned char* in, unsigned n);
+// Unpack-widen twin of sum_fast (factored excess, non-madd low-bit aggregate) —
+// the nobc+unpack BYTE factored path (>2^15-safe, and madd-vs-unpack A/B).
+extern "C" uint32_t p4ndec256v16_sum_fast_unpack(const unsigned char* in, unsigned n);
 // Conservative residual-payload byte bound (shared with the non-FoR fused codec).
 extern "C" size_t   p4nbound256v16_fused(size_t n);
 
@@ -220,7 +223,9 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
           madd ? (turbopfor_for_detail::use_sum_fast()
                       ? p4ndec256v16_sum_fast(payload, (unsigned)length)
                       : p4ndec256v16_sum_madd(payload, (unsigned)length))
-               : p4ndec256v16_sum(payload, (unsigned)length);
+               : (turbopfor_for_detail::use_sum_fast()
+                      ? p4ndec256v16_sum_fast_unpack(payload, (unsigned)length)
+                      : p4ndec256v16_sum(payload, (unsigned)length));
       total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, anchors,
@@ -405,7 +410,9 @@ class TurboPForFusedForHierarchicalCodecU16
           madd ? (turbopfor_for_detail::use_sum_fast()
                       ? p4ndec256v16_sum_fast(payload, (unsigned)length)
                       : p4ndec256v16_sum_madd(payload, (unsigned)length))
-               : p4ndec256v16_sum(payload, (unsigned)length);
+               : (turbopfor_for_detail::use_sum_fast()
+                      ? p4ndec256v16_sum_fast_unpack(payload, (unsigned)length)
+                      : p4ndec256v16_sum(payload, (unsigned)length));
       total = rsum + (uint32_t)((uint64_t)w * asum);
     } else {
       total = p4ndec256v16_for_sum(payload, (unsigned)length, s_anchor,
