@@ -2113,7 +2113,9 @@ def main():
             out.append(gen_unpack_function(bit, I, mode='plain', name_suffix='_il'))
         plain = ["static void simdunpack_u16_il(const __m256i *in, uint16_t *out, "
                  "const uint32_t bit, __m256i* sum) {", "  switch (bit) {",
-                 "  case 0: SIMD_nullunpacker16(in, out); break;"]
+                 "  /* b==0: all-zero block adds 0 to the fused sum (out unused) → no-op",
+                 "     (was a 512B SIMD_nullunpacker16 memset, pure waste). */",
+                 "  case 0: (void)in; (void)out; break;"]
         for b in range(1, MAX_BIT + 1):
             plain.append(f"  case {b}: __SIMD_fastunpack{b}_16_il(in, out, sum); break;")
         plain += ["  default: break;", "  }", "}", ""]
