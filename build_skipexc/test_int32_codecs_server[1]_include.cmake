@@ -1,0 +1,5 @@
+if(EXISTS "/home/omar/compression-geospatial-git/build_skipexc/test_int32_codecs_server[1]_tests.cmake")
+  include("/home/omar/compression-geospatial-git/build_skipexc/test_int32_codecs_server[1]_tests.cmake")
+else()
+  add_test(test_int32_codecs_server_NOT_BUILT test_int32_codecs_server_NOT_BUILT)
+endif()

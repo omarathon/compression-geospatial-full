@@ -1,0 +1,22 @@
+# Base (correct):
+
+echo "base"
+
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 100 -r 1   --icodec "custom_direct_access"   --acodec "custom_direct_access"   --itrans none   --atrans linearSum   --pattern linear   --ordering default   --trace-sums &> out_base.txt
+
+# Fused (simdcomp):
+
+echo "simdcomp"
+
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 100 -r 1   --icodec "simdcomp_fused"   --acodec "simdcomp_fused"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums &> out_simdcomp.txt
+
+# Fused (pfor):
+
+echo "pfor"
+
+./build/bench_pipeline /home/omar/diss/geotiffs/srtm_45_15.tif  -b 256 -n 100 -r 1   --icodec "FastPFor_fused_SIMDPFor+VariableByte"   --acodec "FastPFor_fused_SIMDPFor+VariableByte"   --itrans none   --atrans linearSumFused   --pattern linear   --ordering default   --trace-sums &> out_pfor.txt
+
+echo "diffs"
+
+diff out_base.txt out_simdcomp.txt
+diff out_base.txt out_pfor.txt

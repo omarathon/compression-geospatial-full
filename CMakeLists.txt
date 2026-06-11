@@ -55,6 +55,14 @@ target_include_directories(TurboPForFused PRIVATE
   ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include
   ${EXT}/simdcomp/include ${EXT}/simdcomp/src)
 target_compile_options(TurboPForFused PRIVATE -O3 -mavx2)
+# Diagnostic: skip ALL PFor exception decode work (bitunpack16 of excess, the
+# sum_excess/pshufb merge) and just walk the stream + unpack the low-bit plane.
+# Sums are WRONG (exceptions ignored) — timing-only, to isolate the exception
+# cost vs the bitpack-unpack cost. Default OFF = full, correct decode.
+option(PFOR_SKIP_EXC "TurboPForFused: skip PFor exception decode (timing-only)" OFF)
+if(PFOR_SKIP_EXC)
+  target_compile_definitions(TurboPForFused PRIVATE PFOR_SKIP_EXC)
+endif()
 target_link_libraries(TurboPForFused PUBLIC TurboPFor SimdComp)
 
 # 128-bit (SSE) simdcomp u16 pack/unpack — generated minimal variant, built as

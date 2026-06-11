@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTurboPForFused.a CMakeFiles/TurboPForFused.dir/external/TurboPFor/lib/vp4d_fused.c.o CMakeFiles/TurboPForFused.dir/external/TurboPFor/lib/vp4d256v16_fused.c.o CMakeFiles/TurboPForFused.dir/external/TurboPFor/lib/vp4d256v16_for_fused.c.o
+/usr/bin/ranlib libTurboPForFused.a
