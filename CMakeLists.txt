@@ -63,6 +63,14 @@ option(PFOR_SKIP_EXC "TurboPForFused: skip PFor exception decode (timing-only)" 
 if(PFOR_SKIP_EXC)
   target_compile_definitions(TurboPForFused PRIVATE PFOR_SKIP_EXC)
 endif()
+# Real (correct) variant: store BITMAP excess as fixed-width bytes (uint8 if
+# bxe<=8, else uint16) instead of bitpack16, and SIMD-sum them (no bitunpack16,
+# no scalar bit-extraction). Trades a few bits/exception of CR for a branchless
+# parallel excess sum. Measures how close to the SKIP floor a correct decoder gets.
+option(PFOR_BYTE_EXC "TurboPForFused: byte-aligned excess (correct, SIMD-summable)" OFF)
+if(PFOR_BYTE_EXC)
+  target_compile_definitions(TurboPForFused PRIVATE PFOR_BYTE_EXC)
+endif()
 target_link_libraries(TurboPForFused PUBLIC TurboPFor SimdComp)
 
 # 128-bit (SSE) simdcomp u16 pack/unpack — generated minimal variant, built as
