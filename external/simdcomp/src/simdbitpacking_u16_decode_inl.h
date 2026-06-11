@@ -1433,7 +1433,9 @@ static void __SIMD_fastunpack16_16_il(const __m256i *in, uint16_t *_out, __m256i
 }
 static void simdunpack_u16_il(const __m256i *in, uint16_t *out, const uint32_t bit, __m256i* sum) {
   switch (bit) {
-  case 0: SIMD_nullunpacker16(in, out); break;
+  /* b==0: all-zero block adds 0 to the fused sum (out unused) → no-op (was a
+     512B SIMD_nullunpacker16 memset, pure waste on mostly-zero rasters). */
+  case 0: (void)in; (void)out; break;
   case 1: __SIMD_fastunpack1_16_il(in, out, sum); break;
   case 2: __SIMD_fastunpack2_16_il(in, out, sum); break;
   case 3: __SIMD_fastunpack3_16_il(in, out, sum); break;

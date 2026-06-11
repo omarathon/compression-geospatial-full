@@ -165,6 +165,10 @@ InitPhysicalCodecsU16() {
   codecs.push_back(std::make_unique<TurboPForCodecU16>(7)); // turbopack
   codecs.push_back(std::make_unique<TurboPForFusedCodecU16>()); // fused-sum 128v16
   codecs.push_back(std::make_unique<TurboPForFused256CodecU16>()); // fused-sum 256v16
+  // Non-FoR PFor variants: factored (byte) vs merge-into-OutReg × madd/unpack.
+  for (bool merge : {false, true})
+    for (FusedAggImpl agg : {FusedAggImpl::kMadd, FusedAggImpl::kUnpack})
+      codecs.push_back(std::make_unique<TurboPForFused256VariantCodecU16>(agg, merge));
 
   // ── 256-bit fused FoR TurboPFor (PFor residuals + per-window anchor), both
   //    aggregate impls — regular (window × {raw,packed-anchor}) + hierarchical ──
