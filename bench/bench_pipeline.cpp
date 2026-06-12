@@ -404,35 +404,58 @@ static void RunOneCombinationU16(
   double meanCompRatio      = 0.0;
   double meanExceptPerBlock = -1.0;
 
-  for (int rep = 0; rep < numReps; rep++) {
-    std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(
-        baseCodec.CloneFresh());
-    std::unique_ptr<StatefulIntegerCodec<uint16_t>> expAccess(
-        accessCodec.CloneFresh());
+  // For a non-mutating access transform (sum/min/max/...), BenchmarkAccessU16
+  // never re-encodes (dataChange=false), so the encoded grid is IDENTICAL every
+  // rep. Build+read+encode it ONCE and reuse across reps instead of re-reading +
+  // re-encoding the whole n-block sample every rep (the dominant cost at large n,
+  // ~13x at r=10 rs=3). Mutating transforms keep the per-rep rebuild.
+  const bool staticGrid = !AccessTransformationMutatesData(combo.accessTrans);
 
-    auto codecGrid =
+  auto compute_cr = [&](const auto& grid) {
+    const double uncompBytes =
+        static_cast<double>(blockSize) * blockSize * sizeof(uint16_t);
+    double sumRatio = 0.0, sumExcept = 0.0;
+    for (const auto& c : grid) {
+      sumRatio  += (c->EncodedNumValues() * c->EncodedSizeValue()) / uncompBytes;
+      sumExcept += c->MeanExceptionsPerInnerBlock();
+    }
+    const double n = static_cast<double>(grid.size());
+    meanCompRatio      = sumRatio  / n;
+    meanExceptPerBlock = sumExcept / n;
+  };
+
+  std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> sharedGrid;
+  if (staticGrid) {
+    std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(baseCodec.CloneFresh());
+    sharedGrid =
         SplitIntoFullBlocksU16(band, nXSize, nYSize, blockSize, numBlocks,
                                std::move(expBase), minShift, hasNoData, nodata16,
                                nodataU16, normalize, normMinU16, normGCDU16);
-    if (codecGrid.empty()) {
+    if (sharedGrid.empty()) {
       std::cerr << "NO CODECS FORMING GRID.\n";
       return;
     }
+    compute_cr(sharedGrid);
+  }
 
-    if (rep == 0) {
-      const double uncompBytes =
-          static_cast<double>(blockSize) * blockSize * sizeof(uint16_t);
-      double sumRatio  = 0.0;
-      double sumExcept = 0.0;
-      for (const auto& c : codecGrid) {
-        sumRatio  += (c->EncodedNumValues() * c->EncodedSizeValue()) / uncompBytes;
-        sumExcept += c->MeanExceptionsPerInnerBlock();
+  for (int rep = 0; rep < numReps; rep++) {
+    std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> localGrid;
+    if (!staticGrid) {
+      std::unique_ptr<StatefulIntegerCodec<uint16_t>> expBase(baseCodec.CloneFresh());
+      localGrid =
+          SplitIntoFullBlocksU16(band, nXSize, nYSize, blockSize, numBlocks,
+                                 std::move(expBase), minShift, hasNoData, nodata16,
+                                 nodataU16, normalize, normMinU16, normGCDU16);
+      if (localGrid.empty()) {
+        std::cerr << "NO CODECS FORMING GRID.\n";
+        return;
       }
-      const double n   = static_cast<double>(codecGrid.size());
-      meanCompRatio      = sumRatio  / n;
-      meanExceptPerBlock = sumExcept / n;
+      if (rep == 0) compute_cr(localGrid);
     }
+    auto& codecGrid = staticGrid ? sharedGrid : localGrid;
 
+    std::unique_ptr<StatefulIntegerCodec<uint16_t>> expAccess(
+        accessCodec.CloneFresh());
     if (rep < numSkip) {
       RunningStats dummy1, dummy2, dummy3;
       BenchmarkAccessU16(codecGrid, std::move(expAccess), blockSize, accessPattern,
