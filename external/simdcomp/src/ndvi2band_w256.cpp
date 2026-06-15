@@ -36,7 +36,8 @@ static inline __m256i ex(const __m256i* in) {
 
 // Kernel ladder (op selects the per-OutReg-pair aggregate), so the cost deltas
 // isolate decode vs widen vs divide — the 2-band analog of the single-band ladder.
-enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3, OP_RCPRAW = 4 };
+enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3, OP_RCPRAW = 4,
+       OP_NDVI_DIV = 5, OP_NDVI_RCP = 6, OP_NDVI_RCPRAW = 7 };
 
 template <int OP>
 static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
@@ -81,6 +82,29 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
     accf = _mm256_add_ps(accf, _mm256_mul_ps(a0, _mm256_rcp_ps(b0)));
     accf = _mm256_add_ps(accf, _mm256_mul_ps(a1, _mm256_rcp_ps(b1)));
   }
+  // Full NDVI formula: (a-b)/(a+b), den==0 -> 0.
+  if constexpr (OP == OP_NDVI_DIV || OP == OP_NDVI_RCP || OP == OP_NDVI_RCPRAW) {
+    const __m256 z = _mm256_setzero_ps();
+    __m256 num0 = _mm256_sub_ps(a0, b0), den0 = _mm256_add_ps(a0, b0);
+    __m256 num1 = _mm256_sub_ps(a1, b1), den1 = _mm256_add_ps(a1, b1);
+    __m256 mask0 = _mm256_cmp_ps(den0, z, _CMP_GT_OQ);
+    __m256 mask1 = _mm256_cmp_ps(den1, z, _CMP_GT_OQ);
+    if constexpr (OP == OP_NDVI_DIV) {
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_div_ps(num0, den0), mask0));
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_div_ps(num1, den1), mask1));
+    }
+    if constexpr (OP == OP_NDVI_RCP) {
+      __m256 r0 = _mm256_rcp_ps(den0), r1 = _mm256_rcp_ps(den1);
+      r0 = _mm256_mul_ps(r0, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(den0, r0)));
+      r1 = _mm256_mul_ps(r1, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(den1, r1)));
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num0, r0), mask0));
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num1, r1), mask1));
+    }
+    if constexpr (OP == OP_NDVI_RCPRAW) {
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num0, _mm256_rcp_ps(den0)), mask0));
+      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num1, _mm256_rcp_ps(den1)), mask1));
+    }
+  }
 }
 
 // One sub-block, both bands, lock-step (16 OutRegs). Out-of-line per (bA,bB,OP).
@@ -98,7 +122,7 @@ __attribute__((noinline)) static void sub_op(const __m256i* inA,
 }
 
 using Fn = void (*)(const __m256i*, const __m256i*, __m256*, __m256i*);
-Fn g_tbl[5][17][17];
+Fn g_tbl[8][17][17];
 
 template <int OP, int A>
 static void reg_row() {
@@ -121,6 +145,9 @@ struct Init {
     reg_op<OP_DIV>();
     reg_op<OP_RCP>();
     reg_op<OP_RCPRAW>();
+    reg_op<OP_NDVI_DIV>();
+    reg_op<OP_NDVI_RCP>();
+    reg_op<OP_NDVI_RCPRAW>();
   }
 } g_init;
 
@@ -156,11 +183,16 @@ static double raw_loop(const uint16_t* a, const uint16_t* b, size_t length) {
 // Uncompressed 2-band aggregate over raw uint16 grids (same op ladder).
 extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
                             int op) {
-  return op == 0 ? raw_loop<0>(a, b, length)
-       : op == 1 ? raw_loop<1>(a, b, length)
-       : op == 2 ? raw_loop<2>(a, b, length)
-       : op == 3 ? raw_loop<3>(a, b, length)
-                 : raw_loop<4>(a, b, length);
+  switch (op) {
+    case 0: return raw_loop<0>(a, b, length);
+    case 1: return raw_loop<1>(a, b, length);
+    case 2: return raw_loop<2>(a, b, length);
+    case 3: return raw_loop<3>(a, b, length);
+    case 4: return raw_loop<4>(a, b, length);
+    case 5: return raw_loop<5>(a, b, length);
+    case 6: return raw_loop<6>(a, b, length);
+    default: return raw_loop<7>(a, b, length);
+  }
 }
 
 // Decode a block-pair (encoded simdcomp_fused: [madd_safe:1][bs:num_sb][payload])

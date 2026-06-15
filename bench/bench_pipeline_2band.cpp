@@ -878,7 +878,7 @@ int main(int argc, char* argv[]) {
   app.add_option("--rs", numSkip, "Warm-up reps to skip");
   app.add_option("--icodec", icodecNames,
                  "simdcomp_fused (compressed) | custom_direct_access (uncompressed)");
-  app.add_option("--op", opStr, "noop|add|div|rcp|rcpraw");
+  app.add_option("--op", opStr, "noop|add|div|rcp|rcpraw|ndvi_div|ndvi_rcp|ndvi_rcpraw");
   app.add_flag("--normalize", normalize,
                "Normalize blocks: subtract per-band min, divide by GCD");
   app.add_option("--threads,-X", numThreads,
@@ -890,7 +890,8 @@ int main(int argc, char* argv[]) {
   CaptureFullAffinity();
   PinMainBuilderCpu();
   const int op = (opStr == "noop") ? 0 : (opStr == "add") ? 1 : (opStr == "div") ? 2
-                 : (opStr == "rcp") ? 3 : 4;
+                 : (opStr == "rcp") ? 3 : (opStr == "rcpraw") ? 4
+                 : (opStr == "ndvi_div") ? 5 : (opStr == "ndvi_rcp") ? 6 : 7;
 
   GDALAllRegister();
   GDALSetCacheMax(64 * 1024 * 1024);
