@@ -36,7 +36,7 @@ static inline __m256i ex(const __m256i* in) {
 
 // Kernel ladder (op selects the per-OutReg-pair aggregate), so the cost deltas
 // isolate decode vs widen vs divide — the 2-band analog of the single-band ladder.
-enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3 };
+enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3, OP_RCPRAW = 4 };
 
 template <int OP>
 static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
@@ -76,6 +76,11 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
     accf = _mm256_add_ps(accf, _mm256_mul_ps(a0, r0));
     accf = _mm256_add_ps(accf, _mm256_mul_ps(a1, r1));
   }
+  if constexpr (OP == OP_RCPRAW) {
+    // vrcpps only, no NR step — ~12-bit accuracy, saves 3 dependent mul/sub ops.
+    accf = _mm256_add_ps(accf, _mm256_mul_ps(a0, _mm256_rcp_ps(b0)));
+    accf = _mm256_add_ps(accf, _mm256_mul_ps(a1, _mm256_rcp_ps(b1)));
+  }
 }
 
 // One sub-block, both bands, lock-step (16 OutRegs). Out-of-line per (bA,bB,OP).
@@ -93,7 +98,7 @@ __attribute__((noinline)) static void sub_op(const __m256i* inA,
 }
 
 using Fn = void (*)(const __m256i*, const __m256i*, __m256*, __m256i*);
-Fn g_tbl[4][17][17];
+Fn g_tbl[5][17][17];
 
 template <int OP, int A>
 static void reg_row() {
@@ -115,6 +120,7 @@ struct Init {
     reg_op<OP_ADD>();
     reg_op<OP_DIV>();
     reg_op<OP_RCP>();
+    reg_op<OP_RCPRAW>();
   }
 } g_init;
 
@@ -153,7 +159,8 @@ extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
   return op == 0 ? raw_loop<0>(a, b, length)
        : op == 1 ? raw_loop<1>(a, b, length)
        : op == 2 ? raw_loop<2>(a, b, length)
-                 : raw_loop<3>(a, b, length);
+       : op == 3 ? raw_loop<3>(a, b, length)
+                 : raw_loop<4>(a, b, length);
 }
 
 // Decode a block-pair (encoded simdcomp_fused: [madd_safe:1][bs:num_sb][payload])
