@@ -95,6 +95,12 @@ add_library(SimdCompU16W256 STATIC
 target_include_directories(SimdCompU16W256 PRIVATE ${EXT}/simdcomp/include)
 target_compile_options(SimdCompU16W256 PRIVATE -O3 -march=native -mno-avx512f)
 
+# Two-band lock-step fused NDVI kernels (independent b: 289 per-(bA,bB) kernels).
+# Separate lib; additive — does not touch any single-band generated source.
+add_library(Ndvi2Band STATIC ${EXT}/simdcomp/src/ndvi2band_w256.cpp)
+target_compile_options(Ndvi2Band PRIVATE -O3 -march=native -mno-avx512f)
+set_target_properties(Ndvi2Band PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -241,6 +247,18 @@ configure_bench(bench_comp)
 
 add_executable(bench_pipeline bench/bench_pipeline.cpp)
 configure_bench(bench_pipeline)
+
+# Multi-threaded variant: X parallel decode workers over one shared grid
+# (grid = n*X blocks; each worker decodes a disjoint n-block slice).
+add_executable(bench_pipeline_multithread bench/bench_pipeline_multithread.cpp)
+configure_bench(bench_pipeline_multithread)
+find_package(Threads REQUIRED)
+target_link_libraries(bench_pipeline_multithread PRIVATE Threads::Threads)
+
+# Two-band fused NDVI decode benchmark (L1-temp / shared-b streamed).
+add_executable(bench_pipeline_2band bench/bench_pipeline_2band.cpp)
+configure_bench(bench_pipeline_2band)
+target_link_libraries(bench_pipeline_2band PRIVATE Ndvi2Band)
 
 add_executable(for128_parity bench/for128_parity.cpp)
 configure_bench(for128_parity)
