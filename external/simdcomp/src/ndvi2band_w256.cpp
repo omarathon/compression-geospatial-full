@@ -14,6 +14,7 @@
 // on EVEX-encoded YMM that -march=native would otherwise emit).
 
 #include <immintrin.h>
+#include <cmath>
 #include <cstdint>
 #include <cstddef>
 #include <utility>
@@ -37,7 +38,18 @@ static inline __m256i ex(const __m256i* in) {
 // Kernel ladder (op selects the per-OutReg-pair aggregate), so the cost deltas
 // isolate decode vs widen vs divide — the 2-band analog of the single-band ladder.
 enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3, OP_RCPRAW = 4,
-       OP_NDVI_DIV = 5, OP_NDVI_RCP = 6, OP_NDVI_RCPRAW = 7 };
+       OP_NDVI_DIV = 5, OP_NDVI_RCP = 6, OP_NDVI_RCPRAW = 7, OP_NDVI_COUNT = 8 };
+
+// Fixed-point threshold coefficients for OP_NDVI_COUNT: NDVI > x  <=>
+// (a-b) > x*(a+b)  <=>  a*(1-x) - b*(1+x) > 0  (valid since a+b >= 0; the
+// a=b=0 case gives 0 > 0 = false, consistent with masking den==0 as "no count").
+// x is a runtime threshold but FIXED across the whole decode (not per-pixel),
+// so it folds into two constants reused via one broadcast register — exactly
+// the case where a constant-divisor fixed-point multiply trick applies
+// (unlike the per-pixel-variable divide NDVI itself needs).
+// Layout: 16 lanes of [K1,-K2,K1,-K2,...] so vpmaddwd(interleave(a,b), coef)
+// directly yields a*K1 - b*K2 in int32 — no float widen, no divide at all.
+thread_local __m256i g_count_coef = _mm256_setzero_si256();
 
 template <int OP>
 static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
@@ -54,6 +66,21 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
     accx = _mm256_add_epi32(accx, _mm256_unpackhi_epi16(va, z));
     accx = _mm256_add_epi32(accx, _mm256_unpacklo_epi16(vb, z));
     accx = _mm256_add_epi32(accx, _mm256_unpackhi_epi16(vb, z));
+    return;
+  }
+  if constexpr (OP == OP_NDVI_COUNT) {
+    // count(NDVI > x) per OutReg: pure integer, no widen-to-float, no divide.
+    // unpacklo/hi interleave (a,b) pairs (8 pixels each; order doesn't matter,
+    // we only count); vpmaddwd against [K1,-K2,...] gives a*K1-b*K2 per pixel
+    // directly in int32; cmpgt yields -1/0 per lane, summed into accx (negate
+    // once at the very end to recover the true count).
+    __m256i lo = _mm256_unpacklo_epi16(va, vb);
+    __m256i hi = _mm256_unpackhi_epi16(va, vb);
+    __m256i dlo = _mm256_madd_epi16(lo, g_count_coef);
+    __m256i dhi = _mm256_madd_epi16(hi, g_count_coef);
+    const __m256i z = _mm256_setzero_si256();
+    accx = _mm256_add_epi32(accx, _mm256_cmpgt_epi32(dlo, z));
+    accx = _mm256_add_epi32(accx, _mm256_cmpgt_epi32(dhi, z));
     return;
   }
   // OP_DIV / OP_RCP: both widen to float first; differ only in how they divide.
@@ -122,7 +149,7 @@ __attribute__((noinline)) static void sub_op(const __m256i* inA,
 }
 
 using Fn = void (*)(const __m256i*, const __m256i*, __m256*, __m256i*);
-Fn g_tbl[8][17][17];
+Fn g_tbl[9][17][17];
 
 template <int OP, int A>
 static void reg_row() {
@@ -148,6 +175,7 @@ struct Init {
     reg_op<OP_NDVI_DIV>();
     reg_op<OP_NDVI_RCP>();
     reg_op<OP_NDVI_RCPRAW>();
+    reg_op<OP_NDVI_COUNT>();
   }
 } g_init;
 
@@ -157,6 +185,14 @@ static inline double hsum_ps(__m256 v) {
   s = _mm_hadd_ps(s, s);
   s = _mm_hadd_ps(s, s);
   return _mm_cvtss_f32(s);
+}
+
+static inline int32_t hsum_epi32(__m256i v) {
+  __m128i lo = _mm256_castsi256_si128(v), hi = _mm256_extracti128_si256(v, 1);
+  __m128i s = _mm_add_epi32(lo, hi);
+  s = _mm_hadd_epi32(s, s);
+  s = _mm_hadd_epi32(s, s);
+  return _mm_cvtsi128_si32(s);
 }
 
 static inline double xreduce(__m256i x) {
@@ -175,10 +211,23 @@ static double raw_loop(const uint16_t* a, const uint16_t* b, size_t length) {
   for (size_t i = 0; i < length; i += 16)
     acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a + i)),
                _mm256_loadu_si256((const __m256i*)(b + i)), f, x);
+  if constexpr (OP == OP_NDVI_COUNT) return (double)(-hsum_epi32(x));
   return hsum_ps(f) + xreduce(x);
 }
 
 }  // namespace
+
+// Sets the fixed-point threshold coefficients used by OP_NDVI_COUNT for the
+// CURRENT THREAD. x is the NDVI threshold (typically in (-1,1)); SCALE chosen
+// so a*K1, b*K2 (a,b<=65535) stay comfortably within int32 after vpmaddwd's
+// implicit add of two such products (max ~1.07e9, well under 2^31-1).
+extern "C" void ndvi2_set_count_threshold(float x) {
+  constexpr float SCALE = 4096.0f;
+  int16_t k1 = (int16_t)lrintf((1.0f - x) * SCALE);
+  int16_t k2 = (int16_t)lrintf((1.0f + x) * SCALE);
+  uint32_t packed = (uint32_t)(uint16_t)k1 | ((uint32_t)(uint16_t)(int16_t)(-k2) << 16);
+  g_count_coef = _mm256_set1_epi32((int32_t)packed);
+}
 
 // Uncompressed 2-band aggregate over raw uint16 grids (same op ladder).
 extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
@@ -191,7 +240,8 @@ extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
     case 4: return raw_loop<4>(a, b, length);
     case 5: return raw_loop<5>(a, b, length);
     case 6: return raw_loop<6>(a, b, length);
-    default: return raw_loop<7>(a, b, length);
+    case 7: return raw_loop<7>(a, b, length);
+    default: return raw_loop<8>(a, b, length);
   }
 }
 
@@ -214,5 +264,6 @@ extern "C" double ndvi2_indep(const uint8_t* encA, const uint8_t* encB,
     inA += (size_t)ba * sizeof(__m256i);
     inB += (size_t)bb * sizeof(__m256i);
   }
+  if (op == OP_NDVI_COUNT) return (double)(-hsum_epi32(x));
   return hsum_ps(f) + xreduce(x);
 }

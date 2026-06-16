@@ -33,6 +33,8 @@ extern "C" double ndvi2_indep(const uint8_t* encA, const uint8_t* encB,
                               size_t length, int op);
 extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
                             int op);
+extern "C" void ndvi2_set_count_threshold(float x);
+static float gCountThreshold = 0.3f;
 static volatile double g_ndvi_sink2 = 0.0;
 
 #ifdef __linux__
@@ -800,6 +802,7 @@ static void RunStaticReps2Band(GridU16& gA, GridU16& gB, int blockSize, int op,
 
   auto worker = [&](int t) {
     PinThreadToAllowedCpu(t);
+    if (op == 8) ndvi2_set_count_threshold(gCountThreshold);  // thread_local coef
     const std::size_t lo = (size_t)t * per;
     const std::size_t hi = (t == X - 1) ? total : lo + per;
     for (int myRep = 0; myRep < numReps; myRep++) {
@@ -878,7 +881,9 @@ int main(int argc, char* argv[]) {
   app.add_option("--rs", numSkip, "Warm-up reps to skip");
   app.add_option("--icodec", icodecNames,
                  "simdcomp_fused (compressed) | custom_direct_access (uncompressed)");
-  app.add_option("--op", opStr, "noop|add|div|rcp|rcpraw|ndvi_div|ndvi_rcp|ndvi_rcpraw");
+  app.add_option("--op", opStr, "noop|add|div|rcp|rcpraw|ndvi_div|ndvi_rcp|ndvi_rcpraw|count");
+  app.add_option("--threshold", gCountThreshold,
+                 "NDVI threshold for --op count (default 0.3)");
   app.add_flag("--normalize", normalize,
                "Normalize blocks: subtract per-band min, divide by GCD");
   app.add_option("--threads,-X", numThreads,
@@ -891,7 +896,8 @@ int main(int argc, char* argv[]) {
   PinMainBuilderCpu();
   const int op = (opStr == "noop") ? 0 : (opStr == "add") ? 1 : (opStr == "div") ? 2
                  : (opStr == "rcp") ? 3 : (opStr == "rcpraw") ? 4
-                 : (opStr == "ndvi_div") ? 5 : (opStr == "ndvi_rcp") ? 6 : 7;
+                 : (opStr == "ndvi_div") ? 5 : (opStr == "ndvi_rcp") ? 6
+                 : (opStr == "ndvi_rcpraw") ? 7 : 8;
 
   GDALAllRegister();
   GDALSetCacheMax(64 * 1024 * 1024);
@@ -942,11 +948,12 @@ int main(int argc, char* argv[]) {
   RunStaticReps2Band(gA, gB, blockSize, op, compressed, numReps, numSkip,
                      statsDec, medDec);
 
+  const double resultSink = g_ndvi_sink2;
   std::cout << std::format(
       "**NDVI 2BAND** fileA={} fileB={} op={} codec={} X={} n={} blocks={} "
-      "normalize={} medtimedec:{:.1f} meantimedec:{:.1f} compratio:{:.4f}\n",
+      "normalize={} medtimedec:{:.1f} meantimedec:{:.1f} compratio:{:.4f} result:{:.1f}\n",
       fileA, fileB, opStr, codecName, gNumThreads, numBlocks / gNumThreads,
-      gA.size(), normalize, medDec.Median(), statsDec.mean, cr);
+      gA.size(), normalize, medDec.Median(), statsDec.mean, cr, resultSink);
 
   GDALClose(dsA);
   GDALClose(dsB);
