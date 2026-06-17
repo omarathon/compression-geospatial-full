@@ -319,3 +319,49 @@ done
 | add | 18705 ns | 24311 ns (+30%) | 22592 ns |
 
 CR: pfor_for_2band=0.5125, simdcomp_fused=0.5708, raw=1.000. PFor is ~10% better CR but ~30-48% slower decode at X=1 (Landsat is high-entropy → many exceptions → scalar bitunpack16+pshufb is the bottleneck). Pattern matches single-band TurboPFor on dense-exception data. For sparser data (srtm) PFor would flip faster; for X>1 bandwidth savings may help. All three codecs agree on result (correctness ✓).
+
+## Session 2026-06-17: fine-window FoR + SIMD SKIP_MERGE fix for pfor_for_2band — DONE, server bench DONE
+
+**SIMD SKIP_MERGE_EXC fix:** [ndvi2band_pfor_w256.cpp](external/TurboPFor/lib/ndvi2band_pfor_w256.cpp) `PFOR_SKIP_MERGE_EXC` path replaced scalar `for k<xn: exc_sum += ex[k]<<b` loops with `sum_excess_u16()` helper (AVX2 `unpacklo/hi_epi16` widen+sum, mirrors `vp4d256v16_fused.c`).
+
+**Fine-window FoR added to pfor_for_2band:** New encoder `p4nenc256v16_for2band_w(n, w, ...)` + decoder `ndvi2_pfor_for_indep_w(n, w, op)` with per-window-size dispatch tables `g_plain_csc/half/qtr` and `g_pfor_csc/half/qtr`. Codec names: `pfor_for_2band_w4/8/16/32/64/128/256`. Kernel modes:
+- w≥16 (csc): 1 anchor/OutReg → `set1_epi16(ancs[J])`
+- w=8 (half): 2 anchors/OutReg → `_mm256_set_m128i(set1(ancs[2J+1]), set1(ancs[2J]))`
+- w=4 (qtr): 4 anchors/OutReg → `_mm_setr_epi16(a,a,a,a,b,b,b,b)` per quarter
+
+**Server bench results (sherwood, n=500, r=11, rs=3, X=1, op=add, Landsat B5+B4 mosaic):**
+
+Lossless:
+| codec | CR | ns |
+|---|---|---|
+| simdcomp_fused | 0.5708 | 15,346 |
+| pfor_for_2band_w256 | 0.5125 | 33,784 |
+| w128 | 0.5121 | 35,613 |
+| w64 | 0.5134 | 37,747 |
+| w32 | 0.5193 | 42,518 |
+| w16 | 0.5357 | 47,565 |
+| w8 | 0.5745 | 46,024 |
+| w4 | 0.6400 | 50,702 |
+
+LERC t10pct (MaxZ B5=1214.8, B4=939.1, NRMSE≈4.3%):
+| codec | CR | ns |
+|---|---|---|
+| simdcomp_fused | 0.5711 | 15,705 |
+| pfor_for_2band_w256 | 0.5128 | 34,134 |
+| w128 | 0.5118 | 36,291 |
+| w64 | 0.5113 | 39,934 |
+| w32 | 0.5009 | 57,313 |
+| w16 | 0.4527 | 65,776 |
+| **w8** | **0.3719** | **43,315** |
+| w4 | 0.4309 | 40,799 |
+
+**Key lessons:**
+- `simdcomp_fused` barely benefits from LERC (CR 0.5708→0.5711): b picked from sub-block max, LERC quantization grid doesn't help
+- **w=8 is LERC sweet spot** (CR 0.3719 = 1.54× better than simdcomp lossless) — LERC quantization aligns with 8-element FoR windows
+- w=4 CR rebounds (0.4309) — 4 anchors/OutReg overhead + residuals can't shrink further
+- Fine windows HURT lossless CR (no quantization to exploit); global w=256 best for lossless Landsat
+- **w=16 is slowest** on LERC (65,776 ns) despite moderate CR — csc per-OutReg anchor extraction more expensive than half/qtr broadcasts at fine windows
+- All PFor+FoR 2.2–4.2× slower than simdcomp at X=1 (exception-bound, dense Landsat)
+- **Shared-b penalty**: `shared_b = max(bA, bB)` dilutes LERC CR gains vs single-band
+- LERC TIFs at `/scratch/omsst2/diss/temp/for_cr_bench_2band/` (B5=MaxZ1214p789, B4=MaxZ939p0739)
+- Bandwidth crossover (w=8 LERC beats simdcomp) expected around X≈4-8; NOT yet verified with multithread bench
