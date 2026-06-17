@@ -111,6 +111,13 @@ target_include_directories(Ndvi2BandPFor PRIVATE
 target_compile_options(Ndvi2BandPFor PRIVATE -O3 -march=native -mno-avx512f)
 set_target_properties(Ndvi2BandPFor PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 target_link_libraries(Ndvi2BandPFor PUBLIC TurboPFor SimdComp)
+# BYTE_EXC: store exceptions as raw uint8/uint16 instead of bit-packed. Avoids
+# bitunpack16 on decode (sequential load instead of scalar bit-extraction).
+# pshufb merge is unchanged. Slightly larger stream but cheaper exception decode.
+option(PFOR_BYTE_EXC_2BAND "Ndvi2BandPFor: byte-aligned excess (no bitunpack16)" OFF)
+if(PFOR_BYTE_EXC_2BAND)
+  target_compile_definitions(Ndvi2BandPFor PRIVATE PFOR_BYTE_EXC)
+endif()
 
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
