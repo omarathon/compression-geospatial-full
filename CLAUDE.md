@@ -311,4 +311,11 @@ for c in simdcomp_fused pfor_for_2band custom_direct_access; do
 done
 ```
 
-**PENDING (next session — explicit user directive):** Run X=1 latency bench on sherwood server for noop and add, comparing `pfor_for_2band` vs `simdcomp_fused` vs `custom_direct_access`. Server TIFs: B5(NIR)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B5.tif`, B4(RED)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B4.tif`. Server workflow: commit+push `fuse_for_experiments`; on server `git pull`; `cmake --build build --target bench_pipeline_2band -j32`; run each codec sequentially with `--rs 2 -r 6 -n 500 --threads 1`.
+**Server bench (sherwood, X=1, n=500, r=6, --rs 2, Landsat B5+B4):**
+
+| op | simdcomp_fused | pfor_for_2band | custom_direct_access |
+|---|---|---|---|
+| noop | 16298 ns | 24074 ns (+48%) | 20925 ns |
+| add | 18705 ns | 24311 ns (+30%) | 22592 ns |
+
+CR: pfor_for_2band=0.5125, simdcomp_fused=0.5708, raw=1.000. PFor is ~10% better CR but ~30-48% slower decode at X=1 (Landsat is high-entropy → many exceptions → scalar bitunpack16+pshufb is the bottleneck). Pattern matches single-band TurboPFor on dense-exception data. For sparser data (srtm) PFor would flip faster; for X>1 bandwidth savings may help. All three codecs agree on result (correctness ✓).
