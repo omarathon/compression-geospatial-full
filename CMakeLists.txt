@@ -118,6 +118,13 @@ option(PFOR_BYTE_EXC_2BAND "Ndvi2BandPFor: byte-aligned excess (no bitunpack16)"
 if(PFOR_BYTE_EXC_2BAND)
   target_compile_definitions(Ndvi2BandPFor PRIVATE PFOR_BYTE_EXC)
 endif()
+# Skip pshufb merge for OP_ADD: plain kernel on low bits + scalar sum(exc<<b).
+# Results (XOR-fold) won't match full-merge — timing diagnostic only.
+# Can be combined with PFOR_BYTE_EXC_2BAND to isolate merge vs read costs.
+option(PFOR_SKIP_MERGE_2BAND "Ndvi2BandPFor: skip pshufb merge, sum exc directly (OP_ADD only, timing diagnostic)" OFF)
+if(PFOR_SKIP_MERGE_2BAND)
+  target_compile_definitions(Ndvi2BandPFor PRIVATE PFOR_SKIP_MERGE_EXC)
+endif()
 
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
