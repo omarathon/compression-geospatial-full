@@ -47,6 +47,17 @@ extern "C" double ndvi2_pfor_for_indep(
     const uint8_t* encA, const uint16_t* anchorsA,
     const uint8_t* encB, const uint16_t* anchorsB,
     size_t n, int op);
+// Fine-window FoR variants (w=4,8,16,32,64,128,256):
+extern "C" void p4nenc256v16_for2band_w(
+    const uint16_t* inA, const uint16_t* inB, size_t n, unsigned w,
+    uint16_t* anchorsA, uint16_t* anchorsB,
+    uint8_t* outA, size_t* sizeA,
+    uint8_t* outB, size_t* sizeB);
+extern "C" size_t p4nbound256v16_for2band_w(size_t n);
+extern "C" double ndvi2_pfor_for_indep_w(
+    const uint8_t* encA, const uint16_t* anchorsA,
+    const uint8_t* encB, const uint16_t* anchorsB,
+    size_t n, unsigned w, int op);
 
 // Per-block pair for the pfor_for_2band codec.
 // anchsA/anchsB hold one uint16 anchor per 256-element sub-block.
@@ -888,14 +899,16 @@ static void RunStaticReps2Band(GridU16& gA, GridU16& gB, int blockSize, int op,
 
 // Build a two-band PFor-FoR grid: reads both bands together, applies the same
 // normalization as SplitIntoFullBlocksU16, encodes with shared-b per 256-block.
+// w: FoR window size (4/8/16/32/64/128/256). w=256 = one anchor per block.
 static Grid2BandPFor BuildGrid2BandPFor(
     GDALRasterBand* bandA, GDALRasterBand* bandB,
     int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
-    const BandU16Params& pA, const BandU16Params& pB, bool normalize) {
+    const BandU16Params& pA, const BandU16Params& pB, bool normalize,
+    unsigned w = 256) {
   const int blocksInWidth  = rasterWidth  / blockSize;
   const int blocksInHeight = rasterHeight / blockSize;
   const size_t N = (size_t)blockSize * blockSize;
-  const size_t bound = p4nbound256v16_for2band(N);
+  const size_t bound = p4nbound256v16_for2band_w(N);
 
   Grid2BandPFor grid;
   grid.reserve(numBlocks);
@@ -933,13 +946,13 @@ static Grid2BandPFor BuildGrid2BandPFor(
     readAndNorm(bandB, pB, off.x, off.y, blkB);
 
     Block2BandPFor blk;
-    const size_t numAnchors = N / 256;  // one anchor per 256-elem sub-block
+    const size_t numAnchors = N / w;  // per-window anchor count
     blk.anchsA.resize(numAnchors);
     blk.anchsB.resize(numAnchors);
     size_t sA = 0, sB = 0;
-    p4nenc256v16_for2band(blkA.data(), blkB.data(), N,
-                           blk.anchsA.data(), blk.anchsB.data(),
-                           scrA.data(), &sA, scrB.data(), &sB);
+    p4nenc256v16_for2band_w(blkA.data(), blkB.data(), N, w,
+                             blk.anchsA.data(), blk.anchsB.data(),
+                             scrA.data(), &sA, scrB.data(), &sB);
     blk.encA.assign(scrA.data(), scrA.data() + sA);
     blk.encB.assign(scrB.data(), scrB.data() + sB);
     grid.push_back(std::move(blk));
@@ -950,7 +963,8 @@ static Grid2BandPFor BuildGrid2BandPFor(
 // Spin-pool worker loop for Grid2BandPFor (mirrors RunStaticReps2Band).
 static void RunStaticReps2BandPFor(Grid2BandPFor& grid, size_t N, int op,
                                     int numReps, int numSkip,
-                                    RunningStats& statsDec, RepMedian& medDec) {
+                                    RunningStats& statsDec, RepMedian& medDec,
+                                    unsigned w = 256) {
   const int X = std::max(1, gNumThreads);
   const size_t total = grid.size();
   const size_t per   = total / (size_t)X;
@@ -972,9 +986,9 @@ static void RunStaticReps2BandPFor(Grid2BandPFor& grid, size_t N, int op,
       for (size_t i = lo; i < hi; i++) {
         const Block2BandPFor& blk = grid[i];
         auto c0 = std::chrono::steady_clock::now();
-        double r = ndvi2_pfor_for_indep(
+        double r = ndvi2_pfor_for_indep_w(
             blk.encA.data(), blk.anchsA.data(),
-            blk.encB.data(), blk.anchsB.data(), N, op);
+            blk.encB.data(), blk.anchsB.data(), N, w, op);
         auto c1 = std::chrono::steady_clock::now();
         double dt = std::chrono::duration_cast<std::chrono::nanoseconds>(c1 - c0).count();
         if (timed) tDec[t].Update((size_t)dt);
@@ -1064,9 +1078,16 @@ int main(int argc, char* argv[]) {
   BandU16Params pA = ScanBandU16(bandA, blockSize, numBlocks, normalize);
   BandU16Params pB = ScanBandU16(bandB, blockSize, numBlocks, normalize);
 
-  // Check for pfor_for_2band before touching the codec pool (it's not in the pool).
+  // Check for pfor_for_2band* before touching the codec pool (not in the pool).
+  // Handles "pfor_for_2band" (legacy w=256) and "pfor_for_2band_wN" (fine-window).
   const std::string reqCodec = icodecNames.empty() ? "" : icodecNames[0];
-  const bool isPForFor2Band  = (reqCodec == "pfor_for_2band");
+  const bool isPForFor2Band  = reqCodec.starts_with("pfor_for_2band");
+  unsigned pfor2BandW = 256;
+  if (isPForFor2Band) {
+    auto pos = reqCodec.rfind("_w");
+    if (pos != std::string::npos && pos > 10)
+      pfor2BandW = (unsigned)std::stoul(reqCodec.substr(pos + 2));
+  }
 
   RunningStats statsDec;
   RepMedian medDec;
@@ -1075,10 +1096,11 @@ int main(int argc, char* argv[]) {
   std::string codecName;
 
   if (isPForFor2Band) {
-    codecName = "pfor_for_2band";
+    codecName = reqCodec;
     const size_t N = (size_t)blockSize * blockSize;
     Grid2BandPFor grid = BuildGrid2BandPFor(bandA, bandB, nX, nY, blockSize,
-                                             numBlocks, pA, pB, normalize);
+                                             numBlocks, pA, pB, normalize,
+                                             pfor2BandW);
     if (grid.empty()) { std::cerr << "empty grid\n"; return 1; }
     numGridBlocks = grid.size();
     // CR: (encA + encB + anchor arrays) / raw
@@ -1088,7 +1110,8 @@ int main(int argc, char* argv[]) {
       enc += blk.encA.size() + blk.encB.size()
            + (blk.anchsA.size() + blk.anchsB.size()) * sizeof(uint16_t);
     cr = enc / (rawPerBlock * numGridBlocks);
-    RunStaticReps2BandPFor(grid, N, op, numReps, numSkip, statsDec, medDec);
+    RunStaticReps2BandPFor(grid, N, op, numReps, numSkip, statsDec, medDec,
+                            pfor2BandW);
   } else {
     auto pool = BuildAllCodecsU16();
     auto sel = SelectCodecsByName(pool, icodecNames);
