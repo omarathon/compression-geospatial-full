@@ -34,6 +34,27 @@ extern "C" double ndvi2_indep(const uint8_t* encA, const uint8_t* encB,
 extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
                             int op);
 extern "C" void ndvi2_set_count_threshold(float x);
+
+// Two-band FoR+PFor fused kernels (from libNdvi2BandPFor).
+// Shared-b encoding: both bands use max(opt_bA, opt_bB) per 256-block.
+extern "C" void p4nenc256v16_for2band(
+    const uint16_t* inA, const uint16_t* inB, size_t n,
+    uint16_t* anchorsA, uint16_t* anchorsB,
+    uint8_t* outA, size_t* sizeA,
+    uint8_t* outB, size_t* sizeB);
+extern "C" size_t p4nbound256v16_for2band(size_t n);
+extern "C" double ndvi2_pfor_for_indep(
+    const uint8_t* encA, const uint16_t* anchorsA,
+    const uint8_t* encB, const uint16_t* anchorsB,
+    size_t n, int op);
+
+// Per-block pair for the pfor_for_2band codec.
+// anchsA/anchsB hold one uint16 anchor per 256-element sub-block.
+struct Block2BandPFor {
+  std::vector<uint8_t>  encA, encB;
+  std::vector<uint16_t> anchsA, anchsB;
+};
+using Grid2BandPFor = std::vector<Block2BandPFor>;
 static float gCountThreshold = 0.3f;
 static volatile double g_ndvi_sink2 = 0.0;
 
@@ -865,6 +886,135 @@ static void RunStaticReps2Band(GridU16& gA, GridU16& gB, int blockSize, int op,
   for (int t = 0; t < X; t++) mergeStats(statsDec, tDec[t]);
 }
 
+// Build a two-band PFor-FoR grid: reads both bands together, applies the same
+// normalization as SplitIntoFullBlocksU16, encodes with shared-b per 256-block.
+static Grid2BandPFor BuildGrid2BandPFor(
+    GDALRasterBand* bandA, GDALRasterBand* bandB,
+    int rasterWidth, int rasterHeight, int blockSize, int numBlocks,
+    const BandU16Params& pA, const BandU16Params& pB, bool normalize) {
+  const int blocksInWidth  = rasterWidth  / blockSize;
+  const int blocksInHeight = rasterHeight / blockSize;
+  const size_t N = (size_t)blockSize * blockSize;
+  const size_t bound = p4nbound256v16_for2band(N);
+
+  Grid2BandPFor grid;
+  grid.reserve(numBlocks);
+
+  auto readAndNorm = [&](GDALRasterBand* band, const BandU16Params& p,
+                          int ox, int oy, std::vector<uint16_t>& out) {
+    if (p.minShift < 0) {
+      std::vector<int16_t> tmp(N);
+      band->RasterIO(GF_Read, ox, oy, blockSize, blockSize,
+                     tmp.data(), blockSize, blockSize, GDT_Int16, 0, 0);
+      int32_t shift = -(int32_t)p.minShift;
+      for (size_t i = 0; i < N; ++i)
+        out[i] = (p.hasNoData && tmp[i] == p.nodata16)
+                   ? 0u
+                   : (uint16_t)((int32_t)tmp[i] + shift);
+    } else {
+      band->RasterIO(GF_Read, ox, oy, blockSize, blockSize,
+                     out.data(), blockSize, blockSize, GDT_UInt16, 0, 0);
+      if (p.hasNoData)
+        for (size_t i = 0; i < N; ++i)
+          if (out[i] == p.nodataU16) out[i] = 0;
+    }
+    if (normalize)
+      for (size_t i = 0; i < N; ++i)
+        if (out[i])
+          out[i] = (uint16_t)(((uint32_t)out[i] - p.normMinU16) / p.normGCDU16);
+  };
+
+  std::vector<uint16_t> blkA(N), blkB(N);
+  std::vector<uint8_t> scrA(bound), scrB(bound);
+
+  for (auto& off : SampleBlockOffsets(blocksInWidth, blocksInHeight,
+                                       blockSize, numBlocks)) {
+    readAndNorm(bandA, pA, off.x, off.y, blkA);
+    readAndNorm(bandB, pB, off.x, off.y, blkB);
+
+    Block2BandPFor blk;
+    const size_t numAnchors = N / 256;  // one anchor per 256-elem sub-block
+    blk.anchsA.resize(numAnchors);
+    blk.anchsB.resize(numAnchors);
+    size_t sA = 0, sB = 0;
+    p4nenc256v16_for2band(blkA.data(), blkB.data(), N,
+                           blk.anchsA.data(), blk.anchsB.data(),
+                           scrA.data(), &sA, scrB.data(), &sB);
+    blk.encA.assign(scrA.data(), scrA.data() + sA);
+    blk.encB.assign(scrB.data(), scrB.data() + sB);
+    grid.push_back(std::move(blk));
+  }
+  return grid;
+}
+
+// Spin-pool worker loop for Grid2BandPFor (mirrors RunStaticReps2Band).
+static void RunStaticReps2BandPFor(Grid2BandPFor& grid, size_t N, int op,
+                                    int numReps, int numSkip,
+                                    RunningStats& statsDec, RepMedian& medDec) {
+  const int X = std::max(1, gNumThreads);
+  const size_t total = grid.size();
+  const size_t per   = total / (size_t)X;
+  std::vector<RunningStats> tDec(X);
+  std::vector<double> repDec(X, 0.0), repSink(X, 0.0);
+  std::atomic<int> goRep{-1};
+  std::atomic<int> doneCount{0};
+
+  auto worker = [&](int t) {
+    PinThreadToAllowedCpu(t);
+    if (op == 8) ndvi2_set_count_threshold(gCountThreshold);
+    const size_t lo = (size_t)t * per;
+    const size_t hi = (t == X - 1) ? total : lo + per;
+    for (int myRep = 0; myRep < numReps; myRep++) {
+      while (goRep.load(std::memory_order_acquire) != myRep)
+        __builtin_ia32_pause();
+      const bool timed = (myRep >= numSkip);
+      double rd = 0.0, sink = 0.0;
+      for (size_t i = lo; i < hi; i++) {
+        const Block2BandPFor& blk = grid[i];
+        auto c0 = std::chrono::steady_clock::now();
+        double r = ndvi2_pfor_for_indep(
+            blk.encA.data(), blk.anchsA.data(),
+            blk.encB.data(), blk.anchsB.data(), N, op);
+        auto c1 = std::chrono::steady_clock::now();
+        double dt = std::chrono::duration_cast<std::chrono::nanoseconds>(c1 - c0).count();
+        if (timed) tDec[t].Update((size_t)dt);
+        rd += dt; sink += r;
+      }
+      repDec[t] = rd; repSink[t] = sink;
+      doneCount.fetch_add(1, std::memory_order_release);
+    }
+  };
+
+  std::vector<std::thread> pool;
+  pool.reserve(X);
+  for (int t = 0; t < X; t++) pool.emplace_back(worker, t);
+  for (int r = 0; r < numReps; r++) {
+    doneCount.store(0, std::memory_order_release);
+    goRep.store(r, std::memory_order_release);
+    while (doneCount.load(std::memory_order_acquire) != X)
+      __builtin_ia32_pause();
+    if (r >= numSkip) {
+      double td = 0.0, sk = 0.0;
+      for (int t = 0; t < X; t++) { td += repDec[t]; sk += repSink[t]; }
+      medDec.Push(td, total);
+      g_ndvi_sink2 = sk;
+    }
+  }
+  for (auto& th : pool) th.join();
+
+  auto mergeStats2 = [](RunningStats& a, const RunningStats& b) {
+    if (b.n == 0) return;
+    if (a.n == 0) { a = b; return; }
+    double na = a.n, nb = b.n, nt = na + nb, delta = b.mean - a.mean;
+    a.M2 += b.M2 + delta * delta * na * nb / nt;
+    a.mean += delta * nb / nt;
+    a.n = (size_t)nt;
+    a.min_val = std::min(a.min_val, b.min_val);
+    a.max_val = std::max(a.max_val, b.max_val);
+  };
+  for (int t = 0; t < X; t++) mergeStats2(statsDec, tDec[t]);
+}
+
 int main(int argc, char* argv[]) {
   CLI::App app{"Two-band fused NDVI decode benchmark (off bench_pipeline_multithread)"};
 
@@ -914,46 +1064,70 @@ int main(int argc, char* argv[]) {
   BandU16Params pA = ScanBandU16(bandA, blockSize, numBlocks, normalize);
   BandU16Params pB = ScanBandU16(bandB, blockSize, numBlocks, normalize);
 
-  auto pool = BuildAllCodecsU16();
-  auto sel = SelectCodecsByName(pool, icodecNames);
-  if (sel.empty()) { std::cerr << "no codec matched --icodec\n"; return 1; }
-  const std::string codecName = sel[0]->name();
-  const bool compressed = (codecName != "custom_direct_access");
-
-  GridU16 gA = SplitIntoFullBlocksU16(
-      bandA, nX, nY, blockSize, numBlocks,
-      std::unique_ptr<StatefulIntegerCodec<uint16_t>>(sel[0]->CloneFresh()),
-      pA.minShift, pA.hasNoData, pA.nodata16, pA.nodataU16, normalize,
-      pA.normMinU16, pA.normGCDU16);
-  GridU16 gB = SplitIntoFullBlocksU16(
-      bandB, nX, nY, blockSize, numBlocks,
-      std::unique_ptr<StatefulIntegerCodec<uint16_t>>(sel[0]->CloneFresh()),
-      pB.minShift, pB.hasNoData, pB.nodata16, pB.nodataU16, normalize,
-      pB.normMinU16, pB.normGCDU16);
-  if (gA.empty() || gB.empty()) { std::cerr << "empty grid\n"; return 1; }
-
-  double cr = 1.0;
-  if (compressed) {
-    double enc = 0, raw = 0;
-    for (size_t i = 0; i < gA.size(); i++) {
-      enc += gA[i]->EncodedNumValues() * gA[i]->EncodedSizeValue() +
-             gB[i]->EncodedNumValues() * gB[i]->EncodedSizeValue();
-      raw += 2.0 * blockSize * blockSize * sizeof(uint16_t);
-    }
-    cr = enc / raw;
-  }
+  // Check for pfor_for_2band before touching the codec pool (it's not in the pool).
+  const std::string reqCodec = icodecNames.empty() ? "" : icodecNames[0];
+  const bool isPForFor2Band  = (reqCodec == "pfor_for_2band");
 
   RunningStats statsDec;
   RepMedian medDec;
-  RunStaticReps2Band(gA, gB, blockSize, op, compressed, numReps, numSkip,
-                     statsDec, medDec);
+  double cr = 1.0;
+  size_t numGridBlocks = 0;
+  std::string codecName;
+
+  if (isPForFor2Band) {
+    codecName = "pfor_for_2band";
+    const size_t N = (size_t)blockSize * blockSize;
+    Grid2BandPFor grid = BuildGrid2BandPFor(bandA, bandB, nX, nY, blockSize,
+                                             numBlocks, pA, pB, normalize);
+    if (grid.empty()) { std::cerr << "empty grid\n"; return 1; }
+    numGridBlocks = grid.size();
+    // CR: (encA + encB + anchor arrays) / raw
+    const double rawPerBlock = 2.0 * N * sizeof(uint16_t);
+    double enc = 0;
+    for (auto& blk : grid)
+      enc += blk.encA.size() + blk.encB.size()
+           + (blk.anchsA.size() + blk.anchsB.size()) * sizeof(uint16_t);
+    cr = enc / (rawPerBlock * numGridBlocks);
+    RunStaticReps2BandPFor(grid, N, op, numReps, numSkip, statsDec, medDec);
+  } else {
+    auto pool = BuildAllCodecsU16();
+    auto sel = SelectCodecsByName(pool, icodecNames);
+    if (sel.empty()) { std::cerr << "no codec matched --icodec\n"; return 1; }
+    codecName = sel[0]->name();
+    const bool compressed = (codecName != "custom_direct_access");
+
+    GridU16 gA = SplitIntoFullBlocksU16(
+        bandA, nX, nY, blockSize, numBlocks,
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(sel[0]->CloneFresh()),
+        pA.minShift, pA.hasNoData, pA.nodata16, pA.nodataU16, normalize,
+        pA.normMinU16, pA.normGCDU16);
+    GridU16 gB = SplitIntoFullBlocksU16(
+        bandB, nX, nY, blockSize, numBlocks,
+        std::unique_ptr<StatefulIntegerCodec<uint16_t>>(sel[0]->CloneFresh()),
+        pB.minShift, pB.hasNoData, pB.nodata16, pB.nodataU16, normalize,
+        pB.normMinU16, pB.normGCDU16);
+    if (gA.empty() || gB.empty()) { std::cerr << "empty grid\n"; return 1; }
+    numGridBlocks = gA.size();
+
+    if (compressed) {
+      double enc = 0, raw = 0;
+      for (size_t i = 0; i < gA.size(); i++) {
+        enc += gA[i]->EncodedNumValues() * gA[i]->EncodedSizeValue() +
+               gB[i]->EncodedNumValues() * gB[i]->EncodedSizeValue();
+        raw += 2.0 * blockSize * blockSize * sizeof(uint16_t);
+      }
+      cr = enc / raw;
+    }
+    RunStaticReps2Band(gA, gB, blockSize, op, compressed, numReps, numSkip,
+                       statsDec, medDec);
+  }
 
   const double resultSink = g_ndvi_sink2;
   std::cout << std::format(
       "**NDVI 2BAND** fileA={} fileB={} op={} codec={} X={} n={} blocks={} "
       "normalize={} medtimedec:{:.1f} meantimedec:{:.1f} compratio:{:.4f} result:{:.1f}\n",
       fileA, fileB, opStr, codecName, gNumThreads, numBlocks / gNumThreads,
-      gA.size(), normalize, medDec.Median(), statsDec.mean, cr, resultSink);
+      numGridBlocks, normalize, medDec.Median(), statsDec.mean, cr, resultSink);
 
   GDALClose(dsA);
   GDALClose(dsB);

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -60,7 +61,11 @@ class SimdCompFusedCodecU16 : public StatefulIntegerCodec<uint16_t> {
     assert(length % kFusedSubBlockSize == 0);
     const size_t num_sb = length / kFusedSubBlockSize;
 
-    const bool madd = compressed.data()[0] != 0;
+    // madd_safe is baked per block at encode time, so a grid is a madd/unpack
+    // MIX. Set FORCE_UNPACK=1 to force the unpack-widen aggregate everywhere
+    // (clean unpack-vs-unpack comparisons; read once, no hot-loop overhead).
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const bool madd = (compressed.data()[0] != 0) && !kForceUnpack;
     const uint8_t* bs = compressed.data() + 1;
     const uint8_t* in_ptr = bs + num_sb;
 

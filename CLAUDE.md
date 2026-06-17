@@ -241,3 +241,74 @@ kernel(OutReg_A, OutReg_B, anchor_state)  // once per OutReg
 - **multiply (no algebraic simplification)**: `anchor_kernel(a, b) → {broadcast(a), broadcast(b)}`; `kernel(A, B, bc_a, bc_b)` corrects inline: `(A + bc_a) * (B + bc_b)`. Still benefits from w≥32 broadcast reuse.
 
 The outer dispatch loop (cscalar/uniform/half/quarter) is identical regardless of operation — only the two kernel implementations differ. Half/quarter modes (multiple anchors per OutReg) need a different kernel signature for multi-band ops; cleanest to treat as a separate code path or restrict multi-band ops to w≥16 (256-bit) / w≥8 (128-bit).
+
+## Session 2026-06-16: two-band fused NDVI (`bench_pipeline_2band`) + `count(NDVI > x)` — kernel DONE, server bench PENDING
+
+**The vehicle:** [bench/bench_pipeline_2band.cpp](bench/bench_pipeline_2band.cpp) drives a lock-step two-band fused decode (NIR=B5, RED=B4) over compressed uint16 grids, computing per-pixel NDVI ops in-register. Kernels live in [external/simdcomp/src/ndvi2band_w256.cpp](external/simdcomp/src/ndvi2band_w256.cpp) (lib `Ndvi2Band`, built `-O3 -march=native -mno-avx512f -std=c++20` — server is AVX2-only, SIGILLs on EVEX). Three entry paths share the same templated `acc_op<OP>`: `ndvi2_raw` (decompressed arrays), `ndvi2_indep` (per-band independent unpack), and the fused compressed pipeline. `X` = number of concurrent sum threads (spin-pool, spread-pinned). Codecs compared: `simdcomp_fused` vs `custom_direct_access`.
+
+**Ops enum** (`ndvi2band_w256.cpp:41`): `OP_SUM`/`OP_ADD`/… `OP_NDVI_DIV=5` (`(a-b)/(a+b)`, plain vdivps), `OP_NDVI_RCP=6` (rcp+1 Newton step), `OP_NDVI_RCPRAW=7` (vrcpps, no NR — bench the raw rcp cost), `OP_NDVI_COUNT=8` (NEW).
+
+**X=1 bottleneck for all float NDVI ops = the int→float widen, NOT the divide.** `cvtepu16_epi32`+`cvtepi32_ps` per band dominates (~7,680ns of ~18,539ns for ndvi_div); vdivps / rcp+NR / raw-rcp all time identically because the divide hides behind the widen. At X≥8 the box is DRAM-bound (EPYC 7702 ~105GB/s), float work fully hides, and speedup tracks 1/CR (noop X=32 hit 2.12× > 1/CR=1.78× because both byte volume and load-port pressure drop).
+
+**Measured `ndvi_div` results (local, `(a−b)/(a+b)` + float widen; comp=`simdcomp_fused` vs uncomp baseline, same kernel):**
+
+| X | comp (ns) | uncomp (ns) | speedup |
+|---|---|---|---|
+| 1 | 17,390 | 18,539 | 1.07× |
+| 2 | 17,553 | 19,100 | 1.09× |
+| 4 | 18,664 | 28,531 | 1.53× |
+| 8 | 26,202 | 56,124 | **2.14×** |
+| 16 | 30,619 | 60,017 | 1.96× |
+| 32 | 33,472 | 67,597 | 2.02× |
+
+X=1–2 ≈ flat (1.07–1.09×) — single-thread is compute-bound on the float widen, so compression's bandwidth saving barely helps. The climb to ~2× by X=8 is the DRAM-saturation regime where the smaller compressed working set wins. `count` should lift the X=1 end specifically (no widen → less compute to hide behind). These are the float-op baselines `count` must beat.
+
+**`count(NDVI > x)` — the strongest win (eliminates BOTH divide and float widen → pure int, ~OP_ADD cost):**
+- **Formula:** `NDVI > x  ⟺  (a−b)/(a+b) > x  ⟺  (a−b) > x(a+b)` [valid, `a+b ≥ 0`] `⟺  a·(1−x) − b·(1+x) > 0`. Because `x` is a FIXED threshold, `(1−x)` and `(1+x)` fold to fixed-point constants `K1=lrintf((1−x)·4096)`, `K2=lrintf((1+x)·4096)` (SCALE=4096) — the legitimate constant-coefficient case (unlike per-pixel NDVI which genuinely needs a per-pixel divide).
+- **SIMD:** interleave band pairs `lo=unpacklo_epi16(va,vb)`, `hi=unpackhi_epi16(va,vb)`; one `vpmaddwd` against coefficient register `g_count_coef = set1_epi32( (uint16)K1 | ((uint16)(−K2))<<16 )` yields `a·K1 − b·K2` per pixel directly in int32 (no widen, no float). `cmpgt_epi32(d, 0)` → −1/0 per lane, accumulate into `accx`; final `−hsum_epi32(x)` negates the −count. Range: `a·K1 ≤ 65535·4096 ≈ 2.68e8`, the madd's two-product sum ≈ `±5.4e8 < 2^31` — safe.
+- **Threshold setter:** `extern "C" void ndvi2_set_count_threshold(float x)` (`ndvi2band_w256.cpp:224`) packs K1/−K2 into `thread_local __m256i g_count_coef`. MUST be called inside each spin-pool worker before its rep loop (thread_local) — done at [bench_pipeline_2band.cpp:805](bench/bench_pipeline_2band.cpp#L805) `if (op==8) ndvi2_set_count_threshold(gCountThreshold);`. CLI: `--op count --threshold <x>` (default 0.3).
+- **CORRECTNESS VERIFIED:** standalone `/tmp/test_count.cpp` (link against `build/CMakeFiles/Ndvi2Band.dir/external/simdcomp/src/ndvi2band_w256.cpp.o`) passes all 3 cases: a=b=100 NDVI=0 → x=0.1 count 0, x=−0.1 count 16; a=200,b=0 NDVI=1 → x=0.5 count 16. The earlier "reversed" counts in the full bench were a **data artifact** (same TIF for both bands → after per-band min-subtraction normalize + 65535 nodata, not a clean a=b), **NOT a kernel/sign bug**. Sign logic is correct.
+
+**PENDING (next session — explicit user directive):** benchmark `count` ON THE SERVER (sherwood), not locally, at **X=1,2,4,8,16, N=1000**, `simdcomp_fused` vs `custom_direct_access`, sequentially (no parallel — RAM saturates at large X). Server TIFs: B5(NIR)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B5.tif`, B4(RED)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B4.tif` (both min=0 genuine, max=65534, NoData=65535). Workflow: commit+push `fuse_for_experiments`; on server `git pull`; `cd external/simdcomp && make clean && make -j16 && cd ../..`; `cmake --build build --target bench_pipeline_2band -j32`; run sequentially. Hypothesis: count should beat all float NDVI ops at X=1 (no widen) and approach 1/CR earlier (less compute to hide). PFor+FoR codecs (CR ~0.30–0.33 at 10% NRMSE vs ~0.53 bitpack) would further lift X=1 via bandwidth — not yet wired into the 2band path.
+
+**Float-NDVI dead ends (don't re-explore):** integer-scaled NDVI `x·(num·x/(den·x))` simplifies to num/den (no help, AVX2 has no vector int divide); `_mm256_mulhrs_epi16` fixed reciprocal only works for ONE constant divisor (not per-pixel); the SO "scalar divide is faster" claim rests on a `_mm256_castsi256_ps` bug (bit-reinterpret, not convert → denormals into vdivps).
+
+## Session 2026-06: Two-band FoR+PFor fused decoder (`pfor_for_2band`) — DONE, server bench PENDING
+
+**What was built:** [external/TurboPFor/lib/ndvi2band_pfor_w256.cpp](external/TurboPFor/lib/ndvi2band_pfor_w256.cpp) — encoder `p4nenc256v16_for2band` + fused decoder `ndvi2_pfor_for_indep`. Lib: `Ndvi2BandPFor` (CMakeLists). Wired into `bench_pipeline_2band` as codec `"pfor_for_2band"`.
+
+**Design:**
+- FoR: anchor = per-256-block min per band; residuals = value − anchor; anchors stored as separate `std::vector<uint16_t>` arrays (N/256 per band). MUST be separate from the packed payload — not interleaved.
+- Shared-b: `shared_b = max(best_b(resA), best_b(resB))` per sub-block. Both bands encoded at the same b → 17-entry decoder dispatch instead of 289. M_CONST suppressed to maintain invariant.
+- Exception format: M_PLAIN (xn=0, early exit), M_BITMAP (xn>255 or bitmap < vbyte), M_VBYTE (small xn) — same as `p4nenc256v16`. `bitpack16`/`bitunpack16`/`vbenc16`/`vbdec16` from TurboPFor `ic.h`; `simdpack_u16`/`simdunpack_u16` from simdcomp for packed low-bit planes.
+- `pshufb` exception merge: same `kShuffle16[256][16]` table + `PFOR_MERGE_J` macro as single-band PFor.
+
+**CRITICAL BUG FIXED (b=0 with exceptions):** For sparse sub-blocks with a few large values, the cost model picks b=0 (no low bits stored) with xn exceptions. The decoder's `b==0` shortcut (`if (b==0) { anchor contrib + continue; }`) fired unconditionally, silently DROPPING exception values (the exceptions ARE the full decoded values when b=0). Fix: compute `has_exc = (modeA != M_PLAIN || modeB != M_PLAIN)` BEFORE the b==0 check; gate shortcut on `b==0 && !has_exc`; fall through to `sub_pfor2<OP,0>` when has_exc. The `ex<0,J>` template returns 0 regardless; exceptions carry the full corrected values via pshufb merge.
+
+**Correctness:** All 14 unit tests in `/tmp/test_pfor2band.cpp` pass. Targeted b=0→b>0 transition tests in `/tmp/test_pfor_targeted.cpp` pass. Bench against `simdcomp_fused` and `custom_direct_access` on srtm and Landsat: all three codecs produce identical `result` fields for both `--op add` and `--op noop`.
+
+**CR results (local, srtm/Landsat, OP_ADD):**
+- srtm: pfor_for_2band CR=0.1053, simdcomp_fused CR=0.1151. PFor ~8% smaller.
+- Landsat: pfor_for_2band CR=0.4738, simdcomp_fused CR=0.6785. PFor ~30% smaller.
+
+**Run / verify locally:**
+```bash
+# Build
+cmake --build build --target bench_pipeline_2band Ndvi2BandPFor -j8
+
+# Unit tests (link against built objects)
+g++ -O3 -march=native -mno-avx512f -std=c++20 \
+  -I external/TurboPFor/include -I external/simdcomp/include \
+  /tmp/test_pfor2band.cpp /tmp/test_pfor_targeted.cpp \
+  build/libNdvi2BandPFor.a build/libNdvi2Band.a \
+  external/TurboPFor/libic.a external/simdcomp/libsimdcomp.a -o /tmp/t && /tmp/t
+
+# Correctness bench (all three results must match)
+TIF=/home/omar/diss/geotiffs/srtm_45_15.tif
+for c in simdcomp_fused pfor_for_2band custom_direct_access; do
+  ./build/bench_pipeline_2band "$TIF" --fileB "$TIF" -b 256 -n 10 -r 3 \
+    --icodec "$c" --op add --normalize --threads 1
+done
+```
+
+**PENDING (next session — explicit user directive):** Run X=1 latency bench on sherwood server for noop and add, comparing `pfor_for_2band` vs `simdcomp_fused` vs `custom_direct_access`. Server TIFs: B5(NIR)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B5.tif`, B4(RED)=`/maps/omsst2/diss/papers/zalipynis/2018/landsat8_mosaic_B4.tif`. Server workflow: commit+push `fuse_for_experiments`; on server `git pull`; `cmake --build build --target bench_pipeline_2band -j32`; run each codec sequentially with `--rs 2 -r 6 -n 500 --threads 1`.

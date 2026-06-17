@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_fused_extract_codec_uint16.h"
 #include "simdcomp_for_codec_uint16.h"
 #include "fastpfor_fused_codec_uint16.h"
 #include "turbopfor_fused_codec_uint16.h"
@@ -141,6 +142,50 @@ TEST_F(FusedSumTest, SimdCompFused_Zeros) {
   SimdCompFusedCodecU16 c;
   CheckFusedSum(MakeZeros(kSmall), c);
   CheckFusedSum(MakeZeros(kMedium), c);
+}
+
+// ── SimdComp fused EXTRACT (per-OutReg generic-b decode) ─────────────────────
+// Must produce byte-exact sums vs the reference across the full b range:
+// zeros (b=0), constant 65535 (b=16), sequential/random (mid/high b), spiky.
+TEST_F(FusedSumTest, SimdCompFusedExtract_AllPatterns) {
+  SimdCompFusedExtractCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeZeros(kMedium), c);
+  CheckFusedSum(MakeConstant(kSmall,  1), c);       // b=1
+  CheckFusedSum(MakeConstant(kSmall,  255), c);     // b=8
+  CheckFusedSum(MakeConstant(kSmall,  65535), c);   // b=16
+  CheckFusedSum(MakeConstant(kMedium, 100), c);
+  CheckFusedSum(MakeSequential(kSmall), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+  CheckFusedSum(MakeRandom(kSmall,  42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+  CheckFusedSum(MakeSpiky(kMedium), c);
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedExtractImm_AllPatterns) {
+  SimdCompFusedExtractImmCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 255), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+  CheckFusedSum(MakeSpiky(kMedium), c);
+  CheckFusedSum(MakeLargeFixed(), c);
+}
+
+TEST_F(FusedSumTest, SimdCompFusedL1Temp_AllPatterns) {
+  SimdCompFusedL1TempCodecU16 c;
+  CheckFusedSum(MakeZeros(kSmall), c);
+  CheckFusedSum(MakeConstant(kSmall, 1), c);
+  CheckFusedSum(MakeConstant(kSmall, 65535), c);
+  CheckFusedSum(MakeSequential(kMedium), c);
+  CheckFusedSum(MakeRandom(kSmall, 42), c);
+  CheckFusedSum(MakeRandom(kMedium, 99), c);
+  CheckFusedSum(MakeSpiky(kMedium), c);
+  CheckFusedSum(MakeLargeFixed(), c);
 }
 
 TEST_F(FusedSumTest, SimdCompFused_Constant) {

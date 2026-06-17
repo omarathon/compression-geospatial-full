@@ -101,6 +101,17 @@ add_library(Ndvi2Band STATIC ${EXT}/simdcomp/src/ndvi2band_w256.cpp)
 target_compile_options(Ndvi2Band PRIVATE -O3 -march=native -mno-avx512f)
 set_target_properties(Ndvi2Band PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
+# Two-band FoR+PFor fused kernels (shared-b, pshufb exception merge, noop+add).
+# Uses TurboPFor's ic.h (bitpack16/bitunpack16/vbenc16/vbdec16) for exception I/O
+# and simdcomp's simdpack_u16 for the low-bit packed planes (same as TurboPForFused).
+add_library(Ndvi2BandPFor STATIC ${EXT}/TurboPFor/lib/ndvi2band_pfor_w256.cpp)
+target_include_directories(Ndvi2BandPFor PRIVATE
+  ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include
+  ${EXT}/simdcomp/include ${EXT}/simdcomp/src)
+target_compile_options(Ndvi2BandPFor PRIVATE -O3 -march=native -mno-avx512f)
+set_target_properties(Ndvi2BandPFor PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(Ndvi2BandPFor PUBLIC TurboPFor SimdComp)
+
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -258,7 +269,7 @@ target_link_libraries(bench_pipeline_multithread PRIVATE Threads::Threads)
 # Two-band fused NDVI decode benchmark (L1-temp / shared-b streamed).
 add_executable(bench_pipeline_2band bench/bench_pipeline_2band.cpp)
 configure_bench(bench_pipeline_2band)
-target_link_libraries(bench_pipeline_2band PRIVATE Ndvi2Band)
+target_link_libraries(bench_pipeline_2band PRIVATE Ndvi2Band Ndvi2BandPFor)
 
 add_executable(for128_parity bench/for128_parity.cpp)
 configure_bench(for128_parity)

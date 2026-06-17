@@ -188,7 +188,8 @@ class TurboPForFusedForCodecU16 : public StatefulIntegerCodec<uint16_t> {
     assert(got == num_blk);
     p += sizeof(uint32_t);
     const bool madd_safe = *p++ != 0;
-    const int madd = ((agg_ == FusedAggImpl::kMadd) && madd_safe) ? 1 : 0;
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const int madd = ((agg_ == FusedAggImpl::kMadd) && madd_safe && !kForceUnpack) ? 1 : 0;
 
     const unsigned sh = (unsigned)__builtin_ctzll((unsigned long long)w);
     const int mode = driver_mode(w);
@@ -376,7 +377,8 @@ class TurboPForFusedForHierarchicalCodecU16
     const uint8_t* p = compressed.data();
     p += sizeof(uint32_t);
     const bool madd_safe = *p++ != 0;
-    const int madd = ((agg_ == FusedAggImpl::kMadd) && madd_safe) ? 1 : 0;
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const int madd = ((agg_ == FusedAggImpl::kMadd) && madd_safe && !kForceUnpack) ? 1 : 0;
 
     const uint16_t* gmin = reinterpret_cast<const uint16_t*>(p);
     p += num_outer * sizeof(uint16_t);

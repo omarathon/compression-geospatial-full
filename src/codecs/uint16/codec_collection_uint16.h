@@ -13,6 +13,7 @@
 #include "openjpeg_codecs.h"
 #include "png_codecs.h"
 #include "simdcomp_fused_codec_uint16.h"
+#include "simdcomp_fused_extract_codec_uint16.h"
 #include "simdcomp_fused_codec_uint16_w128.h"
 #include "simdcomp_for_codec_uint16.h"
 #include "simdcomp_for_codec_uint16_w128.h"
@@ -87,6 +88,9 @@ inline std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>>
 InitPhysicalCodecsU16() {
   std::vector<std::unique_ptr<StatefulIntegerCodec<uint16_t>>> codecs;
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16>());       // 256-bit
+  codecs.push_back(std::make_unique<SimdCompFusedExtractCodecU16>()); // per-OutReg extract (runtime shift)
+  codecs.push_back(std::make_unique<SimdCompFusedExtractImmCodecU16>()); // per-OutReg extract (immediate shift)
+  codecs.push_back(std::make_unique<SimdCompFusedL1TempCodecU16>());  // streaming->L1 buffer->sum
   codecs.push_back(std::make_unique<SimdCompFusedCodecU16_128>());   // 128-bit
   // Both aggregate-sum implementations (unpack-widen vs madd) are registered for
   // the 128- and 256-bit FoR codecs so the bench sweep can compare them.
