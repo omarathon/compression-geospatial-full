@@ -38,7 +38,8 @@ static inline __m256i ex(const __m256i* in) {
 // Kernel ladder (op selects the per-OutReg-pair aggregate), so the cost deltas
 // isolate decode vs widen vs divide — the 2-band analog of the single-band ladder.
 enum { OP_NOOP = 0, OP_ADD = 1, OP_DIV = 2, OP_RCP = 3, OP_RCPRAW = 4,
-       OP_NDVI_DIV = 5, OP_NDVI_RCP = 6, OP_NDVI_RCPRAW = 7, OP_NDVI_COUNT = 8 };
+       OP_NDVI_DIV = 5, OP_NDVI_RCP = 6, OP_NDVI_RCPRAW = 7, OP_NDVI_COUNT = 8,
+       OP_ADDFP = 9, OP_CVTFP = 10 };
 
 // Fixed-point threshold coefficients for OP_NDVI_COUNT: NDVI > x  <=>
 // (a-b) > x*(a+b)  <=>  a*(1-x) - b*(1+x) > 0  (valid since a+b >= 0; the
@@ -83,10 +84,31 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
     accx = _mm256_add_epi32(accx, _mm256_cmpgt_epi32(dhi, z));
     return;
   }
-  // OP_DIV / OP_RCP: both widen to float first; differ only in how they divide.
-  // OP_DIV: plain a/b via vdivps (exact, slow divide unit).
-  // OP_RCP: a * rcp(b) with one Newton-Raphson step (vrcpps+NR, no divide unit).
-  // Neither applies NDVI formula — the goal is to isolate the divide vs rcp cost.
+  if constexpr (OP == OP_CVTFP) {
+    // Convert both bands to float, XOR bit-pattern into accx — no float arithmetic.
+    // Isolates pure conversion cost; XOR prevents DCE without any add_ps overhead.
+    __m128i alo = _mm256_castsi256_si128(va), ahi = _mm256_extracti128_si256(va, 1);
+    __m128i blo = _mm256_castsi256_si128(vb), bhi = _mm256_extracti128_si256(vb, 1);
+    accx = _mm256_xor_si256(accx, _mm256_castps_si256(_mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(alo))));
+    accx = _mm256_xor_si256(accx, _mm256_castps_si256(_mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(ahi))));
+    accx = _mm256_xor_si256(accx, _mm256_castps_si256(_mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(blo))));
+    accx = _mm256_xor_si256(accx, _mm256_castps_si256(_mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(bhi))));
+    return;
+  }
+  if constexpr (OP == OP_ADDFP) {
+    // Tree-reduce 4 converted values before touching accf — reduces accf dep chain
+    // from 4×add_ps (16 cycles) to 1 (4 cycles), exposing memory-bandwidth limit.
+    __m128i alo = _mm256_castsi256_si128(va), ahi = _mm256_extracti128_si256(va, 1);
+    __m128i blo = _mm256_castsi256_si128(vb), bhi = _mm256_extracti128_si256(vb, 1);
+    __m256 ta = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(alo));
+    __m256 tb = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(ahi));
+    __m256 tc = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(blo));
+    __m256 td = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(bhi));
+    accf = _mm256_add_ps(accf, _mm256_add_ps(_mm256_add_ps(ta, tb), _mm256_add_ps(tc, td)));
+    return;
+  }
+  // OP_DIV / OP_RCP / OP_RCPRAW: widen to float, compute, combine results before
+  // touching accf (tree-reduce: 2→1 add_ps on accf per call).
   __m128i alo = _mm256_castsi256_si128(va), ahi = _mm256_extracti128_si256(va, 1);
   __m128i blo = _mm256_castsi256_si128(vb), bhi = _mm256_extracti128_si256(vb, 1);
   __m256 a0 = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(alo));
@@ -94,42 +116,48 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
   __m256 a1 = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(ahi));
   __m256 b1 = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(bhi));
   if constexpr (OP == OP_DIV) {
-    accf = _mm256_add_ps(accf, _mm256_div_ps(a0, b0));
-    accf = _mm256_add_ps(accf, _mm256_div_ps(a1, b1));
+    // Combine both divides before accumulating — div0 and div1 run in parallel.
+    accf = _mm256_add_ps(accf, _mm256_add_ps(_mm256_div_ps(a0, b0), _mm256_div_ps(a1, b1)));
   }
   if constexpr (OP == OP_RCP) {
     __m256 r0 = _mm256_rcp_ps(b0), r1 = _mm256_rcp_ps(b1);
-    r0 = _mm256_mul_ps(r0, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(b0, r0)));
-    r1 = _mm256_mul_ps(r1, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(b1, r1)));
-    accf = _mm256_add_ps(accf, _mm256_mul_ps(a0, r0));
-    accf = _mm256_add_ps(accf, _mm256_mul_ps(a1, r1));
+    r0 = _mm256_mul_ps(r0, _mm256_fnmadd_ps(b0, r0, _mm256_set1_ps(2.f)));
+    r1 = _mm256_mul_ps(r1, _mm256_fnmadd_ps(b1, r1, _mm256_set1_ps(2.f)));
+    accf = _mm256_add_ps(accf, _mm256_add_ps(_mm256_mul_ps(a0, r0), _mm256_mul_ps(a1, r1)));
   }
   if constexpr (OP == OP_RCPRAW) {
-    // vrcpps only, no NR step — ~12-bit accuracy, saves 3 dependent mul/sub ops.
-    accf = _mm256_add_ps(accf, _mm256_mul_ps(a0, _mm256_rcp_ps(b0)));
-    accf = _mm256_add_ps(accf, _mm256_mul_ps(a1, _mm256_rcp_ps(b1)));
+    accf = _mm256_add_ps(accf, _mm256_add_ps(_mm256_mul_ps(a0, _mm256_rcp_ps(b0)),
+                                              _mm256_mul_ps(a1, _mm256_rcp_ps(b1))));
   }
   // Full NDVI formula: (a-b)/(a+b), den==0 -> 0.
+  // num/den computed in integer (exact: uint16 add/sub fits in int32, zero precision cost).
   if constexpr (OP == OP_NDVI_DIV || OP == OP_NDVI_RCP || OP == OP_NDVI_RCPRAW) {
+    const __m256i ia0 = _mm256_cvtepu16_epi32(alo), ib0 = _mm256_cvtepu16_epi32(blo);
+    const __m256i ia1 = _mm256_cvtepu16_epi32(ahi), ib1 = _mm256_cvtepu16_epi32(bhi);
+    __m256 num0 = _mm256_cvtepi32_ps(_mm256_sub_epi32(ia0, ib0));
+    __m256 den0 = _mm256_cvtepi32_ps(_mm256_add_epi32(ia0, ib0));
+    __m256 num1 = _mm256_cvtepi32_ps(_mm256_sub_epi32(ia1, ib1));
+    __m256 den1 = _mm256_cvtepi32_ps(_mm256_add_epi32(ia1, ib1));
     const __m256 z = _mm256_setzero_ps();
-    __m256 num0 = _mm256_sub_ps(a0, b0), den0 = _mm256_add_ps(a0, b0);
-    __m256 num1 = _mm256_sub_ps(a1, b1), den1 = _mm256_add_ps(a1, b1);
     __m256 mask0 = _mm256_cmp_ps(den0, z, _CMP_GT_OQ);
     __m256 mask1 = _mm256_cmp_ps(den1, z, _CMP_GT_OQ);
     if constexpr (OP == OP_NDVI_DIV) {
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_div_ps(num0, den0), mask0));
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_div_ps(num1, den1), mask1));
+      accf = _mm256_add_ps(accf, _mm256_add_ps(
+          _mm256_and_ps(_mm256_div_ps(num0, den0), mask0),
+          _mm256_and_ps(_mm256_div_ps(num1, den1), mask1)));
     }
     if constexpr (OP == OP_NDVI_RCP) {
       __m256 r0 = _mm256_rcp_ps(den0), r1 = _mm256_rcp_ps(den1);
-      r0 = _mm256_mul_ps(r0, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(den0, r0)));
-      r1 = _mm256_mul_ps(r1, _mm256_sub_ps(_mm256_set1_ps(2.f), _mm256_mul_ps(den1, r1)));
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num0, r0), mask0));
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num1, r1), mask1));
+      r0 = _mm256_mul_ps(r0, _mm256_fnmadd_ps(den0, r0, _mm256_set1_ps(2.f)));
+      r1 = _mm256_mul_ps(r1, _mm256_fnmadd_ps(den1, r1, _mm256_set1_ps(2.f)));
+      accf = _mm256_add_ps(accf, _mm256_add_ps(
+          _mm256_and_ps(_mm256_mul_ps(num0, r0), mask0),
+          _mm256_and_ps(_mm256_mul_ps(num1, r1), mask1)));
     }
     if constexpr (OP == OP_NDVI_RCPRAW) {
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num0, _mm256_rcp_ps(den0)), mask0));
-      accf = _mm256_add_ps(accf, _mm256_and_ps(_mm256_mul_ps(num1, _mm256_rcp_ps(den1)), mask1));
+      accf = _mm256_add_ps(accf, _mm256_add_ps(
+          _mm256_and_ps(_mm256_mul_ps(num0, _mm256_rcp_ps(den0)), mask0),
+          _mm256_and_ps(_mm256_mul_ps(num1, _mm256_rcp_ps(den1)), mask1)));
     }
   }
 }
@@ -137,19 +165,33 @@ static inline void acc_op(__m256i va, __m256i vb, __m256& accf, __m256i& accx) {
 // One sub-block, both bands, lock-step (16 OutRegs). Out-of-line per (bA,bB,OP).
 template <int OP, int bA, int bB>
 __attribute__((noinline)) static void sub_op(const __m256i* inA,
-                                             const __m256i* inB, __m256* accf,
-                                             __m256i* accx) {
-  __m256 f = *accf;
-  __m256i x = *accx;
-  [&]<int... J>(std::integer_sequence<int, J...>) {
-    ((acc_op<OP>(ex<bA, J>(inA), ex<bB, J>(inB), f, x)), ...);
-  }(std::make_integer_sequence<int, 16>{});
-  *accf = f;
-  *accx = x;
+                                             const __m256i* inB, __m256* pf,
+                                             __m256i* px) {
+  constexpr bool kFloat = (OP == OP_DIV || OP == OP_RCP || OP == OP_RCPRAW ||
+                            OP == OP_NDVI_DIV || OP == OP_NDVI_RCP || OP == OP_NDVI_RCPRAW ||
+                            OP == OP_ADDFP);
+  if constexpr (kFloat) {
+    // Round-robin across 4 independent float accumulators to break the 16-deep serial
+    // add_ps chain down to 4-deep, letting divide/rcp throughput show through.
+    __m256 farr[4] = {*pf, _mm256_setzero_ps(), _mm256_setzero_ps(), _mm256_setzero_ps()};
+    __m256i xd = _mm256_setzero_si256();
+    [&]<int... J>(std::integer_sequence<int, J...>) {
+      ((acc_op<OP>(ex<bA, J>(inA), ex<bB, J>(inB), farr[J & 3], xd)), ...);
+    }(std::make_integer_sequence<int, 16>{});
+    *pf = _mm256_add_ps(_mm256_add_ps(farr[0], farr[1]), _mm256_add_ps(farr[2], farr[3]));
+  } else {
+    __m256 f = *pf;
+    __m256i x = *px;
+    [&]<int... J>(std::integer_sequence<int, J...>) {
+      ((acc_op<OP>(ex<bA, J>(inA), ex<bB, J>(inB), f, x)), ...);
+    }(std::make_integer_sequence<int, 16>{});
+    *pf = f;
+    *px = x;
+  }
 }
 
 using Fn = void (*)(const __m256i*, const __m256i*, __m256*, __m256i*);
-Fn g_tbl[9][17][17];
+Fn g_tbl[11][17][17];
 
 template <int OP, int A>
 static void reg_row() {
@@ -176,6 +218,8 @@ struct Init {
     reg_op<OP_NDVI_RCP>();
     reg_op<OP_NDVI_RCPRAW>();
     reg_op<OP_NDVI_COUNT>();
+    reg_op<OP_ADDFP>();
+    reg_op<OP_CVTFP>();
   }
 } g_init;
 
@@ -206,13 +250,31 @@ static inline double xreduce(__m256i x) {
 // Uncompressed baseline: same per-OutReg ladder over RAW uint16 (no decode).
 template <int OP>
 static double raw_loop(const uint16_t* a, const uint16_t* b, size_t length) {
-  __m256 f = _mm256_setzero_ps();
+  constexpr bool kFloat = (OP == OP_DIV || OP == OP_RCP || OP == OP_RCPRAW ||
+                            OP == OP_NDVI_DIV || OP == OP_NDVI_RCP || OP == OP_NDVI_RCPRAW ||
+                            OP == OP_ADDFP);
+  __m256 farr[4] = {};
   __m256i x = _mm256_setzero_si256();
-  for (size_t i = 0; i < length; i += 16)
-    acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a + i)),
-               _mm256_loadu_si256((const __m256i*)(b + i)), f, x);
+  size_t i = 0;
+  if constexpr (kFloat) {
+    // 4 independent accumulators, round-robin across 64 elements per outer iteration.
+    // Breaks the cross-iteration serial add_ps dep chain (was 4096-deep, now 1024-deep
+    // per accumulator), letting divide/rcp throughput dominate instead.
+    __m256i xd = _mm256_setzero_si256();
+    for (; i + 64 <= length; i += 64) {
+      acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a+i   )), _mm256_loadu_si256((const __m256i*)(b+i   )), farr[0], xd);
+      acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a+i+16)), _mm256_loadu_si256((const __m256i*)(b+i+16)), farr[1], xd);
+      acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a+i+32)), _mm256_loadu_si256((const __m256i*)(b+i+32)), farr[2], xd);
+      acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a+i+48)), _mm256_loadu_si256((const __m256i*)(b+i+48)), farr[3], xd);
+    }
+    farr[0] = _mm256_add_ps(_mm256_add_ps(farr[0], farr[1]), _mm256_add_ps(farr[2], farr[3]));
+  }
+  // Tail / non-float ops: single accumulator.
+  for (; i < length; i += 16)
+    acc_op<OP>(_mm256_loadu_si256((const __m256i*)(a+i)),
+               _mm256_loadu_si256((const __m256i*)(b+i)), farr[0], x);
   if constexpr (OP == OP_NDVI_COUNT) return (double)(-hsum_epi32(x));
-  return hsum_ps(f) + xreduce(x);
+  return hsum_ps(farr[0]) + xreduce(x);
 }
 
 }  // namespace
@@ -241,6 +303,8 @@ extern "C" double ndvi2_raw(const uint16_t* a, const uint16_t* b, size_t length,
     case 5: return raw_loop<5>(a, b, length);
     case 6: return raw_loop<6>(a, b, length);
     case 7: return raw_loop<7>(a, b, length);
+    case 9:  return raw_loop<9>(a, b, length);
+    case 10: return raw_loop<10>(a, b, length);
     default: return raw_loop<8>(a, b, length);
   }
 }

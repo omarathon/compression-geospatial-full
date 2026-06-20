@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <immintrin.h>
 #include <nmmintrin.h>  // SSE4.2 (includes SSSE3 for _mm_hadd_epi32)
 #include <format>
 #include <iostream>
@@ -35,9 +36,15 @@ enum class AccessPattern { Linear, Random };
 enum class AccessTransformation {
   LinearXOR,
   LinearSum,
-  LinearSumSimd,   // AVX2 SIMD sum — madd aggregate (matches fused madd codecs)
-  LinearSumSimdUnpack,  // AVX2 SIMD sum — unpack-widen aggregate (matches non-madd codecs)
-  LinearSumFused,  // reads pre-computed 32-bit sum from codec overflow slot
+  LinearSumSimd,         // AVX2 SIMD sum — madd aggregate
+  LinearSumSimdUnpack,   // AVX2 SIMD sum — unpack-widen aggregate
+  LinearSumFused,        // reads pre-computed 32-bit sum from codec overflow slot
+  LinearMin,             // AVX2 horizontal min (uint16)
+  LinearMax,             // AVX2 horizontal max (uint16)
+  LinearCountGtFxP,      // count(x > kCountThreshold), fixed-point integer comparison
+  LinearCountGtFP,       // count(x > kCountThreshold), float conversion + vcmpps
+  LinearSumRecipDiv,     // sum(1/x), full vdivps
+  LinearSumRecipNR,      // sum(1/x), vrcpps + one Newton-Raphson step
   RandomXOR,
   RandomSum,
   Threshold,
@@ -80,6 +87,12 @@ inline AccessTransformation ParseAccessTransformation(const std::string& s) {
   if (s == "linearSumSimd") return AccessTransformation::LinearSumSimd;
   if (s == "linearSumSimdUnpack") return AccessTransformation::LinearSumSimdUnpack;
   if (s == "linearSumFused") return AccessTransformation::LinearSumFused;
+  if (s == "linearMin") return AccessTransformation::LinearMin;
+  if (s == "linearMax") return AccessTransformation::LinearMax;
+  if (s == "linearCountGtFxP") return AccessTransformation::LinearCountGtFxP;
+  if (s == "linearCountGtFP") return AccessTransformation::LinearCountGtFP;
+  if (s == "linearSumRecipDiv") return AccessTransformation::LinearSumRecipDiv;
+  if (s == "linearSumRecipNR") return AccessTransformation::LinearSumRecipNR;
   if (s == "randomXOR") return AccessTransformation::RandomXOR;
   if (s == "randomSum") return AccessTransformation::RandomSum;
   if (s == "Threshold") return AccessTransformation::Threshold;
@@ -145,6 +158,18 @@ inline std::string ToString(AccessTransformation t) {
       return "linearSumSimdUnpack";
     case AccessTransformation::LinearSumFused:
       return "linearSumFused";
+    case AccessTransformation::LinearMin:
+      return "linearMin";
+    case AccessTransformation::LinearMax:
+      return "linearMax";
+    case AccessTransformation::LinearCountGtFxP:
+      return "linearCountGtFxP";
+    case AccessTransformation::LinearCountGtFP:
+      return "linearCountGtFP";
+    case AccessTransformation::LinearSumRecipDiv:
+      return "linearSumRecipDiv";
+    case AccessTransformation::LinearSumRecipNR:
+      return "linearSumRecipNR";
     case AccessTransformation::RandomXOR:
       return "randomXOR";
     case AccessTransformation::RandomSum:
@@ -213,8 +238,12 @@ void RemapAndTransform(std::vector<T>& data, Ordering o, Transformation t,
 }
 
 
-// Sink for SIMD/fused sum results — file-scope prevents dead-code elimination.
-inline int32_t kLinearSumSink = 0;
+// Sinks — file-scope prevents dead-code elimination.
+inline int32_t kLinearSumSink  = 0;
+inline float   kLinearFloatSink = 0.0f;
+
+// Threshold for COUNT(x > T) ops — set by --threshold CLI arg (default 0).
+inline uint16_t kCountThreshold = 0;
 
 // Returns true for variants that mutate the block data (requiring re-encoding).
 inline bool AccessTransformationMutatesData(AccessTransformation t) {
@@ -391,6 +420,145 @@ inline std::size_t ApplyAccessTransformation<uint16_t>(
       kLinearSumSink = _mm_cvtsi128_si32(s);
       for (; i < total; ++i)
         kLinearSumSink += data[i];
+      break;
+    }
+    case AccessTransformation::LinearMin: {
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      __m256i vmin = _mm256_set1_epi16((short)0xFFFF);
+      for (; i + 16 <= total; i += 16)
+        vmin = _mm256_min_epu16(vmin, _mm256_loadu_si256((const __m256i*)&data[i]));
+      __m128i lo = _mm256_castsi256_si128(vmin);
+      __m128i hi = _mm256_extracti128_si256(vmin, 1);
+      __m128i m = _mm_min_epu16(lo, hi);
+      m = _mm_min_epu16(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(1,0,3,2)));
+      m = _mm_min_epu16(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(2,3,0,1)));
+      m = _mm_min_epu16(m, _mm_shufflelo_epi16(m, _MM_SHUFFLE(2,3,0,1)));
+      kLinearSumSink = (uint16_t)_mm_extract_epi16(m, 0);
+      for (; i < total; ++i)
+        kLinearSumSink = std::min(kLinearSumSink, (int32_t)data[i]);
+      break;
+    }
+    case AccessTransformation::LinearMax: {
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      __m256i vmax = _mm256_setzero_si256();
+      for (; i + 16 <= total; i += 16)
+        vmax = _mm256_max_epu16(vmax, _mm256_loadu_si256((const __m256i*)&data[i]));
+      __m128i lo = _mm256_castsi256_si128(vmax);
+      __m128i hi = _mm256_extracti128_si256(vmax, 1);
+      __m128i m = _mm_max_epu16(lo, hi);
+      m = _mm_max_epu16(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(1,0,3,2)));
+      m = _mm_max_epu16(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(2,3,0,1)));
+      m = _mm_max_epu16(m, _mm_shufflelo_epi16(m, _MM_SHUFFLE(2,3,0,1)));
+      kLinearSumSink = (uint16_t)_mm_extract_epi16(m, 0);
+      for (; i < total; ++i)
+        kLinearSumSink = std::max(kLinearSumSink, (int32_t)data[i]);
+      break;
+    }
+    case AccessTransformation::LinearCountGtFxP: {
+      // Pure integer unsigned comparison: count(x > T).
+      // XOR with 0x8000 converts uint16 to signed domain for cmpgt_epi16.
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      const __m256i kT   = _mm256_set1_epi16((short)kCountThreshold);
+      const __m256i kOne = _mm256_set1_epi16(1);
+      // subs_epu16(v, T) = 0 if v <= T, else v-T > 0. min with 1 gives 0 or 1 per lane.
+      // Accumulate in uint16: max 65536/16 = 4096 per lane, well within uint16 range.
+      __m256i vcnt16 = _mm256_setzero_si256();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v = _mm256_loadu_si256((const __m256i*)&data[i]);
+        vcnt16 = _mm256_add_epi16(vcnt16,
+                     _mm256_min_epu16(_mm256_subs_epu16(v, kT), kOne));
+      }
+      // Horizontal reduce entirely in 16-bit (max per-lane after each fold: 8192, 16384, 32768).
+      // Final step in scalar int32 to handle the edge case count == 65536.
+      __m128i s = _mm_add_epi16(_mm256_castsi256_si128(vcnt16),
+                                 _mm256_extracti128_si256(vcnt16, 1));
+      s = _mm_add_epi16(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1,0,3,2)));
+      s = _mm_add_epi16(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(2,3,0,1)));
+      kLinearSumSink = (int32_t)(uint16_t)_mm_extract_epi16(s, 0)
+                     + (int32_t)(uint16_t)_mm_extract_epi16(s, 1);
+      for (; i < total; ++i)
+        kLinearSumSink += (data[i] > kCountThreshold) ? 1 : 0;
+      break;
+    }
+    case AccessTransformation::LinearCountGtFP: {
+      // Float-path count: convert uint16 → float, compare with vcmpps.
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      const __m256 kThreshPS = _mm256_set1_ps((float)kCountThreshold);
+      __m256i vcnt = _mm256_setzero_si256();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v   = _mm256_loadu_si256((const __m256i*)&data[i]);
+        __m256  flo = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_castsi256_si128(v)));
+        __m256  fhi = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_extracti128_si256(v, 1)));
+        // vcmpps returns 0 or 0xFFFFFFFF; cast to int32 and subtract (adds 1 per true lane)
+        __m256i mlo = _mm256_castps_si256(_mm256_cmp_ps(flo, kThreshPS, _CMP_GT_OS));
+        __m256i mhi = _mm256_castps_si256(_mm256_cmp_ps(fhi, kThreshPS, _CMP_GT_OS));
+        vcnt = _mm256_sub_epi32(vcnt, mlo);
+        vcnt = _mm256_sub_epi32(vcnt, mhi);
+      }
+      __m128i lo = _mm256_castsi256_si128(vcnt);
+      __m128i hi = _mm256_extracti128_si256(vcnt, 1);
+      __m128i s  = _mm_add_epi32(lo, hi);
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(1,0,3,2)));
+      s = _mm_add_epi32(s, _mm_shuffle_epi32(s, _MM_SHUFFLE(2,3,0,1)));
+      kLinearSumSink = _mm_cvtsi128_si32(s);
+      for (; i < total; ++i)
+        kLinearSumSink += (data[i] > kCountThreshold) ? 1 : 0;
+      break;
+    }
+    case AccessTransformation::LinearSumRecipDiv: {
+      // sum(1/x) via full vdivps. Zero elements produce inf (ignored as timing sink).
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      const __m256 kOnesPS = _mm256_set1_ps(1.0f);
+      __m256 vaccA = _mm256_setzero_ps(), vaccB = _mm256_setzero_ps();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v   = _mm256_loadu_si256((const __m256i*)&data[i]);
+        __m256  flo = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_castsi256_si128(v)));
+        __m256  fhi = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_extracti128_si256(v, 1)));
+        vaccA = _mm256_add_ps(vaccA, _mm256_div_ps(kOnesPS, flo));
+        vaccB = _mm256_add_ps(vaccB, _mm256_div_ps(kOnesPS, fhi));
+      }
+      __m256 vacc = _mm256_add_ps(vaccA, vaccB);
+      __m128 slo  = _mm256_castps256_ps128(vacc);
+      __m128 shi  = _mm256_extractf128_ps(vacc, 1);
+      __m128 s    = _mm_add_ps(slo, shi);
+      s = _mm_hadd_ps(s, s);
+      s = _mm_hadd_ps(s, s);
+      kLinearFloatSink = _mm_cvtss_f32(s);
+      for (; i < total; ++i)
+        kLinearFloatSink += (data[i] != 0) ? 1.0f / data[i] : 0.0f;
+      break;
+    }
+    case AccessTransformation::LinearSumRecipNR: {
+      // sum(1/x) via vrcpps + one NR step using FMA: r = r * fnmadd(x, r, 2) = r*(2 - x*r).
+      int total = static_cast<int>(blockSize * blockSize);
+      int i = 0;
+      const __m256 kTwoPS = _mm256_set1_ps(2.0f);
+      __m256 vaccA = _mm256_setzero_ps(), vaccB = _mm256_setzero_ps();
+      for (; i + 16 <= total; i += 16) {
+        __m256i v   = _mm256_loadu_si256((const __m256i*)&data[i]);
+        __m256  flo = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_castsi256_si128(v)));
+        __m256  fhi = _mm256_cvtepi32_ps(_mm256_cvtepu16_epi32(_mm256_extracti128_si256(v, 1)));
+        __m256  rlo = _mm256_rcp_ps(flo);
+        __m256  rhi = _mm256_rcp_ps(fhi);
+        rlo = _mm256_mul_ps(rlo, _mm256_fnmadd_ps(flo, rlo, kTwoPS));
+        rhi = _mm256_mul_ps(rhi, _mm256_fnmadd_ps(fhi, rhi, kTwoPS));
+        vaccA = _mm256_add_ps(vaccA, rlo);
+        vaccB = _mm256_add_ps(vaccB, rhi);
+      }
+      __m256 vacc = _mm256_add_ps(vaccA, vaccB);
+      __m128 slo  = _mm256_castps256_ps128(vacc);
+      __m128 shi  = _mm256_extractf128_ps(vacc, 1);
+      __m128 s    = _mm_add_ps(slo, shi);
+      s = _mm_hadd_ps(s, s);
+      s = _mm_hadd_ps(s, s);
+      kLinearFloatSink = _mm_cvtss_f32(s);
+      for (; i < total; ++i)
+        kLinearFloatSink += (data[i] != 0) ? 1.0f / data[i] : 0.0f;
       break;
     }
     case AccessTransformation::LinearSumFused: {

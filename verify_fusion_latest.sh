@@ -11,50 +11,32 @@ TIFS=(
   /home/omar/diss/geotiffs/2656.tif
 )
 
-COMMON_ARGS="-b 256 -n 500 -r 1 --itrans none --pattern linear --ordering default --trace-sums --normalize"
+COMMON_ARGS="-b 256 -n 500 -r 1 --rs 0 --itrans none --pattern linear --ordering default --trace-sums --normalize"
 
 # tag         atrans          codec
 # (tag is used for filenames + echo; codec is what gets passed as --icodec/--acodec)
+
+WS=(4 8 16 32 128 256)
+
 RUNS=(
-  "base       linearSum       custom_direct_access"
-  # "simdcomp   linearSumFused  simdcomp_fused"
-  # # "pfor_old         linearSumFused  FastPFor_fused_SIMDPFor+VariableByte"
-  # "pfor_global_b    linearSumFused  FastPFor_fused_corrected_global_b_SIMDPFor+VariableByte"
-  # "pfor_adaptive_b  linearSumFused  FastPFor_fused_corrected_adaptive_b_SIMDPFor+VariableByte"
-  # # "simdcomp_dl linearSumFused simdcomp_fused_delta_local"
-  # # "simdcomp_dc linearSumFused simdcomp_fused_delta_carry"
-  # # "pfor_dl    linearSumFused  FastPFor_fused_corrected_delta_local_SIMDPFor+VariableByte"
-  # # "pfor_dc    linearSumFused  FastPFor_fused_corrected_delta_carry_SIMDPFor+VariableByte"
-
-  # # "simdcomp_fl linearSumFused simdcomp_fused_for_local"
-  # "simdcomp_fg linearSumFused simdcomp_fused_for_global"
-  # # "simdcomp_fh linearSumFused simdcomp_fused_for_hierarchical"
-
-  # "pfor_fg_global_b   linearSumFused  FastPFor_fused_corrected_for_global_global_b"
-  # "pfor_fg_adaptive_b linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b"
-  # "pfor_fg_adaptive_b_p32 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p32"
-  # "pfor_fg_adaptive_b_p64 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p64"
-  # "pfor_fg_adaptive_b_p128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_p128"
-
-  # "simdcomp_fg_w128 linearSumFused simdcomp_fused_for_global_w128"
-  # "simdcomp_fg_w64  linearSumFused simdcomp_fused_for_global_w64"
-  # "simdcomp_fg_w32  linearSumFused simdcomp_fused_for_global_w32"
-
-  # "pfor_fg_adaptive_b_w128 linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w128"
-  # "pfor_fg_adaptive_b_w64  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w64"
-  # "pfor_fg_adaptive_b_w32  linearSumFused  FastPFor_fused_corrected_for_global_adaptive_b_w32"
-
-  # "tpfor_pfor linearSumFused  TurboPFor_TurboPFor256"
-  # "tpfor_pack linearSumFused  TurboPFor_TurboPack256"
-
-  "TurboPFor_fused_128v16_sum   linearSumFused  TurboPFor_fused_128v16_sum"
-  "TurboPFor_fused_256v16_sum   linearSumFused  TurboPFor_fused_256v16_sum"
+  "base                              linearSumSimd  custom_direct_access"
+  "simdcomp_fused                    linearSumFused simdcomp_fused"
+  "TurboPFor_fused_256v16_merge_unpack linearSumFused TurboPFor_fused_256v16_merge_unpack"
+  "TurboPFor_fused_256v16_byte_unpack  linearSumFused TurboPFor_fused_256v16_byte_unpack"
 )
+for W in "${WS[@]}"; do
+  RUNS+=(
+    "simdcomp_fused_for_256_w${W}_sep_shuf_unpack  linearSumFused simdcomp_fused_for_256_w${W}_sep_shuf_unpack"
+    "simdcomp_fused_for_256_w${W}_sep_unpack       linearSumFused simdcomp_fused_for_256_w${W}_sep_unpack"
+    "TurboPFor_fused_for_256_w${W}_sep_unpack      linearSumFused TurboPFor_fused_for_256_w${W}_sep_unpack"
+    "TurboPFor_fused_for_256_w${W}_sep_nobc_unpack linearSumFused TurboPFor_fused_for_256_w${W}_sep_nobc_unpack"
+  )
+done
 
 run_one() {
   local tag=$1 atrans=$2 codec=$3
   echo ">>> $tag ($codec)"
-  ./build/bench_pipeline "$TIF" $COMMON_ARGS \
+  ./build_byteexc/bench_pipeline "$TIF" $COMMON_ARGS \
     --icodec "$codec" --acodec "$codec" --atrans "$atrans" \
     > "out_${tag}.txt" 2>&1
   grep "^TRACE" "out_${tag}.txt" > "out_${tag}_trace.txt"

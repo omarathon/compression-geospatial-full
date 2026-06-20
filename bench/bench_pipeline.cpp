@@ -523,6 +523,7 @@ int main(int argc, char* argv[]) {
   bool forceInt32 = false;
   bool traceSums = false;
   bool normalize = false;
+  int threshold = 0;
 
   app.add_option("file", filePath, "GeoTIFF file path")->required();
   app.add_option("--blocksize,-b", blockSize, "Block side length in pixels")
@@ -545,8 +546,12 @@ int main(int argc, char* argv[]) {
                  "Access pattern(s): linear|random");
   app.add_option("--atrans", accessTransformations,
                  "Access transformation(s): linearXOR|linearSum|linearSumSimd|"
-                 "linearSumFused|randomXOR|randomSum|Threshold|SmoothAndShift|"
+                 "linearSumFused|linearMin|linearMax|linearCountGtFxP|linearCountGtFP|"
+                 "linearSumRecipDiv|linearSumRecipNR|"
+                 "randomXOR|randomSum|Threshold|SmoothAndShift|"
                  "IndexBasedClassification|ValueBasedClassification|ValueShift");
+  app.add_option("--threshold", threshold,
+                 "Threshold T for linearCountGtFxP / linearCountGtFP (default: 0)");
   app.add_flag("--force-int32", forceInt32, "Force int32 pipeline for any raster type");
   app.add_flag("--trace-sums", traceSums, "Print per-block sums for verification");
   app.add_flag("--normalize", normalize,
@@ -554,6 +559,7 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
   gTraceSums = traceSums;
+  kCountThreshold = static_cast<uint16_t>(std::clamp(threshold, 0, 65535));
 
   srand(1);  // rand() is used in random access patterns; seed before benchmarking.
 
