@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -70,7 +71,8 @@ class SimdCompFusedCodecU16_128 : public StatefulIntegerCodec<uint16_t> {
     assert(length % kFusedSubBlockSize128 == 0);
     const size_t num_sb = length / kFusedSubBlockSize128;
 
-    const uint8_t madd = compressed.data()[0];
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const uint8_t madd = kForceUnpack ? 0 : compressed.data()[0];
     const uint8_t *bs = compressed.data() + 1;
     const uint8_t *in_ptr = bs + num_sb;
 

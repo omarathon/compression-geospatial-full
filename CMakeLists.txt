@@ -102,6 +102,31 @@ add_library(Ndvi2Band STATIC ${EXT}/simdcomp/src/ndvi2band_w256.cpp)
 target_compile_options(Ndvi2Band PRIVATE -O3 -march=native -mno-avx512f)
 set_target_properties(Ndvi2Band PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 
+# Two-band FoR+PFor fused kernels (shared-b, pshufb exception merge, noop+add).
+# Uses TurboPFor's ic.h (bitpack16/bitunpack16/vbenc16/vbdec16) for exception I/O
+# and simdcomp's simdpack_u16 for the low-bit packed planes (same as TurboPForFused).
+add_library(Ndvi2BandPFor STATIC ${EXT}/TurboPFor/lib/ndvi2band_pfor_w256.cpp)
+target_include_directories(Ndvi2BandPFor PRIVATE
+  ${EXT}/TurboPFor/lib ${EXT}/TurboPFor/include
+  ${EXT}/simdcomp/include ${EXT}/simdcomp/src)
+target_compile_options(Ndvi2BandPFor PRIVATE -O3 -march=native -mno-avx512f)
+set_target_properties(Ndvi2BandPFor PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+target_link_libraries(Ndvi2BandPFor PUBLIC TurboPFor SimdComp)
+# BYTE_EXC: store exceptions as raw uint8/uint16 instead of bit-packed. Avoids
+# bitunpack16 on decode (sequential load instead of scalar bit-extraction).
+# pshufb merge is unchanged. Slightly larger stream but cheaper exception decode.
+option(PFOR_BYTE_EXC_2BAND "Ndvi2BandPFor: byte-aligned excess (no bitunpack16)" OFF)
+if(PFOR_BYTE_EXC_2BAND)
+  target_compile_definitions(Ndvi2BandPFor PRIVATE PFOR_BYTE_EXC)
+endif()
+# Skip pshufb merge for OP_ADD: plain kernel on low bits + scalar sum(exc<<b).
+# Results (XOR-fold) won't match full-merge — timing diagnostic only.
+# Can be combined with PFOR_BYTE_EXC_2BAND to isolate merge vs read costs.
+option(PFOR_SKIP_MERGE_2BAND "Ndvi2BandPFor: skip pshufb merge, sum exc directly (OP_ADD only, timing diagnostic)" OFF)
+if(PFOR_SKIP_MERGE_2BAND)
+  target_compile_definitions(Ndvi2BandPFor PRIVATE PFOR_SKIP_MERGE_EXC)
+endif()
+
 # Header-only / include-path-only deps
 set(EXTRA_INCLUDES
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -259,7 +284,7 @@ target_link_libraries(bench_pipeline_multithread PRIVATE Threads::Threads)
 # Two-band fused NDVI decode benchmark (L1-temp / shared-b streamed).
 add_executable(bench_pipeline_2band bench/bench_pipeline_2band.cpp)
 configure_bench(bench_pipeline_2band)
-target_link_libraries(bench_pipeline_2band PRIVATE Ndvi2Band)
+target_link_libraries(bench_pipeline_2band PRIVATE Ndvi2Band Ndvi2BandPFor)
 
 add_executable(for128_parity bench/for128_parity.cpp)
 configure_bench(for128_parity)

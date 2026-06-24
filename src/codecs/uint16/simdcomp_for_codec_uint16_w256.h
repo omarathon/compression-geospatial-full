@@ -34,6 +34,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <immintrin.h>
 #include <stdexcept>
@@ -508,7 +509,8 @@ class SimdCompFusedForCodecU16_256 : public StatefulIntegerCodec<uint16_t> {
     assert(got == num_blk);
     p += sizeof(uint32_t);
     const bool madd_safe = *p++ != 0;
-    const bool madd = (agg_ == FusedAggImpl::kMadd) && madd_safe;
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const bool madd = (agg_ == FusedAggImpl::kMadd) && madd_safe && !kForceUnpack;
 
     const unsigned sh = (unsigned)__builtin_ctzll((unsigned long long)w);
     const int mode = decode_mode(w);
@@ -710,7 +712,8 @@ class SimdCompFusedForHierarchicalCodecU16_256
     assert(got == num_blk);
     p += sizeof(uint32_t);
     const bool madd_safe = *p++ != 0;
-    const bool madd = (agg_ == FusedAggImpl::kMadd) && madd_safe;
+    static const bool kForceUnpack = (std::getenv("FORCE_UNPACK") != nullptr);
+    const bool madd = (agg_ == FusedAggImpl::kMadd) && madd_safe && !kForceUnpack;
 
     const uint16_t* gmin = reinterpret_cast<const uint16_t*>(p);
     p += num_outer * sizeof(uint16_t);
